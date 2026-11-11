@@ -26,7 +26,7 @@ assert.match(provider,/Tasto premuto alle/,'Every tap must show an immediate vis
 assert.match(jobService,/EnelConnector\.fetch\(credentials,\s*config\.months,\s*phase\s*->/,
  'Background sync must report its stage');
 assert.match(widgetLayout,/android:id="@\+id\/widget_refresh"/);
-assert.match(widgetLayout,/android:layout_width="48dp"/);
+assert.match(widgetLayout,/android:layout_width="46dp"/);
 
 // First launch: tariffs can be saved without a made-up initial consumption.
 const mainActivity=app('java/com/costoluce/importatore/MainActivity.java');
