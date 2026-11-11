@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#f4f7fc" />
-  <title>Costo Luce 5.2.0</title>
+  <title>Costo Luce 5.3.0</title>
   <style>
     :root { --ink:#152844; --muted:#718198; --blue:#365cda; --blue2:#5472ed; --pale:#eaf0ff; --line:#e5eaf3; --bg:#f4f7fc; --green:#108266; }
     * { box-sizing:border-box; }
@@ -75,13 +75,16 @@
     .month-value{font-size:16px;font-weight:800;white-space:nowrap;color:#2147b2;font-variant-numeric:tabular-nums}
     .month-sum{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:13px;border-top:1px solid #ccd9ec;font-weight:800;font-size:14px}
     .month-warning{font-size:11px;line-height:1.6;color:#97551a;margin-top:10px}
+    .widgetcard{border:1px solid #d9e6fb;background:#fbfdff}
+    .widgetcard .step{font-size:12px;line-height:1.5}
+    .widgethint{font-size:11px;color:#58718d;margin:10px 0 0;line-height:1.5}
   </style>
 </head>
 <body>
   <main class="shell">
     <header class="mast">
       <div class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m14.2 2.7-9.1 10h6.4L9.8 21.3l9.1-10h-6.4l1.7-8.6Z" fill="white" stroke="white" stroke-width="1.5" stroke-linejoin="round"/></svg></div>
-      <div><h1>Costo Luce 5.2.0</h1><p class="sub">Calcolatore · Dettaglio mensile Enel v5.2.0</p></div>
+      <div><h1>Costo Luce 5.3.0</h1><p class="sub">Calcolatore · Widget Home v5.3.0</p></div>
     </header>
 
     <section class="card" aria-labelledby="calc-title">
@@ -125,6 +128,16 @@
       <div class="result-foot"><div><div class="klabel">Costo variabile / kWh</div><div id="perKwh" class="kvalue">—</div></div><div><div class="klabel">kWh soggetti ad accisa</div><div id="taxKwh" class="kvalue">—</div></div></div>
     </section>
 
+    <section class="card widgetcard" aria-labelledby="widget-title">
+      <div class="eyebrow" id="widget-title">Widget sulla schermata Home</div>
+      <p class="step">Mostra il <b>costo variabile stimato</b> e i <b>kWh</b> dell'ultimo periodo salvato.
+      Prima inserisci i tuoi kWh o importali: il valore iniziale dimostrativo non viene salvato automaticamente.</p>
+      <div class="buttonrow">
+        <a class="mainbtn" id="widgetSave" href="#" onclick="return prepareWidgetSave()">Aggiorna widget Home</a>
+      </div>
+      <p id="widgetStatus" class="widgethint" role="status">Il widget non si aggiorna da solo da Enel: mostra i dati che salvi qui, con la data dell'ultimo salvataggio.</p>
+    </section>
+
     <section class="card" aria-labelledby="detail-title">
       <h2 class="sect-title" id="detail-title">Dettaglio del consumo</h2>
       <div id="breakdown"></div>
@@ -165,6 +178,9 @@
   ];
   let months=2;
   let lastEnelImport=false;
+  let hasWidgetInput=false;
+  let widgetSource='manuale';
+  let widgetPeriod='';
   let tariffs={...initial};
   try {const saved=JSON.parse(localStorage.getItem('costoluce_rates_v1')||'null');if(saved && typeof saved==='object'){for(const key of Object.keys(initial)){if(typeof saved[key]==='number' && isFinite(saved[key]) && saved[key]>=0) tariffs[key]=saved[key]}}}catch(e){}
   const euro=n=>new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'}).format(n);
@@ -211,12 +227,18 @@
     const legacy=byId('openSync');if(legacy)legacy.href='costoluce://sync?months='+v;
     if(changed && lastEnelImport){
       lastEnelImport=false;
+      hasWidgetInput=false;
+      widgetSource='manuale';
+      widgetPeriod='';
       byId('kwh').value='';
       byId('importStatus').className='importstatus';
       byId('importStatus').textContent='Periodo cambiato. Aggiorna i consumi da Enel per ottenere i valori del nuovo intervallo.';
     }
     updateRequestedPeriod();
-    if(changed)renderMonthPending();
+    if(changed){
+      renderMonthPending();
+      widgetPeriod='';
+    }
     recalc();
   }
   function toggleRates(){const el=byId('rates');const opened=el.classList.toggle('open');byId('editBtn').setAttribute('aria-expanded',opened?'true':'false');byId('chevron').style.transform=opened?'rotate(180deg)':'none';}
@@ -242,6 +264,7 @@
     byId('taxKwh').textContent=decimal(taxKwh,1)+' kWh';
     const dest=byId('breakdown');dest.innerHTML='';
     for(const [name,value,desc] of items){const row=document.createElement('div');row.className='lineitem';const text=document.createElement('div');text.innerHTML='<div class="labeltext"></div><div class="detail"></div>';text.children[0].textContent=name;text.children[1].textContent=desc;const money=document.createElement('span');money.className='money';money.textContent=euro(value);row.appendChild(text);row.appendChild(money);dest.appendChild(row)}
+    return total;
   }
 
   /* Accetta solo consumi in kWh, mai letture cumulative in kWh non differenziate,
@@ -336,6 +359,9 @@
     try{
       const result=parseConsumption(raw);
       byId('kwh').value=String(Number(result.kwh.toFixed(3)));
+      hasWidgetInput=result.kwh>0;
+      widgetSource='file';
+      widgetPeriod='';
       status.className='importstatus ok';
       status.textContent='Importati '+decimal(result.kwh,3)+' kWh · '+result.origin+'. Verifica che il periodo del file coincida con quello selezionato (1 o 2 mesi).';
       recalc();
@@ -411,6 +437,9 @@
     notes.push('La presenza di tutte le ore non è verificata.');
     byId('monthlyWarning').textContent=(missing||incomplete?'Attenzione: ':'Verifica dati: ')+notes.join('. ');
     byId('kwh').value=String(Math.round(data.kwh*1000)/1000);
+    hasWidgetInput=data.kwh>0;
+    widgetSource='enel';
+    widgetPeriod=list.map(e=>italianMonth(e.year,e.month)).join(' + ');
     lastEnelImport=true;
     recalc();
     status.className='importstatus '+((missing||incomplete)?'err':'ok');
@@ -422,6 +451,9 @@
     const k=Number(enelMatch[1]);const m=Number(enelMatch[2]);
     if(Number.isFinite(k)&&k>=0&&k<1000000){
       byId('kwh').value=String(k);setMonths(m);
+      hasWidgetInput=k>0;
+      widgetSource='enel';
+      widgetPeriod=selectedPeriod(m).map(e=>italianMonth(e.year,e.month)).join(' + ');
       byId('importStatus').className='importstatus ok';
       byId('importStatus').textContent='Acquisiti '+decimal(k,3)+' kWh direttamente da Enel Energia per '+m+' mesi solari completi. Giornate con misure: '+enelMatch[3]+'. Se mancano giorni, il totale potrebbe essere parziale.';
     }
@@ -433,12 +465,46 @@
     const imported=Number(portalMatch[1]);
     if(Number.isFinite(imported)&&imported>0&&imported<1000000){
       byId('kwh').value=String(imported);
+      hasWidgetInput=true;
+      widgetSource='portale';
+      widgetPeriod='';
       byId('importStatus').className='importstatus ok';
       byId('importStatus').textContent='Acquisiti '+decimal(imported,3)+' kWh dalla pagina del Portale Consumi. Verifica l’intervallo selezionato sul portale e imposta qui il numero di mesi corrispondente.';
     }
   }
 
-  byId('kwh').addEventListener('input',recalc);byId('resident').addEventListener('change',recalc);fillRates();updateRequestedPeriod();renderMonthPending();recalc();
+  function markManualInput(){
+    const input=byId('kwh').value;
+    hasWidgetInput=String(input).trim()!=='' && Number.isFinite(Number(String(input).replace(',','.'))) && Number(input)>0;
+    widgetSource='manuale';
+    widgetPeriod='';
+    lastEnelImport=false;
+    recalc();
+  }
+  function prepareWidgetSave(){
+    const kwh=safeNumber(byId('kwh').value);
+    const cost=recalc();
+    const message=byId('widgetStatus');
+    if(!hasWidgetInput||!Number.isFinite(kwh)||kwh<=0||kwh>=1000000||
+        !Number.isFinite(cost)||cost<0||cost>10000000){
+      message.textContent='Inserisci o importa prima un consumo reale in kWh; il valore dimostrativo non e valido per il widget.';
+      return false;
+    }
+    const period=widgetPeriod||months+' '+(months===1?'mese':'mesi')+' selezionati';
+    const link=byId('widgetSave');
+    link.href='costoluce://widget-save?kwh='+encodeURIComponent(kwh.toFixed(3))+
+      '&euro='+encodeURIComponent(cost.toFixed(2))+'&months='+months+
+      '&source='+encodeURIComponent(widgetSource)+'&period='+encodeURIComponent(period);
+    return true;
+  }
+  window.onWidgetSaveStatus=function(message,success){
+    const status=byId('widgetStatus');if(!status)return;
+    status.textContent=String(message||'');
+    status.style.color=success?'#108266':'#af4d28';
+  };
+  byId('kwh').addEventListener('input',markManualInput);
+  byId('resident').addEventListener('change',recalc);
+  fillRates();updateRequestedPeriod();renderMonthPending();recalc();
 </script>
 </body>
 </html>

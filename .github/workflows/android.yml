@@ -40,30 +40,34 @@ jobs:
           node tests/test_capture.js
           node tests/test_navigation.js
           node tests/test_monthly.js
+          node tests/test_widget.js
       - name: Compilazione ufficiale Android
         run: gradle --no-daemon --stacktrace :app:testDebugUnitTest :app:assembleDebug
       - name: Verifica presenza APK
         run: test -s app/build/outputs/apk/debug/app-debug.apk
+          # Verify the generated APK includes the registered widget resources.
+          unzip -l app/build/outputs/apk/debug/app-debug.apk | grep -q 'resources.arsc'
+          $ANDROID_HOME/build-tools/35.0.0/aapt dump xmltree app/build/outputs/apk/debug/app-debug.apk AndroidManifest.xml | grep -q 'CostoLuceWidgetProvider'
       - name: Rinomina APK con numero versione
         run: |
           mkdir -p dist
-          cp app/build/outputs/apk/debug/app-debug.apk dist/CostoLuce_v5.2.0_DettaglioMensile_S25.apk
-          test -s dist/CostoLuce_v5.2.0_DettaglioMensile_S25.apk
+          cp app/build/outputs/apk/debug/app-debug.apk dist/CostoLuce_v5.3.0_WidgetHome_S25.apk
+          test -s dist/CostoLuce_v5.3.0_WidgetHome_S25.apk
       - name: Pubblica APK installabile
         uses: actions/upload-artifact@v4
         with:
-          name: CostoLuce_v5.2.0_DettaglioMensile_S25
-          path: dist/CostoLuce_v5.2.0_DettaglioMensile_S25.apk
+          name: CostoLuce_v5.3.0_WidgetHome_S25
+          path: dist/CostoLuce_v5.3.0_WidgetHome_S25.apk
           if-no-files-found: error
           retention-days: 30
       - name: Pubblica release GitHub scaricabile direttamente
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if gh release view v5.2.0 > /dev/null 2>&1; then
-            gh release upload v5.2.0 dist/CostoLuce_v5.2.0_DettaglioMensile_S25.apk --clobber
+          if gh release view v5.3.0 > /dev/null 2>&1; then
+            gh release upload v5.3.0 dist/CostoLuce_v5.3.0_WidgetHome_S25.apk --clobber
           else
-            gh release create v5.2.0 dist/CostoLuce_v5.2.0_DettaglioMensile_S25.apk --target "$GITHUB_SHA" --title "Costo Luce v5.2.0 - Enel Diagnostica" --notes "APK di prova Android. Collegamento Enel non verificato su account reale." --prerelease
+            gh release create v5.3.0 dist/CostoLuce_v5.3.0_WidgetHome_S25.apk --target "$GITHUB_SHA" --title "Costo Luce v5.3.0 - Widget Home" --notes "APK di prova Android. Collegamento Enel non verificato su account reale." --prerelease
           fi
 
   smoke-test:
@@ -76,7 +80,7 @@ jobs:
       - name: Scarica APK prodotto in CI
         uses: actions/download-artifact@v4
         with:
-          name: CostoLuce_v5.2.0_DettaglioMensile_S25
+          name: CostoLuce_v5.3.0_WidgetHome_S25
           path: ./apk
       - name: Emulatore Android - prova apertura
         uses: reactivecircus/android-emulator-runner@v2
@@ -86,7 +90,7 @@ jobs:
           arch: x86_64
           profile: pixel_6
           script: |
-            adb install -r apk/CostoLuce_v5.2.0_DettaglioMensile_S25.apk
+            adb install -r apk/CostoLuce_v5.3.0_WidgetHome_S25.apk
             adb logcat -c
             adb shell am start -W -n com.costoluce.cloud/com.costoluce.importatore.MainActivity
             sleep 12

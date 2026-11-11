@@ -68,6 +68,28 @@ public final class MainActivity extends Activity {
         try { uri = Uri.parse(url); } catch (Exception e) { return false; }
         if (!"costoluce".equalsIgnoreCase(uri.getScheme())) return false;
         String action = uri.getHost();
+        if ("widget-save".equals(action)) {
+            // Only the locally packaged calculator may send the summary.
+            // Never accept data from the embedded external ARERA portal.
+            if (web == null || web.getUrl() == null || !web.getUrl().startsWith(HOME))
+                return true;
+            boolean success = false;
+            try {
+                double kwh = Double.parseDouble(uri.getQueryParameter("kwh"));
+                double euro = Double.parseDouble(uri.getQueryParameter("euro"));
+                int months = Integer.parseInt(uri.getQueryParameter("months"));
+                success = CostoLuceWidgetProvider.saveSnapshot(this, kwh, euro, months,
+                        uri.getQueryParameter("source"), uri.getQueryParameter("period"));
+            } catch (RuntimeException ignored) {
+                // Invalid input: do not store or log any arbitrary content.
+            }
+            String message = success
+                ? "Widget aggiornato. Aggiungilo dalla schermata Home del telefono, se non e gia presente."
+                : "Impossibile aggiornare il widget: verifica i dati inseriti.";
+            web.evaluateJavascript("window.onWidgetSaveStatus("
+                    + JSONObject.quote(message) + ", " + (success ? "true" : "false") + ");", null);
+            return true;
+        }
         if ("enel-sync".equals(action)) {
             preferredMonths = "1".equals(uri.getQueryParameter("months")) ? 1 : 2;
             startEnelSync(); return true;

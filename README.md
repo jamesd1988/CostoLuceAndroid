@@ -1,4 +1,4 @@
-# Costo Luce 5.2.0 — consumi per mese (Enel beta)
+# Costo Luce 5.3.0 — widget Home Android (Enel beta)
 
 App Android per stimare i soli costi variabili dai kWh; Android Gradle Plugin e GitHub Actions.
 
@@ -45,3 +45,13 @@ Nota: la firma dell'APK di debug può cambiare a ogni run. Per sostituire una pr
 - Test Java JUnit su raggruppamento mensile con date 2026 e cambio anno, e test JS di rendering del riepilogo.
 - Versione applicazione **5.2.0-dettaglio-mensile**, `versionCode 10`, nome installato **Costo Luce 5.2.0**. APK `CostoLuce_v5.2.0_DettaglioMensile_S25.apk`.
 - Rimane una **beta**: autenticazione e lettura dall'endpoint Enel non sono verificate in una sessione reale.
+
+## Widget Android v5.3.0
+
+- Un widget Home Android (dimensioni di base circa 3 × 2 celle) mostra **ultimo costo variabile stimato**, **kWh**, **periodo**, **origine** e **data di salvataggio**.
+- Dal calcolatore usa **Aggiorna widget Home**, dopo aver realmente inserito o importato kWh. Il valore iniziale dimostrativo non viene inviato al widget.
+- I dati sono memorizzati solo localmente in SharedPreferences; non vengono salvate password, POD, cookie o dati personali sul widget.
+- Il widget mostra sempre l'ultimo riepilogo **esplicitamente salvato**, non effettua interrogazioni automatiche o periodiche a Enel. Toccandolo si apre Costo Luce.
+- Per aggiungerlo su Samsung: pressione prolungata schermata Home → Widget → Costo Luce 5.3.0.
+- Versione Android `5.3.0-home-widget`, versionCode 11, file APK `CostoLuce_v5.3.0_WidgetHome_S25.apk`.
+- Attenzione: prezzo stimato basato sulle tariffe attualmente configurate nell'app, non fattura definitiva.
