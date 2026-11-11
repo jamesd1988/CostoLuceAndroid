@@ -11,12 +11,18 @@ android {
         applicationId 'com.costoluce.cloud'
         minSdk 24
         targetSdk 35
-        versionCode 9
-        versionName '5.1.1-enel-diagnostica'
+        versionCode 10
+        versionName '5.2.0-dettaglio-mensile'
     }
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+}
+
+// Test JVM: verifica raggruppamento dei dati orari in mesi solari.
+dependencies {
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.json:json:20240303'
 }

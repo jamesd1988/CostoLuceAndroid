@@ -64,11 +64,34 @@ public final class EnelConnector {
         }
     }
 
+    /** A month is reported independently, including months with no measurements. */
+    static final class MonthUsage {
+        final int year, month, days, expectedDays, hourSamples;
+        final double kwh;
+        MonthUsage(int year, int month, double kwh, int days, int expectedDays, int hourSamples) {
+            this.year=year; this.month=month; this.kwh=kwh;
+            this.days=days; this.expectedDays=expectedDays; this.hourSamples=hourSamples;
+        }
+    }
+
+    private static final class MonthAccumulator {
+        final int year, month, expectedDays;
+        final Set<String> observedDays = new HashSet<>();
+        double kwh;
+        int hourSamples;
+        MonthAccumulator(int year, int month, int expectedDays) {
+            this.year=year; this.month=month; this.expectedDays=expectedDays;
+        }
+    }
+
     static final class Result {
         final double kwh;
         final String period;
         final int days;
-        Result(double kwh, String period, int days) { this.kwh=kwh; this.period=period; this.days=days; }
+        final java.util.List<MonthUsage> monthly;
+        Result(double kwh, String period, int days, java.util.List<MonthUsage> monthly) {
+            this.kwh=kwh; this.period=period; this.days=days; this.monthly=monthly;
+        }
     }
 
     static Result fetch(Credentials credentials, int months) throws IOException, JSONException {
@@ -117,7 +140,7 @@ public final class EnelConnector {
             if (!response.trim().startsWith("{")) throw new IOException("Enel non ha restituito dati JSON. Controlla l'accesso e riprova.");
             Result parsed = parseTotal(new JSONObject(response), from, to);
             return new Result(parsed.kwh, from.substring(0,2)+"/"+from.substring(2,4)+"/"+from.substring(4)
-                +" – "+to.substring(0,2)+"/"+to.substring(2,4)+"/"+to.substring(4), parsed.days);
+                +" – "+to.substring(0,2)+"/"+to.substring(2,4)+"/"+to.substring(4), parsed.days, parsed.monthly);
         } finally {
             jar.getCookieStore().removeAll();
             CookieHandler.setDefault(previous);
@@ -141,46 +164,100 @@ public final class EnelConnector {
         if (aggregations == null) throw new IOException("Formato dati Enel inatteso: mancano le aggregazioni.");
         JSONArray results = null;
         for (int i=0; i<aggregations.length(); i++) {
-            JSONObject entry = aggregations.optJSONObject(i);
-            if (entry != null && "hourlyConsumption".equals(entry.optString("referenceID"))) {
-                if (results != null) throw new IOException("Risultati orari duplicati: importazione annullata.");
-                results = entry.optJSONArray("results");
+            JSONObject entry=aggregations.optJSONObject(i);
+            if (entry!=null && "hourlyConsumption".equals(entry.optString("referenceID"))) {
+                if (results!=null) throw new IOException("Risultati orari duplicati: importazione annullata.");
+                results=entry.optJSONArray("results");
             }
         }
-        if (results == null) throw new IOException("Nessun dato di consumo orario trovato per la fornitura.");
-        final SimpleDateFormat date = new SimpleDateFormat("ddMMyyyy", Locale.ITALY);
+        if (results==null) throw new IOException("Nessun dato di consumo orario trovato per la fornitura.");
+
+        final TimeZone tz=TimeZone.getTimeZone("Europe/Rome");
+        final SimpleDateFormat date=new SimpleDateFormat("ddMMyyyy",Locale.ITALY);
+        date.setTimeZone(tz);
         date.setLenient(false);
+        if (!from.matches("\\d{8}") || !to.matches("\\d{8}"))
+            throw new IOException("Intervallo date non valido.");
         java.util.Date dFrom, dTo;
-        try { dFrom=date.parse(from);dTo=date.parse(to); }
-        catch (ParseException e) { throw new IOException("Intervallo date non valido."); }
-        Set<String> dates = new HashSet<>();
-        double total = 0; int points = 0;
-        for (int i=0; i<results.length(); i++) {
-            JSONObject day = results.optJSONObject(i);
-            if (day == null) throw new IOException("Risultato consumi malformato.");
-            String stamp = day.optString("date", "");
+        try { dFrom=date.parse(from); dTo=date.parse(to); }
+        catch(ParseException e) { throw new IOException("Intervallo date non valido."); }
+        if (dTo.before(dFrom)) throw new IOException("Intervallo date invertito.");
+
+        // Build every requested month in chronological order, including months with zero data.
+        java.util.LinkedHashMap<Integer,MonthAccumulator> buckets=new java.util.LinkedHashMap<>();
+        Calendar cursor=Calendar.getInstance(tz,Locale.ITALY);
+        cursor.setTime(dFrom);
+        final int startDay=cursor.get(Calendar.DAY_OF_MONTH);
+        final int startKey=cursor.get(Calendar.YEAR)*100+cursor.get(Calendar.MONTH)+1;
+        cursor.set(Calendar.DAY_OF_MONTH,1);
+        Calendar endCal=Calendar.getInstance(tz,Locale.ITALY);
+        endCal.setTime(dTo);
+        final int endDay=endCal.get(Calendar.DAY_OF_MONTH);
+        final int endKey=endCal.get(Calendar.YEAR)*100+endCal.get(Calendar.MONTH)+1;
+        for (int index=0; index<12; index++) {
+            int y=cursor.get(Calendar.YEAR);
+            int m=cursor.get(Calendar.MONTH)+1;
+            int key=y*100+m;
+            int first=key==startKey?startDay:1;
+            int last=key==endKey?endDay:cursor.getActualMaximum(Calendar.DAY_OF_MONTH);
+            int expected=last-first+1;
+            if (expected<1) throw new IOException("Periodo mensile non valido.");
+            buckets.put(key,new MonthAccumulator(y,m,expected));
+            if(key==endKey) break;
+            cursor.add(Calendar.MONTH,1);
+        }
+        if (!buckets.containsKey(endKey))
+            throw new IOException("Intervallo mensile troppo esteso.");
+
+        Set<String> uniqueDays=new HashSet<>();
+        double total=0; int points=0;
+        for(int i=0;i<results.length();i++) {
+            JSONObject day=results.optJSONObject(i);
+            if(day==null) throw new IOException("Risultato consumi malformato.");
+            String stamp=day.optString("date","");
+            if(!stamp.matches("\\d{8}")) throw new IOException("Data consumi non valida.");
             java.util.Date parsedDate;
             try { parsedDate=date.parse(stamp); }
-            catch (ParseException e) { throw new IOException("Data consumi non valida."); }
-            if (parsedDate.before(dFrom) || parsedDate.after(dTo)) continue;
-            if (!dates.add(stamp)) throw new IOException("Data duplicata nei consumi Enel; importazione annullata.");
+            catch(ParseException e) { throw new IOException("Data consumi non valida."); }
+            if(parsedDate.before(dFrom)||parsedDate.after(dTo)) continue;
+            if(!uniqueDays.add(stamp))
+                throw new IOException("Data duplicata nei consumi Enel; importazione annullata.");
+            Calendar dayCalendar=Calendar.getInstance(tz,Locale.ITALY);
+            dayCalendar.setTime(parsedDate);
+            int key=dayCalendar.get(Calendar.YEAR)*100+dayCalendar.get(Calendar.MONTH)+1;
+            MonthAccumulator month=buckets.get(key);
+            if(month==null) throw new IOException("Data consumi fuori dal periodo richiesto.");
             JSONArray bins=day.optJSONArray("binValues");
-            if (bins == null) throw new IOException("Mancano le misure orarie per una giornata.");
-            Set<String> hours = new HashSet<>();
-            for (int j=0;j<bins.length();j++) {
+            if(bins==null) throw new IOException("Mancano le misure orarie per una giornata.");
+            Set<String> hours=new HashSet<>();
+            for(int j=0;j<bins.length();j++) {
                 JSONObject bin=bins.optJSONObject(j);
-                if (bin==null || !(bin.opt("value") instanceof Number)) throw new IOException("Una misura oraria non è numerica.");
-                String hour=bin.optString("name", "");
-                if (!hour.matches("H[0-9]{1,2}") || !hours.add(hour))
+                if(bin==null || !(bin.opt("value") instanceof Number))
+                    throw new IOException("Una misura oraria non è numerica.");
+                String hour=bin.optString("name","");
+                if(!hour.matches("H[0-9]{1,2}") || !hours.add(hour))
                     throw new IOException("Misure orarie duplicate o senza identificativo.");
-                double v = ((Number)bin.opt("value")).doubleValue();
-                if (!Double.isFinite(v) || v < 0 || v > 10000) throw new IOException("Valore kWh fuori intervallo.");
-                total += v; points++;
+                double value=((Number)bin.opt("value")).doubleValue();
+                if(!Double.isFinite(value)||value<0||value>10000)
+                    throw new IOException("Valore kWh fuori intervallo.");
+                month.kwh+=value;
+                total+=value;
+                month.hourSamples++;
+                points++;
             }
+            if(bins.length()>0) month.observedDays.add(stamp);
         }
-        if (points == 0) throw new IOException("Non risultano misure disponibili nel periodo selezionato.");
-        if (!Double.isFinite(total) || total > 1_000_000) throw new IOException("Totale kWh fuori intervallo.");
-        return new Result(total, from+"-"+to, dates.size());
+        if(points==0) throw new IOException("Non risultano misure disponibili nel periodo selezionato.");
+        if(!Double.isFinite(total)||total>1_000_000)
+            throw new IOException("Totale kWh fuori intervallo.");
+        java.util.List<MonthUsage> monthly=new java.util.ArrayList<>();
+        int countedDays=0;
+        for(MonthAccumulator m : buckets.values()) {
+            int n=m.observedDays.size();
+            countedDays+=n;
+            monthly.add(new MonthUsage(m.year,m.month,m.kwh,n,m.expectedDays,m.hourSamples));
+        }
+        return new Result(total,from+"-"+to,countedDays,monthly);
     }
 
     private static String hiddenValue(String html, String name) {

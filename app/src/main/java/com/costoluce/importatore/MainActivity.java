@@ -158,7 +158,7 @@ public final class MainActivity extends Activity {
         remember.setChecked(false); // Explicit opt-in to durable credential storage.
         content.addView(remember);
         TextView note = new TextView(this);
-        note.setText("Periodo importato: ultimi " + preferredMonths + " mesi solari completi. Non è un'API pubblica ufficiale e potrebbe non funzionare.");
+        note.setText("Periodo importato: ultimi " + preferredMonths + " mesi solari conclusi. Il riepilogo con i nomi dei mesi è mostrato nella schermata principale. Non è un'API pubblica ufficiale e potrebbe non funzionare.");
         content.addView(note);
         scroller.addView(content);
         AlertDialog dialog=new AlertDialog.Builder(this)
@@ -201,7 +201,29 @@ public final class MainActivity extends Activity {
                 if(!isFinishing()) runOnUiThread(() -> {
                     if (enelRequestId != requestId) return;
                     enelBusy=false;
-                    if(web != null) web.loadUrl(HOME+"#enel="+String.format(java.util.Locale.ROOT,"%.3f",result.kwh)+"&months="+selectedMonths+"&days="+result.days);
+                    if(web != null && web.getUrl() != null && web.getUrl().startsWith(HOME)) {
+                        try {
+                            org.json.JSONObject detail=new org.json.JSONObject();
+                            detail.put("kwh",result.kwh);
+                            detail.put("months",selectedMonths);
+                            detail.put("period",result.period);
+                            org.json.JSONArray monthly=new org.json.JSONArray();
+                            for(EnelConnector.MonthUsage m : result.monthly) {
+                                org.json.JSONObject row=new org.json.JSONObject();
+                                row.put("year",m.year);
+                                row.put("month",m.month);
+                                row.put("kwh",m.kwh);
+                                row.put("days",m.days);
+                                row.put("expectedDays",m.expectedDays);
+                                row.put("hourSamples",m.hourSamples);
+                                monthly.put(row);
+                            }
+                            detail.put("monthly",monthly);
+                            web.evaluateJavascript("window.onEnelConsumption("+detail.toString()+");",null);
+                        } catch(org.json.JSONException e) {
+                            enelStatus("Errore nella visualizzazione del riepilogo mensile.",true);
+                        }
+                    }
                 });
             } catch (Exception error) {
                 // Do not print credentials, HTTP bodies, tokens or authenticated URLs.

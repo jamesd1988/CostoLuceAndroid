@@ -1,4 +1,4 @@
-# Costo Luce 5.1.1 — Enel Energia (diagnostica beta)
+# Costo Luce 5.2.0 — consumi per mese (Enel beta)
 
 App Android per stimare i soli costi variabili dai kWh; Android Gradle Plugin e GitHub Actions.
 
@@ -33,3 +33,15 @@ Nota: la firma dell'APK di debug può cambiare a ogni run. Per sostituire una pr
 - Versione Android: **5.1.1-enel-diagnostica**, codice versione **9**.
 - APK prodotto: **CostoLuce_v5.1.1_EnelDiagnostica_S25.apk**.
 - Distribuzione diretta: GitHub Release `v5.1.1` (prerelease; installazione ancora sperimentale). Non richiede la Libreria ChatGPT.
+
+## Dettaglio mensile v5.2.0
+
+- Selezionando **2 mesi** vengono mostrati i nomi degli ultimi due **mesi solari conclusi** (per esempio settembre e ottobre 2026 quando siamo a novembre).
+- Dopo una sincronizzazione Enel riuscita, i dati `hourlyConsumption` sono aggregati **separatamente per mese**. Il riepilogo mostra nome/anno, kWh del mese, giorni con misure, totale del periodo e avvisi di incompletezza.
+- Un mese senza misure è indicato **Non disponibile**, mai come 0 kWh. Anche il totale è etichettato **disponibile** se alcuni periodi sono incompleti.
+- Non è possibile garantire tutte le misure orarie solo con i giorni: la schermata lo dichiara.
+- Il calcolo in euro usa il totale dei kWh disponibili; per stime definitive servono misure complete.
+- Corrige bug preesistente del tasto 1 mese / 2 mesi quando il vecchio collegamento ARERA non è presente.
+- Test Java JUnit su raggruppamento mensile con date 2026 e cambio anno, e test JS di rendering del riepilogo.
+- Versione applicazione **5.2.0-dettaglio-mensile**, `versionCode 10`, nome installato **Costo Luce 5.2.0**. APK `CostoLuce_v5.2.0_DettaglioMensile_S25.apk`.
+- Rimane una **beta**: autenticazione e lettura dall'endpoint Enel non sono verificate in una sessione reale.
