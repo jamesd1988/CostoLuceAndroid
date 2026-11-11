@@ -91,3 +91,13 @@ Nota: la firma dell'APK di debug può cambiare a ogni run. Per sostituire una pr
 - Il widget mostra distintamente "Configurato · premi ↻ per i dati Enel" prima della prima acquisizione.
 - La sincronizzazione dal widget continua a richiedere credenziali Enel **salvate volontariamente e cifrate** e un accesso effettivamente funzionante. Il login Enel sperimentale non è ancora stato verificato con un account reale.
 - Versione **5.7.0**, codice versione 15, APK `CostoLuce_v5.7.0_WidgetSetupAndRefresh_S25.apk`.
+
+## Widget automatico e nuova grafica v5.8.0
+
+- **Rimosso il passaggio manuale «Salva configurazione widget».** La pagina calcolatore trasferisce automaticamente al widget le impostazioni al primo avvio, alla modifica delle tariffe, del periodo, dell'opzione residente, e quando i kWh reali vengono inseriti o acquisiti da file/portale/Enel. Invio tramite schema `costoluce://widget-config` o `costoluce://widget-save`, intercettato esclusivamente dalla WebView locale dell'app, con debounce di 450 ms; nessuna credenziale passa negli URL.
+- I **479 kWh dimostrativi** iniziali non vengono mai pubblicati: prima di acquisire consumi reali si inviano solo tariffe e periodo.
+- Memorizzazione separata tra `configured_months` (futura acquisizione) e `months` (periodo dell'ultimo consumo): i vecchi dati non vengono erroneamente attribuiti al nuovo periodo, neppure durante la riapertura dell'app.
+- Quando cambiano solo i prezzi, il costo è ricalcolato ma **la data dell'ultimo consumo non viene aggiornata artificialmente**. Le misure mensili Enel restano preservate finché il dato è lo stesso.
+- Widget riprogettato: gradiente blu profondo, tipografia gerarchica, costo in evidenza, pill verde-acqua dei kWh, header dedicato, data e periodo, footer di stato separato e aggiornamento ↻ da 46 dp.
+- Il pulsante ↻ continua a funzionare in background tramite `PendingIntent.getBroadcast` + `JobScheduler`, senza aprire il calcolatore. Necessario account Enel configurato con credenziali salvate volontariamente e cifrate sul telefono; il connettore non ufficiale resta sperimentale.
+- Versione **5.8.0**, `versionCode 16`; APK: `CostoLuce_v5.8.0_AutoSyncWidget_S25.apk`.

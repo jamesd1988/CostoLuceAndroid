@@ -3,10 +3,13 @@ const fs=require('fs'),vm=require('vm'),assert=require('assert');
 const html=fs.readFileSync(__dirname+'/../app/src/main/assets/index.html','utf8');
 const code=html.match(/<script>([\s\S]*?)<\/script>/)[1];
 new vm.Script(code);
+assert.doesNotMatch(html,/id="widgetSave"/,
+  'No separate Save widget button: configuration must be automatic');
+
 function make(tag='div'){
-  const x={tag,children:[],style:{},className:'',checked:false,value:'',textContent:'',href:'',_inner:''};
+  const x={tag,children:[],style:{},className:'',checked:false,value:'',textContent:'',href:'',_inner:'',handlers:{}};
   x.appendChild=c=>x.children.push(c);
-  x.addEventListener=()=>{};
+  x.addEventListener=(event,callback)=>x.handlers[event]=callback;
   x.setAttribute=()=>{};
   x.classList={toggle:()=>true};
   Object.defineProperty(x,'innerHTML',{get(){return this._inner},set(v){this._inner=v;this.children=v.includes('labeltext')?[make(),make()]:[]}});
@@ -14,52 +17,68 @@ function make(tag='div'){
 }
 const nodes={};const byId=id=>nodes[id]||(nodes[id]=make());
 byId('kwh').value='479';byId('resident').checked=true;
+const timers=new Map();let timerId=0;
+const mockWindow={location:{href:''}};
 const ctx={
   document:{getElementById:byId,createElement:make},
-  location:{hash:''},window:{},
+  location:{hash:''},window:mockWindow,
   localStorage:{getItem:()=>null,setItem:()=>{}},
-  Number,Math,Intl,Date,Object,String,JSON,isFinite,encodeURIComponent,console
+  Number,Math,Intl,Date,Object,String,JSON,isFinite,encodeURIComponent,console,
+  setTimeout:(fn)=>{const id=++timerId;timers.set(id,fn);return id},
+  clearTimeout:(id)=>timers.delete(id)
+};
+const flush=()=>{
+  for(let i=0;i<20&&timers.size;i++){
+    const queued=[...timers.values()];timers.clear();
+    for(const callback of queued)callback();
+  }
+  assert.strictEqual(timers.size,0,'No infinite autosync loop');
 };
 vm.createContext(ctx);vm.runInContext(code,ctx);
-assert.strictEqual(ctx.prepareWidgetSave(),true,'Initial setup must allow tariff-only configuration');
-assert.match(byId('widgetSave').href,/^costoluce:\/\/widget-config\?months=2/);
-assert.doesNotMatch(byId('widgetSave').href,/kwh=479/,'Never use initial example consumption');
-assert.strictEqual(new URL(byId('widgetSave').href).searchParams.get('rates')!==null,true);
-byId('kwh').value='238';
-ctx.markManualInput();
-assert.strictEqual(ctx.prepareWidgetSave(),true);
-assert.match(byId('widgetSave').href,/^costoluce:\/\/widget-save\?kwh=238\.000/);
-assert.match(byId('widgetSave').href,/source=manuale/);
-assert.match(byId('widgetSave').href,/months=2/);
-assert.match(byId('widgetSave').href,/euro=/);
-const savedUrl=new URL(byId('widgetSave').href);
-assert(savedUrl.searchParams.has('rates'),'Tariffe non incluse per il widget');
-assert(savedUrl.searchParams.has('resident'),'Residenza non inclusa per il widget');
-assert.strictEqual(JSON.parse(savedUrl.searchParams.get('rates')).energy,0.135);
-ctx.window.onWidgetRestored({kwh:123,months:1,source:'manuale',period:'ottobre 2026'});
-assert.strictEqual(byId('kwh').value,'123');
-assert.strictEqual(ctx.prepareWidgetSave(),true);
-assert.match(byId('widgetSave').href,/months=1/);
-ctx.setMonths(2);
+assert.match(ctx.buildWidgetSyncUrl(),/^costoluce:\/\/widget-config\?months=2/);
+assert.doesNotMatch(ctx.buildWidgetSyncUrl(),/kwh=479/,'Never publish the initial demonstration');
+flush();
+assert.match(mockWindow.location.href,/^costoluce:\/\/widget-config\?/);
+assert.strictEqual(new URL(mockWindow.location.href).searchParams.get('auto'),'1');
+assert(new URL(mockWindow.location.href).searchParams.has('rates'));
 
-const amount=Number(new URL(byId('widgetSave').href).searchParams.get('euro'));
-assert(Number.isFinite(amount)&&amount>0);
-ctx.applyImportedText('Totale 240 kWh');
-assert.strictEqual(ctx.prepareWidgetSave(),true);
-assert.match(byId('widgetSave').href,/source=file/);
+byId('kwh').value='238';ctx.markManualInput();flush();
+let url=new URL(mockWindow.location.href);
+assert.strictEqual(url.host,'widget-save');
+assert.strictEqual(url.searchParams.get('kwh'),'238.000');
+assert.strictEqual(url.searchParams.get('source'),'manuale');
+
+ctx.applyImportedText('Totale 240 kWh');flush();
+url=new URL(mockWindow.location.href);
+assert.strictEqual(url.searchParams.get('kwh'),'240.000');
+assert.strictEqual(url.searchParams.get('source'),'file');
+
 ctx.window.onEnelConsumption({months:2,kwh:125.75,monthly:[
- {year:2026,month:9,kwh:50.25,days:30,expectedDays:30,hourSamples:720},
- {year:2026,month:10,kwh:75.50,days:31,expectedDays:31,hourSamples:744}
-]});
-assert.strictEqual(ctx.prepareWidgetSave(),true);
-const url=new URL(byId('widgetSave').href);
+  {year:2026,month:9,kwh:50.25,days:30,expectedDays:30,hourSamples:720},
+  {year:2026,month:10,kwh:75.50,days:31,expectedDays:31,hourSamples:744}
+]});flush();
+url=new URL(mockWindow.location.href);
 assert.strictEqual(url.searchParams.get('source'),'enel');
 assert.match(url.searchParams.get('period'),/settembre 2026/);
 assert.strictEqual(url.searchParams.get('kwh'),'125.750');
-ctx.setMonths(1);
-assert.strictEqual(ctx.prepareWidgetSave(),true,'Changing Enel period allows tariff-only setup');
-assert.match(byId('widgetSave').href,/^costoluce:\/\/widget-config\?/);
-assert.doesNotMatch(byId('widgetSave').href,/kwh=/,'Stale consumption must not be carried into a new period');
-ctx.window.onWidgetSaveStatus('Salvato correttamente',true);
-assert.match(byId('widgetStatus').textContent,/Salvato correttamente/);
-console.log('PASS: widget config-only first setup without demo kWh, real manual/import/Enel snapshots, period change and statuses');
+
+ctx.setMonths(1);flush();
+url=new URL(mockWindow.location.href);
+assert.strictEqual(url.host,'widget-config');
+assert.strictEqual(url.searchParams.get('months'),'1');
+assert.strictEqual(url.searchParams.get('kwh'),null,
+  'Never reuse kWh from the previous period');
+
+byId('resident').checked=false;byId('resident').handlers.change();flush();
+url=new URL(mockWindow.location.href);
+assert.strictEqual(url.searchParams.get('resident'),'0');
+
+ctx.window.onWidgetNativeState({months:1,resident:false},{months:2,kwh:999,source:'enel',period:'2026'});
+flush();
+assert.notStrictEqual(byId('kwh').value,'999',
+  'The previous month snapshot must not overwrite new-period settings');
+
+ctx.window.onWidgetSaveStatus('Sincronizzato',true);
+assert.match(byId('widgetStatus').textContent,/Sincronizzato/);
+
+console.log('PASS: automatic widget configuration, real data updates, no demo consumption, period isolation and resident pricing');

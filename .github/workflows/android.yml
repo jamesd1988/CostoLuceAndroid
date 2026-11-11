@@ -54,13 +54,13 @@ jobs:
       - name: Rinomina APK con numero versione
         run: |
           mkdir -p dist
-          cp app/build/outputs/apk/debug/app-debug.apk dist/CostoLuce_v5.6.0_WidgetBackgroundRefresh_S25.apk
-          test -s dist/CostoLuce_v5.6.0_WidgetBackgroundRefresh_S25.apk
+          cp app/build/outputs/apk/debug/app-debug.apk dist/CostoLuce_v5.8.0_AutoSyncWidget_S25.apk
+          test -s dist/CostoLuce_v5.8.0_AutoSyncWidget_S25.apk
       - name: Pubblica APK installabile
         uses: actions/upload-artifact@v4
         with:
-          name: CostoLuce_v5.6.0_WidgetBackgroundRefresh_S25
-          path: dist/CostoLuce_v5.6.0_WidgetBackgroundRefresh_S25.apk
+          name: CostoLuce_v5.8.0_AutoSyncWidget_S25
+          path: dist/CostoLuce_v5.8.0_AutoSyncWidget_S25.apk
           if-no-files-found: error
           retention-days: 30
   smoke-test:
@@ -73,7 +73,7 @@ jobs:
       - name: Scarica APK prodotto in CI
         uses: actions/download-artifact@v4
         with:
-          name: CostoLuce_v5.6.0_WidgetBackgroundRefresh_S25
+          name: CostoLuce_v5.8.0_AutoSyncWidget_S25
           path: ./apk
       - name: Emulatore Android - prova apertura
         uses: reactivecircus/android-emulator-runner@v2
@@ -83,7 +83,7 @@ jobs:
           arch: x86_64
           profile: pixel_6
           script: |
-            adb install -r apk/CostoLuce_v5.6.0_WidgetBackgroundRefresh_S25.apk
+            adb install -r apk/CostoLuce_v5.8.0_AutoSyncWidget_S25.apk
             adb logcat -c
             adb shell am broadcast -n com.costoluce.cloud/com.costoluce.importatore.CostoLuceWidgetProvider -a com.costoluce.cloud.action.WIDGET_REFRESH
             sleep 2

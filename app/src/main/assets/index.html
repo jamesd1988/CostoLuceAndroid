@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#f4f7fc" />
-  <title>Costo Luce 5.7.0</title>
+  <title>Costo Luce 5.8.0</title>
   <style>
     :root { --ink:#152844; --muted:#718198; --blue:#365cda; --blue2:#5472ed; --pale:#eaf0ff; --line:#e5eaf3; --bg:#f4f7fc; --green:#108266; }
     * { box-sizing:border-box; }
@@ -129,14 +129,10 @@
     </section>
 
     <section class="card widgetcard" aria-labelledby="widget-title">
-      <div class="eyebrow" id="widget-title">Widget sulla schermata Home</div>
-      <p class="step">Salva le tariffe e il periodo una sola volta. Il pulsante ↻ sul widget
-      proverà a recuperare i consumi Enel anche se non hai ancora inserito kWh nell'app.
-      Per la prima acquisizione è necessario che Enel sia collegato con credenziali cifrate salvate.</p>
-      <div class="buttonrow">
-        <a class="mainbtn" id="widgetSave" href="#" onclick="return prepareWidgetSave()">Salva configurazione widget</a>
-      </div>
-      <p id="widgetStatus" class="widgethint" role="status">Dopo aver salvato le tariffe, premi ↻ direttamente sul widget per provare a recuperare nuovi kWh Enel in background, senza aprire l'app, e ricalcolare il costo. Servono credenziali Enel salvate sul telefono e un login funzionante; il connettore è sperimentale.</p>
+      <div class="eyebrow" id="widget-title">Widget Home · collegamento automatico</div>
+      <p class="step">Tariffe, periodo e consumi reali vengono sincronizzati con il widget
+        automaticamente quando li modifichi o li importi. Non occorre premere Salva.</p>
+      <p id="widgetStatus" class="widgethint" role="status">Sul widget premi ↻ per richiedere una nuova lettura Enel in background. Servono credenziali salvate sul telefono e un accesso Enel funzionante. Le stime non includono le quote fisse.</p>
     </section>
 
     <section class="card" aria-labelledby="detail-title">
@@ -178,6 +174,13 @@
     ['excise','Accisa (€/kWh)'], ['vat','IVA (%)']
   ];
   let months=2;
+  try {
+    const storedMonths=localStorage.getItem('costoluce_months_v1');
+    if(storedMonths==='1'||storedMonths==='2') months=Number(storedMonths);
+  }catch(e){}
+  let lastCalculatedCost=0;
+  let widgetSyncTimer=null;
+  let lastWidgetSyncUrl='';
   let lastEnelImport=false;
   let hasWidgetInput=false;
   let widgetSource='manuale';
@@ -222,6 +225,7 @@
     if(v!==1&&v!==2)return;
     const changed=months!==v;
     months=v;
+    if(changed){try{localStorage.setItem('costoluce_months_v1',String(months))}catch(e){}}
     const link=byId('enelSync');if(link)link.href='costoluce://enel-sync?months='+v;
     byId('m1').classList.toggle('active',v===1);
     byId('m2').classList.toggle('active',v===2);
@@ -260,11 +264,13 @@
       ['Accisa',taxKwh*t.excise,decimal(t.excise,6)+' €/kWh imponibile']
     ];
     const preVat=items.reduce((s,it)=>s+it[1],0); const vat=preVat*t.vat/100;items.push(['IVA',vat,decimal(t.vat,1)+'% dell’imponibile']);const total=preVat+vat;
+    lastCalculatedCost=total;
     byId('total').textContent=euro(total);byId('total2').textContent=euro(total);
     byId('perKwh').textContent=kwh?decimal(total/kwh,3)+' €/kWh':'—';
     byId('taxKwh').textContent=decimal(taxKwh,1)+' kWh';
     const dest=byId('breakdown');dest.innerHTML='';
     for(const [name,value,desc] of items){const row=document.createElement('div');row.className='lineitem';const text=document.createElement('div');text.innerHTML='<div class="labeltext"></div><div class="detail"></div>';text.children[0].textContent=name;text.children[1].textContent=desc;const money=document.createElement('span');money.className='money';money.textContent=euro(value);row.appendChild(text);row.appendChild(money);dest.appendChild(row)}
+    scheduleWidgetSync();
     return total;
   }
 
@@ -482,36 +488,65 @@
     lastEnelImport=false;
     recalc();
   }
-  function prepareWidgetSave(){
+  // The calculator is the source of truth. After every recalc the settings
+  // are sent to the private Android widget store; only real measurements
+  // (manual entry, verified file, portal or Enel) may be published as kWh.
+  // No Enel credentials are transferred through this channel.
+  function buildWidgetSyncUrl(){
     const kwh=safeNumber(byId('kwh').value);
-    const cost=recalc();
-    const message=byId('widgetStatus');
-    const link=byId('widgetSave');
     const common='months='+months+
       '&resident='+(byId('resident').checked?'1':'0')+
-      '&rates='+encodeURIComponent(JSON.stringify(tariffs));
+      '&rates='+encodeURIComponent(JSON.stringify(tariffs))+
+      '&auto=1';
     if(!hasWidgetInput){
-      // Never send the initial 479 kWh demo or assume consumption from old periods.
-      // Save configuration only, so a real first fetch is possible from the widget.
-      link.href='costoluce://widget-config?'+common;
-      return true;
+      return 'costoluce://widget-config?'+common;
     }
+    const cost=lastCalculatedCost;
     if(!Number.isFinite(kwh)||kwh<=0||kwh>=1000000||
-        !Number.isFinite(cost)||cost<0||cost>10000000){
-      message.textContent='Consumo o tariffe non validi. Correggi i valori prima di salvare.';
-      return false;
-    }
+       !Number.isFinite(cost)||cost<0||cost>10000000) return null;
     const period=widgetPeriod||months+' '+(months===1?'mese':'mesi')+' selezionati';
-    link.href='costoluce://widget-save?kwh='+encodeURIComponent(kwh.toFixed(3))+
+    return 'costoluce://widget-save?kwh='+encodeURIComponent(kwh.toFixed(3))+
       '&euro='+encodeURIComponent(cost.toFixed(2))+
-      '&source='+encodeURIComponent(widgetSource)+'&period='+encodeURIComponent(period)+
+      '&source='+encodeURIComponent(widgetSource)+
+      '&period='+encodeURIComponent(period)+
       '&'+common;
-    return true;
+  }
+  function scheduleWidgetSync(){
+    if(typeof setTimeout!=='function')return;
+    if(widgetSyncTimer!==null)clearTimeout(widgetSyncTimer);
+    // Debounce edits to avoid sending intermediate prices or partial kWh.
+    widgetSyncTimer=setTimeout(()=>{
+      widgetSyncTimer=null;
+      const url=buildWidgetSyncUrl();
+      if(!url || url===lastWidgetSyncUrl)return;
+      lastWidgetSyncUrl=url;
+      window.location.href=url; // intercepted by PortalRouter; never opens a site
+    },450);
   }
   window.onWidgetSaveStatus=function(message,success){
     const status=byId('widgetStatus');if(!status)return;
     status.textContent=String(message||'');
     status.style.color=success?'#108266':'#af4d28';
+  };
+  // On app launch native Android supplies the last configuration AND the
+  // last measured values. They are independent: do not reassign old kWh
+  // to a newly selected 1/2-month period.
+  window.onWidgetNativeState=function(config,snapshot){
+    if(config && [1,2].includes(Number(config.months))){
+      const saved=(()=>{try{return localStorage.getItem('costoluce_months_v1')}catch(e){return null}})();
+      const wanted=saved==='1'||saved==='2'?Number(saved):Number(config.months);
+      setMonths(wanted);
+      const residence=(()=>{try{return localStorage.getItem('costoluce_resident_v1')}catch(e){return null}})();
+      byId('resident').checked=residence===null?Boolean(config.resident):residence==='1';
+      recalc();
+    }
+    if(snapshot && (!config||Number(snapshot.months)===months)){
+      window.onWidgetRestored(snapshot);
+    } else if(snapshot && config && Number(snapshot.months)!==months) {
+      // The previous usage remains visible on the widget with its actual
+      // old period, but is not imported into the new period's calculator.
+      byId('importStatus').textContent='Il widget conserva i consumi del precedente periodo; premi ↻ per leggere il nuovo intervallo.';
+    }
   };
   window.onWidgetRestored=function(data){
     if(!data||!Number.isFinite(Number(data.kwh))||Number(data.kwh)<=0||
@@ -532,8 +567,16 @@
     byId('widgetStatus').textContent='Ultimo riepilogo salvato ripristinato dal widget. Il costo viene ricalcolato con le tariffe attualmente impostate.';
   };
   byId('kwh').addEventListener('input',markManualInput);
-  byId('resident').addEventListener('change',recalc);
-  fillRates();updateRequestedPeriod();renderMonthPending();recalc();
+  byId('resident').addEventListener('change',()=>{
+    try{localStorage.setItem('costoluce_resident_v1',byId('resident').checked?'1':'0')}catch(e){}
+    recalc();
+  });
+  try{
+    const storedResident=localStorage.getItem('costoluce_resident_v1');
+    if(storedResident==='1'||storedResident==='0')
+      byId('resident').checked=storedResident==='1';
+  }catch(e){}
+  fillRates();setMonths(months);renderMonthPending();recalc();
 </script>
 </body>
 </html>

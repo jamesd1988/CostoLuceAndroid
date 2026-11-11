@@ -34,6 +34,19 @@ assert.match(mainActivity,/if \("widget-config"\.equals\(action\)\)/);
 assert.match(mainActivity,/CostoLuceWidgetProvider\.saveConfiguration\(this, months, rates, resident\)/);
 assert.match(provider,/static boolean saveConfiguration\(Context context, int months, String ratesJson, boolean resident\)/);
 assert.match(provider,/WidgetPricing\.parse\(ratesJson, resident\)/);
-assert.match(provider,/Tariffe salvate\. Tocca ↻/);
+assert.match(provider,/Pronto: premi ↻/);
+assert.match(provider,/KEY_CONFIG_MONTHS/);
+assert.match(provider,/sameMeasurement/);
+assert.match(provider,/static JSONObject getWidgetConfiguration\(Context context\)/);
+
+
+assert.match(mainActivity,/window\.onWidgetNativeState\(/);
+assert.match(mainActivity,/boolean automatic = "1"\.equals\(uri\.getQueryParameter\("auto"\)\)/);
+const index=app('assets/index.html');
+assert.match(index,/function buildWidgetSyncUrl\(\)/);
+assert.match(index,/function scheduleWidgetSync\(\)/);
+assert.match(index,/window\.location\.href=url/);
+assert.match(index,/scheduleWidgetSync\(\);\s*return total;/);
+assert.doesNotMatch(index,/id="widgetSave"/);
 
 console.log('PASS: refresh via foreground broadcast (no Activity), background JobScheduler, clear status and network permission');

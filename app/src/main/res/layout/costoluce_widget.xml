@@ -3,44 +3,69 @@
     android:id="@+id/widget_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/costoluce_widget_bg"
     android:orientation="vertical"
-    android:gravity="center_vertical"
+    android:gravity="top"
+    android:background="@drawable/costoluce_widget_bg"
     android:paddingLeft="16dp"
-    android:paddingRight="14dp"
-    android:paddingTop="11dp"
-    android:paddingBottom="12dp">
+    android:paddingRight="16dp"
+    android:paddingTop="14dp"
+    android:paddingBottom="14dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical">
-        <TextView
-            android:id="@+id/widget_brand"
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:text="COSTO LUCE  •  v5.7"
-            android:textSize="11sp"
-            android:textColor="#C3D5FF"
-            android:fontFamily="sans"
-            android:letterSpacing="0.06"
-            android:maxLines="1" />
+            android:orientation="vertical">
+            <TextView
+                android:id="@+id/widget_brand"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="COSTO LUCE"
+                android:textColor="#F6FAFF"
+                android:textStyle="bold"
+                android:letterSpacing="0.10"
+                android:textSize="12sp"
+                android:maxLines="1"/>
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:text="I TUOI CONSUMI"
+                android:textColor="#8FA9D0"
+                android:letterSpacing="0.07"
+                android:textSize="10sp"
+                android:maxLines="1"/>
+        </LinearLayout>
         <TextView
             android:id="@+id/widget_refresh"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_marginLeft="6dp"
+            android:layout_width="46dp"
+            android:layout_height="46dp"
+            android:layout_marginLeft="8dp"
             android:background="@drawable/costoluce_widget_refresh_bg"
             android:gravity="center"
             android:text="↻"
-            android:textColor="#FFFFFF"
             android:textSize="26sp"
+            android:textColor="#E9FAFF"
+            android:contentDescription="Aggiorna i consumi Enel in background"
             android:clickable="true"
-            android:focusable="true"
-            android:contentDescription="Aggiorna i consumi Enel e il costo stimato" />
+            android:focusable="true" />
     </LinearLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="COSTO VARIABILE STIMATO"
+        android:letterSpacing="0.06"
+        android:textColor="#ADC2E0"
+        android:textStyle="bold"
+        android:textSize="10sp"
+        android:maxLines="1" />
 
     <TextView
         android:id="@+id/widget_euro"
@@ -49,19 +74,25 @@
         android:text="—"
         android:textColor="#FFFFFF"
         android:textStyle="bold"
+        android:textSize="32sp"
         android:fontFamily="sans"
-        android:textSize="29sp"
         android:maxLines="1"
         android:ellipsize="end" />
 
     <TextView
         android:id="@+id/widget_kwh"
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="3dp"
+        android:background="@drawable/costoluce_widget_kwh_bg"
+        android:paddingLeft="12dp"
+        android:paddingRight="12dp"
+        android:paddingTop="5dp"
+        android:paddingBottom="5dp"
         android:text="Nessun dato"
-        android:textColor="#76E2CE"
+        android:textColor="#8EF7D5"
         android:textStyle="bold"
-        android:textSize="17sp"
+        android:textSize="15sp"
         android:maxLines="1"
         android:ellipsize="end" />
 
@@ -69,9 +100,9 @@
         android:id="@+id/widget_period"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="5dp"
-        android:text="Apri l'app e salva i consumi"
-        android:textColor="#E1EAFB"
+        android:layout_marginTop="10dp"
+        android:text="In attesa di consumi reali"
+        android:textColor="#E4ECFA"
         android:textSize="12sp"
         android:maxLines="1"
         android:ellipsize="end" />
@@ -81,26 +112,36 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="3dp"
-        android:text="Nessun aggiornamento salvato"
-        android:textColor="#A6BCD8"
+        android:text="Ultima lettura: nessuna"
+        android:textColor="#9EB5D3"
         android:textSize="10sp"
         android:maxLines="1"
         android:ellipsize="end" />
 
+    <!-- Flexible space: footer stays at the bottom when Samsung resizes the widget. -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical" />
+
     <TextView
         android:id="@+id/widget_status"
         android:layout_width="match_parent"
-        android:layout_height="40dp"
-        android:layout_marginTop="6dp"
+        android:layout_height="46dp"
+        android:layout_marginTop="9dp"
+        android:background="@drawable/costoluce_widget_status_bg"
+        android:paddingLeft="12dp"
+        android:paddingRight="10dp"
         android:gravity="center_vertical"
-        android:paddingLeft="10dp"
-        android:background="@drawable/costoluce_widget_refresh_bg"
         android:clickable="true"
         android:focusable="true"
-        android:contentDescription="Aggiorna consumi e costo senza aprire l'app"
+        android:contentDescription="Aggiorna consumi e costi senza aprire l'app"
         android:text="↻  Aggiorna consumi e costo"
-        android:textColor="#D6E6FF"
+        android:textColor="#E6F1FE"
+        android:textStyle="bold"
         android:textSize="11sp"
         android:maxLines="2"
         android:ellipsize="end" />
+
 </LinearLayout>

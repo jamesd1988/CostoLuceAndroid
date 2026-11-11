@@ -30,7 +30,8 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
     private static final int REFRESH_JOB_ID = 225901;
     private static final String KEY_KWH = "kwh";
     private static final String KEY_EUR = "estimated_euro";
-    private static final String KEY_MONTHS = "months";
+    private static final String KEY_MONTHS = "months"; // Period of the last actual consumption
+    private static final String KEY_CONFIG_MONTHS = "configured_months"; // Period requested next
     private static final String KEY_SOURCE = "source";
     private static final String KEY_PERIOD = "period";
     private static final String KEY_TIMESTAMP = "saved_at";
@@ -60,7 +61,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
     static WidgetConfiguration readConfiguration(Context context) {
         SharedPreferences p = prefs(context);
         String rates = p.getString(KEY_RATES, null);
-        int months = p.getInt(KEY_MONTHS, 2);
+        int months = p.getInt(KEY_CONFIG_MONTHS, p.getInt(KEY_MONTHS, 2));
         if (rates == null || (months != 1 && months != 2)) return null;
         return new WidgetConfiguration(rates, p.getBoolean(KEY_RESIDENT, false), months);
     }
@@ -104,20 +105,33 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
     static boolean saveConfiguration(Context context, int months, String ratesJson, boolean resident) {
         if (months != 1 && months != 2 || ratesJson == null || ratesJson.length() > 1500)
             return false;
-        try {
-            WidgetPricing.parse(ratesJson, resident);
-        } catch (Exception invalidRates) {
-            return false;
-        }
-        boolean hasEnel = new EnelCredentialStore(context).hasSaved();
-        boolean ok = prefs(context).edit()
-                .putInt(KEY_MONTHS, months)
+        final WidgetPricing pricing;
+        try { pricing = WidgetPricing.parse(ratesJson, resident); }
+        catch (Exception invalidRates) { return false; }
+
+        SharedPreferences p = prefs(context);
+        SharedPreferences.Editor edit = p.edit()
+                .putInt(KEY_CONFIG_MONTHS, months)
                 .putString(KEY_RATES, ratesJson)
-                .putBoolean(KEY_RESIDENT, resident)
-                .putString(KEY_STATUS, hasEnel
-                        ? "Tariffe salvate. Tocca ↻ per leggere i consumi Enel."
-                        : "Tariffe salvate. Collega Enel per recuperare i kWh.")
-                .commit();
+                .putBoolean(KEY_RESIDENT, resident);
+
+        // Price-only edits recompute the old kWh, without changing the time
+        // when those kWh were actually acquired.
+        if (p.getLong(KEY_TIMESTAMP, 0L) > 0 && p.getInt(KEY_MONTHS, 2) == months) {
+            try {
+                double lastKwh = Double.parseDouble(p.getString(KEY_KWH, ""));
+                if (Double.isFinite(lastKwh) && lastKwh > 0)
+                    edit.putString(KEY_EUR, Double.toString(pricing.estimatedCost(lastKwh, months)));
+            } catch (RuntimeException ignored) { }
+        }
+
+        // Keep the previous fetch error/partial-data warning if measurements exist.
+        if (p.getLong(KEY_TIMESTAMP, 0L) <= 0) {
+            edit.putString(KEY_STATUS, new EnelCredentialStore(context).hasSaved()
+                    ? "Pronto: premi ↻ per leggere i kWh Enel."
+                    : "Impostazioni pronte. Collega Enel per i consumi.");
+        }
+        boolean ok = edit.commit();
         if (ok) refresh(context);
         return ok;
     }
@@ -136,19 +150,36 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         } catch (Exception ex) {
             return false;
         }
-        boolean ok = prefs(context).edit()
+        SharedPreferences previous = prefs(context);
+        // Avoid claiming fresh Enel readings when the UI merely redraws
+        // or the user changes a tariff. Same measurement = same acquisition time.
+        boolean sameMeasurement = previous.getLong(KEY_TIMESTAMP, 0L) > 0
+                && previous.getInt(KEY_MONTHS, 2) == months
+                && source.equals(previous.getString(KEY_SOURCE, ""))
+                && period.equals(previous.getString(KEY_PERIOD, ""));
+        if (sameMeasurement) {
+            try {
+                sameMeasurement = Math.abs(kwh -
+                        Double.parseDouble(previous.getString(KEY_KWH, ""))) <= 0.0005;
+            } catch (RuntimeException invalid) { sameMeasurement = false; }
+        }
+        long at = sameMeasurement ? previous.getLong(KEY_TIMESTAMP, 0L)
+                : System.currentTimeMillis();
+        SharedPreferences.Editor edit = previous.edit()
                 .putString(KEY_KWH, Double.toString(kwh))
                 .putString(KEY_EUR, Double.toString(euro))
                 .putInt(KEY_MONTHS, months)
+                .putInt(KEY_CONFIG_MONTHS, months)
                 .putString(KEY_SOURCE, source)
                 .putString(KEY_PERIOD, period)
                 .putString(KEY_RATES, ratesJson)
                 .putBoolean(KEY_RESIDENT, resident)
-                .remove(KEY_MONTHLY)
-                .putLong(KEY_TIMESTAMP, System.currentTimeMillis())
-                .putString(KEY_STATUS, "")
-                .putBoolean(KEY_BUSY, false)
-                .commit();
+                .putLong(KEY_TIMESTAMP, at)
+                .putBoolean(KEY_BUSY, false);
+        if (!sameMeasurement) {
+            edit.remove(KEY_MONTHLY).putString(KEY_STATUS, "");
+        }
+        boolean ok = edit.commit();
         if (ok) refresh(context);
         return ok;
     }
@@ -168,6 +199,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
                 .putString(KEY_KWH, Double.toString(kwh))
                 .putString(KEY_EUR, Double.toString(euro))
                 .putInt(KEY_MONTHS, months)
+                .putInt(KEY_CONFIG_MONTHS, months)
                 .putString(KEY_SOURCE, "enel")
                 .putString(KEY_PERIOD, period)
                 .putString(KEY_MONTHLY, monthlyJson)
@@ -177,6 +209,18 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
                 .commit();
         if (ok) refresh(context);
         return ok;
+    }
+
+    /** Current settings are separate from the period of the last actual measurement. */
+    static JSONObject getWidgetConfiguration(Context context) {
+        SharedPreferences p = prefs(context);
+        if (p.getString(KEY_RATES, null) == null) return null;
+        try {
+            JSONObject state = new JSONObject();
+            state.put("months", p.getInt(KEY_CONFIG_MONTHS, p.getInt(KEY_MONTHS, 2)));
+            state.put("resident", p.getBoolean(KEY_RESIDENT, false));
+            return state;
+        } catch (JSONException ignored) { return null; }
     }
 
     static JSONObject getLatestSnapshot(Context context) {
@@ -299,8 +343,8 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
                 views.setTextViewText(R.id.widget_period, "Configura le tariffe nell'app");
                 views.setTextViewText(R.id.widget_updated, "Prima configurazione necessaria");
             } else {
-                views.setTextViewText(R.id.widget_period, "Configurato · premi ↻ per i dati Enel");
-                views.setTextViewText(R.id.widget_updated, "In attesa del primo recupero dei kWh");
+                views.setTextViewText(R.id.widget_period, "Pronto per il recupero dei consumi");
+                views.setTextViewText(R.id.widget_updated, "I dati compariranno dopo la prima lettura");
             }
         } else {
             try {

@@ -81,13 +81,16 @@ public final class MainActivity extends Activity {
                 success = CostoLuceWidgetProvider.saveConfiguration(this, months, rates, resident);
             } catch (RuntimeException ignored) { }
             boolean enelReady = new EnelCredentialStore(this).hasSaved();
+            boolean automatic = "1".equals(uri.getQueryParameter("auto"));
             String message = !success
-                ? "Tariffe o periodo non validi: correggi i valori e riprova."
+                ? "Non riesco a trasferire le tariffe al widget: controlla i valori."
                 : enelReady
-                    ? "Configurazione widget salvata. Premi ↻ sulla Home per tentare di recuperare i kWh Enel."
-                    : "Tariffe e periodo salvati. Per recuperare nuovi kWh, collega Enel e abilita il salvataggio cifrato delle credenziali.";
-            web.evaluateJavascript("window.onWidgetSaveStatus("
-                    + JSONObject.quote(message) + ", " + (success ? "true" : "false") + ");", null);
+                    ? "Widget sincronizzato automaticamente. Premi ↻ sulla Home per nuovi kWh."
+                    : "Widget sincronizzato. Per recuperare nuovi kWh, collega Enel e salva le credenziali cifrate.";
+            if (!automatic || !success) {
+                web.evaluateJavascript("window.onWidgetSaveStatus("
+                        + JSONObject.quote(message) + ", " + (success ? "true" : "false") + ");", null);
+            }
             return true;
         }
         if ("widget-save".equals(action)) {
@@ -108,11 +111,14 @@ public final class MainActivity extends Activity {
             } catch (RuntimeException ignored) {
                 // Invalid input: do not store or log any arbitrary content.
             }
+            boolean automatic = "1".equals(uri.getQueryParameter("auto"));
             String message = success
-                ? "Widget aggiornato. Aggiungilo dalla schermata Home del telefono, se non e gia presente."
-                : "Impossibile aggiornare il widget: verifica i dati inseriti.";
-            web.evaluateJavascript("window.onWidgetSaveStatus("
-                    + JSONObject.quote(message) + ", " + (success ? "true" : "false") + ");", null);
+                ? "Widget sincronizzato automaticamente con i consumi e le tariffe."
+                : "Non riesco a trasferire i consumi al widget: controlla le tariffe.";
+            if (!automatic || !success) {
+                web.evaluateJavascript("window.onWidgetSaveStatus("
+                        + JSONObject.quote(message) + ", " + (success ? "true" : "false") + ");", null);
+            }
             return true;
         }
         if ("enel-sync".equals(action)) {
@@ -149,8 +155,10 @@ public final class MainActivity extends Activity {
     void restoreWidgetSnapshot() {
         if (web == null || web.getUrl() == null || !web.getUrl().startsWith(HOME)) return;
         JSONObject snapshot = CostoLuceWidgetProvider.getLatestSnapshot(this);
-        if (snapshot != null)
-            web.evaluateJavascript("window.onWidgetRestored(" + snapshot.toString() + ");", null);
+        JSONObject config = CostoLuceWidgetProvider.getWidgetConfiguration(this);
+        web.evaluateJavascript("window.onWidgetNativeState("
+                + (config == null ? "null" : config.toString()) + ","
+                + (snapshot == null ? "null" : snapshot.toString()) + ");", null);
     }
 
     @Override protected void onNewIntent(Intent intent) {
