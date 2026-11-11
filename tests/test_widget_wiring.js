@@ -50,3 +50,12 @@ assert.match(index,/scheduleWidgetSync\(\);\s*return total;/);
 assert.doesNotMatch(index,/id="widgetSave"/);
 
 console.log('PASS: refresh via foreground broadcast (no Activity), background JobScheduler, clear status and network permission');
+
+// Billing-cycle logic: two months anchored to even start month, query through today.
+const connector=app('java/com/costoluce/importatore/EnelConnector.java');
+const billing=app('java/com/costoluce/importatore/BillingPeriod.java');
+assert.match(connector,/BillingPeriod\.today\(months\)/);
+assert.match(billing,/start\.add\(Calendar\.MONTH, -1\)/);
+assert.match(billing,/formatter\.format\(now\.getTime\(\)\)/);
+assert.match(connector,/lastMeasuredDay/);
+assert.match(provider,/taxableFromMonthly/);

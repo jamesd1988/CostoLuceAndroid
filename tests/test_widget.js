@@ -54,12 +54,13 @@ assert.strictEqual(url.searchParams.get('kwh'),'240.000');
 assert.strictEqual(url.searchParams.get('source'),'file');
 
 ctx.window.onEnelConsumption({months:2,kwh:125.75,monthly:[
-  {year:2026,month:9,kwh:50.25,days:30,expectedDays:30,hourSamples:720},
-  {year:2026,month:10,kwh:75.50,days:31,expectedDays:31,hourSamples:744}
+  {year:2026,month:10,kwh:50.25,days:30,expectedDays:31,hourSamples:720},
+  {year:2026,month:11,kwh:75.50,days:10,expectedDays:11,hourSamples:240}
 ]});flush();
 url=new URL(mockWindow.location.href);
 assert.strictEqual(url.searchParams.get('source'),'enel');
-assert.match(url.searchParams.get('period'),/settembre 2026/);
+assert.match(url.searchParams.get('period'),/ottobre 2026.*novembre 2026/);
+assert(url.searchParams.has('monthly'),'Monthly data must be included in native widget calculation');
 assert.strictEqual(url.searchParams.get('kwh'),'125.750');
 
 ctx.setMonths(1);flush();

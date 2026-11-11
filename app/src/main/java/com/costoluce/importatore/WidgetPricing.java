@@ -33,7 +33,7 @@ final class WidgetPricing {
         return new WidgetPricing(values, resident);
     }
 
-    private static double taxableMonthly(double kwh) {
+    static double taxableMonthly(double kwh) {
         if (kwh <= 150) return 0;
         if (kwh <= 220) return kwh - 150;
         if (kwh <= 370) return 2 * kwh - 370;
@@ -41,10 +41,17 @@ final class WidgetPricing {
     }
 
     double estimatedCost(double kwh, int months) {
+        return estimatedCost(kwh, months, months * taxableMonthly(kwh / months));
+    }
+
+    /** Use measured monthly consumption when available; do not average two uneven months. */
+    double estimatedCost(double kwh, int months, double residentTaxableKwh) {
         if (!Double.isFinite(kwh) || kwh < 0 || kwh >= 1_000_000
-                || (months != 1 && months != 2))
-            throw new IllegalArgumentException("Consumo o periodo non valido.");
-        double taxKwh = resident ? months * taxableMonthly(kwh / months) : kwh;
+                || (months != 1 && months != 2)
+                || !Double.isFinite(residentTaxableKwh)
+                || residentTaxableKwh < 0 || residentTaxableKwh > kwh + 0.0001)
+            throw new IllegalArgumentException("Consumo o imponibile non valido.");
+        double taxKwh = resident ? residentTaxableKwh : kwh;
         double preVat = kwh * (
                 values[0] + values[0] * values[1] / 100
                 + values[2] + values[3] + values[4] + values[5] + values[6] + values[7])

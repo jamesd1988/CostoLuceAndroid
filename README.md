@@ -101,3 +101,13 @@ Nota: la firma dell'APK di debug può cambiare a ogni run. Per sostituire una pr
 - Widget riprogettato: gradiente blu profondo, tipografia gerarchica, costo in evidenza, pill verde-acqua dei kWh, header dedicato, data e periodo, footer di stato separato e aggiornamento ↻ da 46 dp.
 - Il pulsante ↻ continua a funzionare in background tramite `PendingIntent.getBroadcast` + `JobScheduler`, senza aprire il calcolatore. Necessario account Enel configurato con credenziali salvate volontariamente e cifrate sul telefono; il connettore non ufficiale resta sperimentale.
 - Versione **5.8.0**, `versionCode 16`; APK: `CostoLuce_v5.8.0_AutoSyncWidget_S25.apk`.
+
+## Periodo di fatturazione in corso (v5.9.0)
+
+- Allineamento al ciclo Enel di due mesi **con inizio nei mesi pari**: giugno-luglio, agosto-settembre, ottobre-novembre, dicembre-gennaio, febbraio-marzo, aprile-maggio (coerente con l'ultima fattura giugno-luglio). In novembre il periodo selezionato è **1 ottobre – oggi**, e il widget lo presenta come **ottobre + novembre in corso**.
+- La modalità «Mese corrente» richiede solo i consumi dal giorno 1 del mese alla data odierna.
+- I giorni successivi a oggi non sono richiesti, proiettati né sommati; la lettura Enel può arrivare in ritardo. Il mese corrente è sempre indicato come **in corso** e il costo come **provvisorio**.
+- Se il bimestre appena iniziato include un mese futuro (es. dicembre-gennaio, a dicembre), il secondo mese è segnalato **«Non iniziato»**, con 0 consumi *non interpretati come una vera lettura*.
+- Il dato annuale non viene alterato: se lo snapshot precedente appartiene a settembre–ottobre, l'app lo riconosce come ciclo passato e non lo associa a ottobre–novembre. Il vecchio valore può restare visualizzato sul widget con la sua data finché non viene effettuata una lettura nuova.
+- Per utente residente l'accisa si calcola sui kWh effettivi **separatamente per ciascun mese** quando Enel fornisce il dettaglio; per consumi manuali senza suddivisione si mantiene una stima su ripartizione uniforme. Il prezzo delle altre componenti resta quello salvato nella calcolatrice, non viene aggiornato dai servizi tariffari.
+- Codice versione 17, versione **5.9.0**, APK `CostoLuce_v5.9.0_BimestreCorrente_S25.apk`.

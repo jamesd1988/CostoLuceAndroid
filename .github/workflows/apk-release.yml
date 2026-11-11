@@ -1,4 +1,4 @@
-name: Costo Luce - APK 5.8.0
+name: Costo Luce - APK 5.9.0
 
 on:
   push:
@@ -16,7 +16,7 @@ permissions:
 
 # Avoid competing releases after multiple rapid pushes.
 concurrency:
-  group: costoluce-apk-v5-8-0
+  group: costoluce-apk-v5-9-0
   cancel-in-progress: true
 
 jobs:
@@ -84,8 +84,8 @@ jobs:
           grep -q "android.permission.ACCESS_NETWORK_STATE" permissions-compiled.txt
           grep -q "android.permission.INTERNET" permissions-compiled.txt
           mkdir -p dist
-          cp "$APK" dist/CostoLuce_v5.8.0_AutoSyncWidget_S25.apk
-          sha256sum dist/CostoLuce_v5.8.0_AutoSyncWidget_S25.apk
+          cp "$APK" dist/CostoLuce_v5.9.0_BimestreCorrente_S25.apk
+          sha256sum dist/CostoLuce_v5.9.0_BimestreCorrente_S25.apk
 
       # Release directly after the build. No emulator or upload-artifact dependency.
       - name: Pubblica APK su GitHub Release
@@ -94,16 +94,16 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          TAG="v5.8.0"
-          APK="dist/CostoLuce_v5.8.0_AutoSyncWidget_S25.apk"
+          TAG="v5.9.0"
+          APK="dist/CostoLuce_v5.9.0_BimestreCorrente_S25.apk"
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" "$APK" --clobber
           else
             gh release create "$TAG" "$APK" \
               --target "$GITHUB_SHA" \
-              --title "Costo Luce v5.8.0 - Widget refresh fix" \
-              --notes "APK Android di test. Le tariffe e i consumi validi sono sincronizzati automaticamente nella Home widget; nuovo layout premium. Recupero Enel in background. Sono necessarie credenziali Enel salvate. Login Enel non verificato con account reale. APK debug: la firma puo cambiare." \
+              --title "Costo Luce v5.9.0 - Widget refresh fix" \
+              --notes "APK Android di test. Bimestre fatturazione corrente (ottobre-novembre) e mese parziale, con accisa basata sui kWh di ciascun mese. Widget Home auto sync. Sono necessarie credenziali Enel salvate. Login Enel non verificato con account reale. APK debug: la firma puo cambiare." \
               --prerelease
           fi
           echo "### APK pubblicato" >> "$GITHUB_STEP_SUMMARY"
-          echo "https://github.com/$GITHUB_REPOSITORY/releases/download/v5.8.0/CostoLuce_v5.8.0_AutoSyncWidget_S25.apk" >> "$GITHUB_STEP_SUMMARY"
+          echo "https://github.com/$GITHUB_REPOSITORY/releases/download/v5.9.0/CostoLuce_v5.9.0_BimestreCorrente_S25.apk" >> "$GITHUB_STEP_SUMMARY"

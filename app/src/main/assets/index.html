@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#f4f7fc" />
-  <title>Costo Luce 5.8.0</title>
+  <title>Costo Luce 5.9.0</title>
   <style>
     :root { --ink:#152844; --muted:#718198; --blue:#365cda; --blue2:#5472ed; --pale:#eaf0ff; --line:#e5eaf3; --bg:#f4f7fc; --green:#108266; }
     * { box-sizing:border-box; }
@@ -91,13 +91,13 @@
       <div id="calc-title" class="eyebrow">Consumo da calcolare</div>
       <div class="field-box"><input class="biginput" id="kwh" type="number" inputmode="decimal" min="0" step="0.1" value="479" aria-label="Energia consumata in kilowattora"><span class="unit">kWh</span></div>
       <div class="controlhead">Periodo di consumo</div>
-      <div class="seg" role="group" aria-label="Periodo"><button id="m1" type="button" onclick="setMonths(1)">1 mese</button><button id="m2" class="active" type="button" onclick="setMonths(2)">2 mesi</button></div>
+      <div class="seg" role="group" aria-label="Periodo"><button id="m1" type="button" onclick="setMonths(1)">Mese corrente</button><button id="m2" class="active" type="button" onclick="setMonths(2)">Bimestre fattura</button></div>
       <div class="switchrow"><div class="switchlabel"><b>Agevolazione accisa domestica</b><span>Residente con potenza fino a 3 kW</span></div><label class="switch"><input type="checkbox" id="resident" checked aria-label="Applica esenzione accisa per residenza"><span class="track"></span></label></div>
     </section>
 
     <section class="card importcard" aria-labelledby="import-title">
       <div id="import-title" class="eyebrow">Enel Energia · collegamento diretto (beta 5.2)</div>
-      <p class="step">Aggiorna automaticamente il <b>totale dei kWh</b> degli ultimi 1 o 2 mesi solari <b>completi</b>, tramite i servizi Enel Energia. La prima volta configura email, password, POD e numero utente. Puoi scegliere di salvarli cifrati sul telefono per il successivo aggiornamento con un tocco.</p>
+      <p class="step">Recupera i kWh del <b>bimestre di fatturazione</b> (es. ottobre–novembre) oppure del solo mese corrente. I consumi del mese in corso vengono conteggiati <b>solo fino alle letture già disponibili</b>. La prima volta configura Enel; puoi salvare le credenziali cifrate sul telefono per aggiornare dal widget.</p>
       <div class="buttonrow">
         <a class="mainbtn" href="costoluce://enel-sync?months=2" id="enelSync">↻ Aggiorna da Enel</a>
         <a class="mainbtn alt" href="costoluce://enel-config" id="enelConfig">Configura account</a>
@@ -182,6 +182,7 @@
   let widgetSyncTimer=null;
   let lastWidgetSyncUrl='';
   let lastEnelImport=false;
+  let lastEnelMonthly=[];
   let hasWidgetInput=false;
   let widgetSource='manuale';
   let widgetPeriod='';
@@ -196,11 +197,17 @@
   function italianMonth(year,month){
     return new Intl.DateTimeFormat('it-IT',{month:'long',year:'numeric'}).format(new Date(year,month-1,1));
   }
+  // The customer's billing cycle is even + odd months:
+  // June-July, Aug-Sep, Oct-Nov, Dec-Jan, Feb-Mar, Apr-May.
+  // One-month mode always shows the current calendar month.
   function selectedPeriod(count, today){
     const now=today||new Date();
+    let first=new Date(now.getFullYear(),now.getMonth(),1);
+    if(count===2 && (now.getMonth()+1)%2===1)
+      first=new Date(now.getFullYear(),now.getMonth()-1,1);
     const result=[];
-    for(let offset=count;offset>=1;offset--){
-      const d=new Date(now.getFullYear(),now.getMonth()-offset,1);
+    for(let offset=0;offset<count;offset++){
+      const d=new Date(first.getFullYear(),first.getMonth()+offset,1);
       result.push({year:d.getFullYear(),month:d.getMonth()+1});
     }
     return result;
@@ -211,15 +218,20 @@
       const line=document.createElement('div');line.className='month-entry';
       const left=document.createElement('div');left.className='month-name';
       left.textContent=italianMonth(item.year,item.month);
-      const right=document.createElement('div');right.className='month-value';right.textContent='—';
+      const right=document.createElement('div');right.className='month-value';
+      const now=new Date();
+      const isFuture=item.year>now.getFullYear()||
+        (item.year===now.getFullYear()&&item.month>now.getMonth()+1);
+      right.textContent=isFuture?'Non iniziato':'—';
       line.appendChild(left);line.appendChild(right);target.appendChild(line);
     });
     byId('monthlySum').style.display='none';
-    byId('monthlyWarning').textContent='Consumi non ancora recuperati da Enel. Nessun valore mensile disponibile.';
+    byId('monthlyWarning').textContent='Nessun dato acquisito per il periodo di fatturazione attuale. Il mese in corso sarà conteggiato solo fino alle letture disponibili.';
   }
   function updateRequestedPeriod(){
     const names=selectedPeriod(months).map(x=>italianMonth(x.year,x.month));
-    byId('requestedPeriod').textContent='Periodo richiesto: '+names.join(' + ')+'. Solo mesi solari conclusi; il mese corrente è escluso.';
+    byId('requestedPeriod').textContent=(months===2?'Bimestre di fatturazione: ':'Mese in corso: ')+
+      names.join(' + ')+'. Il mese corrente è incluso; sono usati solo i consumi già disponibili.';
   }
   function setMonths(v){
     if(v!==1&&v!==2)return;
@@ -232,6 +244,7 @@
     const legacy=byId('openSync');if(legacy)legacy.href='costoluce://sync?months='+v;
     if(changed && lastEnelImport){
       lastEnelImport=false;
+      lastEnelMonthly=[];
       hasWidgetInput=false;
       widgetSource='manuale';
       widgetPeriod='';
@@ -251,7 +264,12 @@
   function fillRates(){const dest=byId('rateFields');dest.innerHTML='';fields.forEach(([key,label])=>{const wrap=document.createElement('div');wrap.className='ratefield';const title=document.createElement('label');title.textContent=label;title.htmlFor='t_'+key;const inp=document.createElement('input');inp.id='t_'+key;inp.type='number';inp.inputMode='decimal';inp.min='0';inp.step='any';inp.value=String(Number(tariffs[key].toFixed(9)));inp.addEventListener('input',()=>{tariffs[key]=safeNumber(inp.value);save();recalc()});wrap.appendChild(title);wrap.appendChild(inp);dest.appendChild(wrap);});}
   function recalc(){
     const kwh=safeNumber(byId('kwh').value);const t=tariffs;
-    const taxKwh=byId('resident').checked?months*taxableMonthly(kwh/months):kwh;
+    const monthlyMeasured=lastEnelImport&&lastEnelMonthly.length===months&&
+      Math.abs(lastEnelMonthly.reduce((sum,m)=>sum+m.kwh,0)-kwh)<0.02;
+    const taxKwh=byId('resident').checked
+      ? (monthlyMeasured?lastEnelMonthly.reduce((sum,m)=>sum+taxableMonthly(m.kwh),0)
+         : months*taxableMonthly(kwh/months))
+      : kwh;
     const items=[
       ['Energia elettrica',kwh*t.energy,decimal(t.energy,6)+' €/kWh'],
       ['Perdite di rete',kwh*t.energy*t.losses/100,decimal(t.losses,1)+'% dei kWh, al prezzo energia'],
@@ -369,6 +387,8 @@
       hasWidgetInput=result.kwh>0;
       widgetSource='file';
       widgetPeriod='';
+      lastEnelImport=false;
+      lastEnelMonthly=[];
       status.className='importstatus ok';
       status.textContent='Importati '+decimal(result.kwh,3)+' kWh · '+result.origin+'. Verifica che il periodo del file coincida con quello selezionato (1 o 2 mesi).';
       recalc();
@@ -410,10 +430,18 @@
       status.textContent='La somma mensile non corrisponde al totale Enel: importazione annullata.';
       return;
     }
+    const expected=selectedPeriod(Number(data.months));
+    if(list.some((entry,index)=>entry.year!==expected[index].year||
+                                  entry.month!==expected[index].month)){
+      status.className='importstatus err';
+      status.textContent='I consumi appartengono a un vecchio ciclo di fatturazione. Aggiorna Enel.';
+      return;
+    }
     // If the user changed the period while the request was running, keep the returned period explicit.
     setMonths(Number(data.months));
     const target=byId('monthlyRows');target.innerHTML='';
-    let incomplete=0,missing=0;
+    let incomplete=0,missing=0,ongoing=0,upcoming=0;
+    const now=new Date();
     list.forEach(entry=>{
       const line=document.createElement('div');line.className='month-entry';
       const left=document.createElement('div');
@@ -421,14 +449,26 @@
       name.textContent=italianMonth(entry.year,entry.month);
       const detail=document.createElement('div');detail.className='month-detail';
       const right=document.createElement('div');right.className='month-value';
-      if(entry.days===0){
+      const isCurrent=entry.year===now.getFullYear()&&entry.month===now.getMonth()+1;
+      const isFuture=entry.future===true ||
+        entry.year>now.getFullYear()||
+        (entry.year===now.getFullYear()&&entry.month>now.getMonth()+1);
+      if(isFuture){
+        right.textContent='Non iniziato';
+        detail.textContent='Mese successivo del bimestre';
+        upcoming++;
+      }else if(entry.days===0){
         right.textContent='Non disponibile';
-        detail.textContent='Nessuna misura ricevuta nel mese';
+        detail.textContent=isCurrent?'In attesa delle prime misure del mese':'Nessuna misura ricevuta nel mese';
         missing++;
+        if(isCurrent)ongoing++;
       }else{
         right.textContent=decimal(entry.kwh,3)+' kWh';
-        detail.textContent=entry.days+'/'+entry.expectedDays+' giorni con misure'+
-          (entry.days<entry.expectedDays?' · Dati parziali':'');
+        const latest=Number.isInteger(entry.lastMeasuredDay)&&entry.lastMeasuredDay>0
+          ?' · ultima lettura '+entry.lastMeasuredDay+'/'+entry.month:'';
+        detail.textContent=entry.days+'/'+entry.expectedDays+' giorni con misure'+latest+
+          (isCurrent?' · Mese in corso':entry.days<entry.expectedDays?' · Dati incompleti':'');
+        if(isCurrent)ongoing++;
         if(entry.days<entry.expectedDays) incomplete++;
       }
       left.appendChild(name);left.appendChild(detail);
@@ -439,18 +479,21 @@
     const value=document.createElement('span');value.textContent=decimal(data.kwh,3)+' kWh';
     totalEl.appendChild(title);totalEl.appendChild(value);totalEl.style.display='flex';
     const notes=[];
+    if(ongoing)notes.push('Mese corrente in corso: stima non definitiva');
+    if(upcoming)notes.push('Il mese successivo non è ancora iniziato');
     if(missing)notes.push(missing+' mese/i senza misure');
     if(incomplete)notes.push(incomplete+' mese/i con giorni mancanti');
-    notes.push('La presenza di tutte le ore non è verificata.');
-    byId('monthlyWarning').textContent=(missing||incomplete?'Attenzione: ':'Verifica dati: ')+notes.join('. ');
+    notes.push('Le letture Enel possono essere pubblicate con ritardo');
+    byId('monthlyWarning').textContent=(ongoing||missing||incomplete||upcoming?'Attenzione: ':'Verifica dati: ')+notes.join('. ');
     byId('kwh').value=String(Math.round(data.kwh*1000)/1000);
     hasWidgetInput=data.kwh>0;
     widgetSource='enel';
     widgetPeriod=list.map(e=>italianMonth(e.year,e.month)).join(' + ');
     lastEnelImport=true;
+    lastEnelMonthly=list.map(e=>({...e}));
     recalc();
-    status.className='importstatus '+((missing||incomplete)?'err':'ok');
-    status.textContent=(missing||incomplete?'Dati parziali: ':'Dati ricevuti: ')+
+    status.className='importstatus '+((missing||incomplete||ongoing||upcoming)?'err':'ok');
+    status.textContent=(missing||incomplete||ongoing||upcoming?'Dati disponibili, bimestre in corso: ':'Dati ricevuti: ')+
       'riepilogo mensile disponibile qui sotto. Totale '+decimal(data.kwh,3)+' kWh.';
   };
   const enelMatch=/^#enel=(\d{1,8}(?:\.\d{1,3})?)&months=([12])&days=(\d{1,3})$/.exec(location.hash);
@@ -462,7 +505,7 @@
       widgetSource='enel';
       widgetPeriod=selectedPeriod(m).map(e=>italianMonth(e.year,e.month)).join(' + ');
       byId('importStatus').className='importstatus ok';
-      byId('importStatus').textContent='Acquisiti '+decimal(k,3)+' kWh direttamente da Enel Energia per '+m+' mesi solari completi. Giornate con misure: '+enelMatch[3]+'. Se mancano giorni, il totale potrebbe essere parziale.';
+      byId('importStatus').textContent='Acquisiti '+decimal(k,3)+' kWh da Enel per il periodo attivo. Giornate con misure: '+enelMatch[3]+'. Il mese corrente è ancora in corso.';
     }
   }
   // Il valore viene passato dalla WebView del Portale tramite URL privato.
@@ -475,6 +518,8 @@
       hasWidgetInput=true;
       widgetSource='portale';
       widgetPeriod='';
+      lastEnelMonthly=[];
+      lastEnelImport=false;
       byId('importStatus').className='importstatus ok';
       byId('importStatus').textContent='Acquisiti '+decimal(imported,3)+' kWh dalla pagina del Portale Consumi. Verifica l’intervallo selezionato sul portale e imposta qui il numero di mesi corrispondente.';
     }
@@ -486,6 +531,7 @@
     widgetSource='manuale';
     widgetPeriod='';
     lastEnelImport=false;
+    lastEnelMonthly=[];
     recalc();
   }
   // The calculator is the source of truth. After every recalc the settings
@@ -509,6 +555,8 @@
       '&euro='+encodeURIComponent(cost.toFixed(2))+
       '&source='+encodeURIComponent(widgetSource)+
       '&period='+encodeURIComponent(period)+
+      (widgetSource==='enel'&&lastEnelMonthly.length===months
+        ?'&monthly='+encodeURIComponent(JSON.stringify(lastEnelMonthly)):'')+
       '&'+common;
   }
   function scheduleWidgetSync(){
@@ -540,8 +588,18 @@
       byId('resident').checked=residence===null?Boolean(config.resident):residence==='1';
       recalc();
     }
-    if(snapshot && (!config||Number(snapshot.months)===months)){
+    const cycle=selectedPeriod(months);
+    const staleEnel=snapshot&&snapshot.source==='enel'&&(
+      (Array.isArray(snapshot.monthly)&&
+         (snapshot.monthly.length!==months||snapshot.monthly.some((e,i)=>
+           e.year!==cycle[i].year||e.month!==cycle[i].month)))||
+      (!Array.isArray(snapshot.monthly)&&snapshot.period&&
+        snapshot.period.toLowerCase()!==cycle.map(e=>italianMonth(e.year,e.month)).join(' + ').toLowerCase())
+    );
+    if(snapshot && !staleEnel && (!config||Number(snapshot.months)===months)){
       window.onWidgetRestored(snapshot);
+    } else if(staleEnel){
+      byId('importStatus').textContent='I consumi salvati appartengono al periodo precedente. Premere ↻ sul widget per acquisire il bimestre in corso.';
     } else if(snapshot && config && Number(snapshot.months)!==months) {
       // The previous usage remains visible on the widget with its actual
       // old period, but is not imported into the new period's calculator.
@@ -563,6 +621,7 @@
     widgetSource=['enel','file','portale','manuale'].includes(data.source)?data.source:'manuale';
     widgetPeriod=String(data.period||'');
     lastEnelImport=widgetSource==='enel';
+    lastEnelMonthly=[];
     recalc();
     byId('widgetStatus').textContent='Ultimo riepilogo salvato ripristinato dal widget. Il costo viene ricalcolato con le tariffe attualmente impostate.';
   };

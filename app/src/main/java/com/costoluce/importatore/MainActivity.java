@@ -107,7 +107,7 @@ public final class MainActivity extends Activity {
                 boolean resident = "1".equals(uri.getQueryParameter("resident"));
                 success = CostoLuceWidgetProvider.saveSnapshot(this, kwh, euro, months,
                         uri.getQueryParameter("source"), uri.getQueryParameter("period"),
-                        rates, resident);
+                        rates, resident, uri.getQueryParameter("monthly"));
             } catch (RuntimeException ignored) {
                 // Invalid input: do not store or log any arbitrary content.
             }
@@ -292,6 +292,8 @@ public final class MainActivity extends Activity {
                                 row.put("days",m.days);
                                 row.put("expectedDays",m.expectedDays);
                                 row.put("hourSamples",m.hourSamples);
+                                row.put("future",m.future);
+                                row.put("lastMeasuredDay",m.lastMeasuredDay);
                                 monthly.put(row);
                             }
                             detail.put("monthly",monthly);

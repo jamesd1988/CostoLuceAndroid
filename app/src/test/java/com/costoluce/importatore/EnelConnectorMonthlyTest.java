@@ -29,6 +29,21 @@ public final class EnelConnectorMonthlyTest {
         assertEquals(2,r.days);
     }
 
+    @Test public void currentNovemberIsPartialAndUsesTheLastPublishedMeasurement() throws Exception {
+        JSONObject json=payload(
+            "{\"date\":\"31102026\",\"binValues\":[{\"name\":\"H1\",\"value\":12.5}]},"+
+            "{\"date\":\"09112026\",\"binValues\":[{\"name\":\"H1\",\"value\":2.0}]}"
+        );
+        EnelConnector.Result r=EnelConnector.parseTotal(json,"01102026","11112026");
+        assertEquals(2,r.monthly.size());
+        assertEquals(10,r.monthly.get(0).month);
+        assertEquals(31,r.monthly.get(0).expectedDays);
+        assertEquals(11,r.monthly.get(1).month);
+        assertEquals(11,r.monthly.get(1).expectedDays);
+        assertEquals(9,r.monthly.get(1).lastMeasuredDay);
+        assertEquals(14.5,r.kwh,0.00001);
+    }
+
     @Test public void missingMonthIsNotSilentlyTreatedAsRealZero() throws Exception {
         JSONObject json=payload("{\"date\":\"01092026\",\"binValues\":[{\"name\":\"H1\",\"value\":3.75}]}");
         EnelConnector.Result r=EnelConnector.parseTotal(json,"01092026","31102026");

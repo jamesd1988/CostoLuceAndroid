@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="widget_description">Consumi e costo variabile in un widget sincronizzato automaticamente, aggiornamento Enel con un tocco</string>
+    <string name="widget_description">Costo stimato e kWh del bimestre di fatturazione corrente con aggiornamento Enel</string>
     <string name="widget_name">Costo Luce · Riepilogo</string>
 </resources>

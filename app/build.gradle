@@ -11,8 +11,8 @@ android {
         applicationId 'com.costoluce.cloud'
         minSdk 24
         targetSdk 35
-        versionCode 16
-        versionName '5.8.0-auto-widget-sync-ui'
+        versionCode 17
+        versionName '5.9.0-billing-cycle-current'
     }
 
     compileOptions {

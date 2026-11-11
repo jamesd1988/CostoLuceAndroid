@@ -68,9 +68,20 @@ public final class EnelConnector {
     static final class MonthUsage {
         final int year, month, days, expectedDays, hourSamples;
         final double kwh;
+        final boolean future;
+        final int lastMeasuredDay;
         MonthUsage(int year, int month, double kwh, int days, int expectedDays, int hourSamples) {
+            this(year, month, kwh, days, expectedDays, hourSamples, false, 0);
+        }
+        MonthUsage(int year, int month, double kwh, int days, int expectedDays, int hourSamples,
+                   boolean future) {
+            this(year, month, kwh, days, expectedDays, hourSamples, future, 0);
+        }
+        MonthUsage(int year, int month, double kwh, int days, int expectedDays, int hourSamples,
+                   boolean future, int lastMeasuredDay) {
             this.year=year; this.month=month; this.kwh=kwh;
             this.days=days; this.expectedDays=expectedDays; this.hourSamples=hourSamples;
+            this.future=future; this.lastMeasuredDay=lastMeasuredDay;
         }
     }
 
@@ -79,6 +90,7 @@ public final class EnelConnector {
         final Set<String> observedDays = new HashSet<>();
         double kwh;
         int hourSamples;
+        int lastMeasuredDay;
         MonthAccumulator(int year, int month, int expectedDays) {
             this.year=year; this.month=month; this.expectedDays=expectedDays;
         }
@@ -102,19 +114,11 @@ public final class EnelConnector {
         final long deadline = System.nanoTime() + MAX_SYNC_MS * 1_000_000L;
         credentials.validate();
         if (months != 1 && months != 2) throw new IOException("Periodo non supportato.");
-        // Last full calendar month(s): avoids presenting incomplete measures as a final total.
-        Calendar now = Calendar.getInstance(TimeZone.getTimeZone("Europe/Rome"), Locale.ITALY);
-        now.set(Calendar.DAY_OF_MONTH, 1);
-        now.add(Calendar.MONTH, -1);
-        Calendar end = (Calendar) now.clone();
-        end.set(Calendar.DAY_OF_MONTH, end.getActualMaximum(Calendar.DAY_OF_MONTH));
-        Calendar start = (Calendar) now.clone();
-        start.add(Calendar.MONTH, -(months - 1));
-        SimpleDateFormat date = new SimpleDateFormat("ddMMyyyy", Locale.ITALY);
-        date.setTimeZone(TimeZone.getTimeZone("Europe/Rome"));
-        date.setLenient(false);
-        String from = date.format(start.getTime());
-        String to = date.format(end.getTime());
+        // Respect the customer's bimonthly billing cycle. The active month
+        // is included only through today's date; no future kWh are inferred.
+        BillingPeriod.Window window = BillingPeriod.today(months);
+        String from = window.from;
+        String to = window.to;
 
         CookieManager jar = new CookieManager(null, CookiePolicy.ACCEPT_ORIGINAL_SERVER);
         // Session cookies stay in RAM. They are not saved to Android preferences.
@@ -139,8 +143,10 @@ public final class EnelConnector {
             report(progress, "Analisi del totale kWh ricevuto da Enel...");
             if (!response.trim().startsWith("{")) throw new IOException("Enel non ha restituito dati JSON. Controlla l'accesso e riprova.");
             Result parsed = parseTotal(new JSONObject(response), from, to);
+            java.util.List<MonthUsage> monthly = window.withFutureMonths(parsed.monthly);
             return new Result(parsed.kwh, from.substring(0,2)+"/"+from.substring(2,4)+"/"+from.substring(4)
-                +" – "+to.substring(0,2)+"/"+to.substring(2,4)+"/"+to.substring(4), parsed.days, parsed.monthly);
+                +" – "+to.substring(0,2)+"/"+to.substring(2,4)+"/"+to.substring(4),
+                parsed.days, monthly);
         } finally {
             jar.getCookieStore().removeAll();
             CookieHandler.setDefault(previous);
@@ -245,7 +251,11 @@ public final class EnelConnector {
                 month.hourSamples++;
                 points++;
             }
-            if(bins.length()>0) month.observedDays.add(stamp);
+            if(bins.length()>0) {
+                month.observedDays.add(stamp);
+                month.lastMeasuredDay = Math.max(month.lastMeasuredDay,
+                        dayCalendar.get(Calendar.DAY_OF_MONTH));
+            }
         }
         if(points==0) throw new IOException("Non risultano misure disponibili nel periodo selezionato.");
         if(!Double.isFinite(total)||total>1_000_000)
@@ -255,7 +265,8 @@ public final class EnelConnector {
         for(MonthAccumulator m : buckets.values()) {
             int n=m.observedDays.size();
             countedDays+=n;
-            monthly.add(new MonthUsage(m.year,m.month,m.kwh,n,m.expectedDays,m.hourSamples));
+            monthly.add(new MonthUsage(m.year,m.month,m.kwh,n,m.expectedDays,m.hourSamples,
+                    false,m.lastMeasuredDay));
         }
         return new Result(total,from+"-"+to,countedDays,monthly);
     }

@@ -74,8 +74,8 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
                 || result.monthly == null || result.monthly.size() != months)
             return false;
         WidgetPricing pricing = WidgetPricing.parse(config.ratesJson, config.resident);
-        double cost = pricing.estimatedCost(result.kwh, months);
         org.json.JSONArray rows = new org.json.JSONArray();
+        double monthlyTaxable = 0;
         boolean partial = false;
         StringBuilder period = new StringBuilder();
         String[] names = new java.text.DateFormatSymbols(IT).getMonths();
@@ -87,12 +87,20 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
             row.put("days", month.days);
             row.put("expectedDays", month.expectedDays);
             row.put("hourSamples", month.hourSamples);
+            row.put("future", month.future);
+            row.put("lastMeasuredDay", month.lastMeasuredDay);
             rows.put(row);
-            if (month.days < month.expectedDays || month.hourSamples < month.days * 23)
+            // The current billing month remains in progress even if every day
+            // elapsed so far has supplied measurements.
+            if (month.future || BillingPeriod.currentMonth(month)
+                    || month.days < month.expectedDays
+                    || month.hourSamples < month.days * 23)
                 partial = true;
+            monthlyTaxable += WidgetPricing.taxableMonthly(month.kwh);
             if (period.length() > 0) period.append(" + ");
             period.append(names[month.month - 1]).append(' ').append(month.year);
         }
+        double cost = pricing.estimatedCost(result.kwh, months, monthlyTaxable);
         return saveFetchedResult(context, result.kwh, cost, months,
                 period.toString(), rows.toString(), partial);
     }
@@ -121,8 +129,10 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
             try {
                 double lastKwh = Double.parseDouble(p.getString(KEY_KWH, ""));
                 if (Double.isFinite(lastKwh) && lastKwh > 0)
-                    edit.putString(KEY_EUR, Double.toString(pricing.estimatedCost(lastKwh, months)));
-            } catch (RuntimeException ignored) { }
+                    edit.putString(KEY_EUR, Double.toString(pricing.estimatedCost(lastKwh,
+                            months, taxableFromMonthly(p.getString(KEY_MONTHLY, null),
+                                    lastKwh, months)));
+            } catch (Exception ignored) { }
         }
 
         // Keep the previous fetch error/partial-data warning if measurements exist.
@@ -136,23 +146,49 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         return ok;
     }
 
+    private static double taxableFromMonthly(String monthlyJson, double total, int months)
+            throws JSONException {
+        if (monthlyJson == null || monthlyJson.isEmpty())
+            return months * WidgetPricing.taxableMonthly(total / months);
+        org.json.JSONArray entries = new org.json.JSONArray(monthlyJson);
+        if (entries.length() != months || monthlyJson.length() > 2500)
+            throw new JSONException("Numero mensilita non corretto.");
+        double sum = 0;
+        double taxable = 0;
+        for (int i = 0; i < entries.length(); i++) {
+            JSONObject row = entries.getJSONObject(i);
+            double value = row.getDouble("kwh");
+            int year = row.getInt("year");
+            int month = row.getInt("month");
+            if (!Double.isFinite(value) || value < 0 || value > 1_000_000 ||
+                    year < 2000 || year > 2100 || month < 1 || month > 12)
+                throw new JSONException("Dettaglio mensile non valido.");
+            sum += value;
+            taxable += WidgetPricing.taxableMonthly(value);
+        }
+        if (Math.abs(sum - total) > 0.02)
+            throw new JSONException("Somma mensile diversa dal consumo totale.");
+        return taxable;
+    }
+
     /** Called from a trusted, local WebView navigation, after the user taps Save. */
     static boolean saveSnapshot(Context context, double kwh, double euro, int months,
-                                String source, String period, String ratesJson, boolean resident) {
+                                String source, String period, String ratesJson, boolean resident,
+                                String monthlyJson) {
         if (!valid(kwh, euro, months, period)
                 || (!"manuale".equals(source) && !"file".equals(source)
                     && !"portale".equals(source) && !"enel".equals(source)))
             return false;
+        if (!"enel".equals(source)) monthlyJson = null;
         try {
             WidgetPricing pricing = WidgetPricing.parse(ratesJson, resident);
-            // Native and JavaScript calculations should agree to the cent.
-            if (Math.abs(pricing.estimatedCost(kwh, months) - euro) > 0.025) return false;
+            double taxable = taxableFromMonthly(monthlyJson, kwh, months);
+            if (Math.abs(pricing.estimatedCost(kwh, months, taxable) - euro) > 0.025)
+                return false;
         } catch (Exception ex) {
             return false;
         }
         SharedPreferences previous = prefs(context);
-        // Avoid claiming fresh Enel readings when the UI merely redraws
-        // or the user changes a tariff. Same measurement = same acquisition time.
         boolean sameMeasurement = previous.getLong(KEY_TIMESTAMP, 0L) > 0
                 && previous.getInt(KEY_MONTHS, 2) == months
                 && source.equals(previous.getString(KEY_SOURCE, ""))
@@ -176,8 +212,12 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
                 .putBoolean(KEY_RESIDENT, resident)
                 .putLong(KEY_TIMESTAMP, at)
                 .putBoolean(KEY_BUSY, false);
+        if (monthlyJson != null) edit.putString(KEY_MONTHLY, monthlyJson);
+        else if (!sameMeasurement) edit.remove(KEY_MONTHLY);
         if (!sameMeasurement) {
-            edit.remove(KEY_MONTHLY).putString(KEY_STATUS, "");
+            if ("enel".equals(source) && monthlyJson != null)
+                edit.putString(KEY_STATUS, "Ciclo in corso · consumi disponibili");
+            else edit.putString(KEY_STATUS, "");
         }
         boolean ok = edit.commit();
         if (ok) refresh(context);
@@ -204,7 +244,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
                 .putString(KEY_PERIOD, period)
                 .putString(KEY_MONTHLY, monthlyJson)
                 .putLong(KEY_TIMESTAMP, System.currentTimeMillis())
-                .putString(KEY_STATUS, partial ? "Attenzione: consumi parziali" : "")
+                .putString(KEY_STATUS, partial ? "Bimestre in corso · costo non definitivo" : "")
                 .putBoolean(KEY_BUSY, false)
                 .commit();
         if (ok) refresh(context);

@@ -26,6 +26,14 @@ public final class WidgetPricingTest {
         assertTrue(nonResident.estimatedCost(238, 1) > resident.estimatedCost(238, 1));
     }
 
+    @Test public void measuredMonthlyExciseIsNotAveragedAcrossTwoMonths() throws Exception {
+        WidgetPricing pricing = WidgetPricing.parse(rates(), true);
+        double taxable = WidgetPricing.taxableMonthly(400) + WidgetPricing.taxableMonthly(100);
+        double exact = pricing.estimatedCost(500, 2, taxable);
+        double oldAveraged = pricing.estimatedCost(500, 2);
+        assertTrue("October/November excise must use actual monthly kWh", exact > oldAveraged);
+    }
+
     @Test(expected=JSONException.class)
     public void missingRatesAreRejected() throws Exception {
         WidgetPricing.parse("{\"energy\":0.1}", true);
