@@ -38,7 +38,7 @@ assert.strictEqual(el('kwh').value,'125.75');
 assert.match(el('monthlyRows').children[0].children[0].children[0].textContent,/ottobre 2026/);
 assert.match(el('monthlyRows').children[0].children[1].textContent,/50,250 kWh/);
 assert.match(el('monthlyRows').children[1].children[1].textContent,/75,500 kWh/);
-assert.match(el('monthlyRows').children[1].children[0].children[1].textContent,/20\/11/);
+assert.match(el('monthlyRows').children[1].children[0].children[1].textContent,/10\/11/);
 assert.match(el('monthlyWarning').textContent,/Mese corrente in corso|mesi con giorni mancanti|mese\/i con giorni mancanti/);
 ctx.window.onEnelConsumption({months:2,kwh:50.25,monthly:[
  {year:2026,month:10,kwh:50.25,days:1,expectedDays:31,hourSamples:24},
