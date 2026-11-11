@@ -204,8 +204,10 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
     static void requestDataRefresh(Context context) {
         // Confirm every actual tap before checking any credentials or network state.
         String time = new SimpleDateFormat("HH:mm:ss", IT).format(new Date());
-        setRefreshStatus(context, "↻ Tasto premuto alle " + time, false);
         SharedPreferences p = prefs(context);
+        // Acknowledge immediately without clearing the existing busy flag.
+        p.edit().putString(KEY_STATUS, "↻ Tasto premuto alle " + time).apply();
+        refresh(context);
         long now = System.currentTimeMillis();
         long last = p.getLong(KEY_LAST_REQUEST, 0L);
         if (p.getBoolean(KEY_BUSY, false) && now - last < 110_000L) {
