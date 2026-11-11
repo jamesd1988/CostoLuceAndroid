@@ -30,6 +30,16 @@ assert.match(byId('widgetSave').href,/^costoluce:\/\/widget-save\?kwh=238\.000/)
 assert.match(byId('widgetSave').href,/source=manuale/);
 assert.match(byId('widgetSave').href,/months=2/);
 assert.match(byId('widgetSave').href,/euro=/);
+const savedUrl=new URL(byId('widgetSave').href);
+assert(savedUrl.searchParams.has('rates'),'Tariffe non incluse per il widget');
+assert(savedUrl.searchParams.has('resident'),'Residenza non inclusa per il widget');
+assert.strictEqual(JSON.parse(savedUrl.searchParams.get('rates')).energy,0.135);
+ctx.window.onWidgetRestored({kwh:123,months:1,source:'manuale',period:'ottobre 2026'});
+assert.strictEqual(byId('kwh').value,'123');
+assert.strictEqual(ctx.prepareWidgetSave(),true);
+assert.match(byId('widgetSave').href,/months=1/);
+ctx.setMonths(2);
+
 const amount=Number(new URL(byId('widgetSave').href).searchParams.get('euro'));
 assert(Number.isFinite(amount)&&amount>0);
 ctx.applyImportedText('Totale 240 kWh');

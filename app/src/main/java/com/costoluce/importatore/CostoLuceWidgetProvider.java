@@ -1,13 +1,19 @@
 package com.costoluce.importatore;
 
 import android.app.PendingIntent;
+import android.app.job.JobInfo;
+import android.app.job.JobScheduler;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.widget.RemoteViews;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
@@ -15,45 +21,170 @@ import java.util.Date;
 import java.util.Locale;
 
 /**
- * Home-screen widget: displays the last summary explicitly saved from Costo Luce.
- * Does not fetch data from Enel or show the example value as a real measurement.
+ * User-triggered widget refresh. The last verified values remain visible if Enel fails.
+ * Stores only kWh, estimates, tariffs and timestamps: no passwords or POD.
  */
 public final class CostoLuceWidgetProvider extends AppWidgetProvider {
-    private static final String PREFS = "costoluce_widget_snapshot_v1";
+    static final String PREFS = "costoluce_widget_snapshot_v1";
+    static final String ACTION_REFRESH = "com.costoluce.cloud.action.WIDGET_REFRESH";
+    private static final int REFRESH_JOB_ID = 225901;
     private static final String KEY_KWH = "kwh";
     private static final String KEY_EUR = "estimated_euro";
     private static final String KEY_MONTHS = "months";
     private static final String KEY_SOURCE = "source";
     private static final String KEY_PERIOD = "period";
     private static final String KEY_TIMESTAMP = "saved_at";
+    private static final String KEY_RATES = "rates_json";
+    private static final String KEY_RESIDENT = "resident";
+    private static final String KEY_MONTHLY = "monthly_json";
+    private static final String KEY_STATUS = "refresh_status";
+    private static final String KEY_BUSY = "refresh_busy";
+    private static final String KEY_LAST_REQUEST = "last_request_at";
     private static final Locale IT = Locale.ITALY;
 
-    /** Only a validated, user-requested snapshot is saved. No credentials or POD. */
-    static boolean saveSnapshot(Context context, double kwh, double euro, int months, String source, String period) {
-        if (!Double.isFinite(kwh) || kwh <= 0 || kwh >= 1_000_000
-                || !Double.isFinite(euro) || euro < 0 || euro > 10_000_000
-                || (months != 1 && months != 2)) return false;
-        if (!"manuale".equals(source) && !"file".equals(source)
-                && !"portale".equals(source) && !"enel".equals(source)) return false;
-        if (period == null || period.length() > 56 || period.indexOf('\n') >= 0
-                || period.indexOf('\r') >= 0) return false;
+    static final class WidgetConfiguration {
+        final String ratesJson;
+        final boolean resident;
+        final int months;
+        WidgetConfiguration(String ratesJson, boolean resident, int months) {
+            this.ratesJson = ratesJson;
+            this.resident = resident;
+            this.months = months;
+        }
+    }
 
-        boolean ok = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+    static SharedPreferences prefs(Context context) {
+        return context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+    }
+
+    static WidgetConfiguration readConfiguration(Context context) {
+        SharedPreferences p = prefs(context);
+        String rates = p.getString(KEY_RATES, null);
+        int months = p.getInt(KEY_MONTHS, 2);
+        if (rates == null || (months != 1 && months != 2)) return null;
+        return new WidgetConfiguration(rates, p.getBoolean(KEY_RESIDENT, false), months);
+    }
+
+    /** Shared by both in-app sync and the one-tap Home widget refresh. */
+    static boolean saveResultFromEnel(Context context, EnelConnector.Result result, int months)
+            throws JSONException {
+        WidgetConfiguration config = readConfiguration(context);
+        if (config == null || result == null || result.monthly == null || result.monthly.size() != months)
+            return false;
+        WidgetPricing pricing = WidgetPricing.parse(config.ratesJson, config.resident);
+        double cost = pricing.estimatedCost(result.kwh, months);
+        org.json.JSONArray rows = new org.json.JSONArray();
+        boolean partial = false;
+        StringBuilder period = new StringBuilder();
+        String[] names = new java.text.DateFormatSymbols(IT).getMonths();
+        for (EnelConnector.MonthUsage month : result.monthly) {
+            JSONObject row = new JSONObject();
+            row.put("year", month.year);
+            row.put("month", month.month);
+            row.put("kwh", month.kwh);
+            row.put("days", month.days);
+            row.put("expectedDays", month.expectedDays);
+            row.put("hourSamples", month.hourSamples);
+            rows.put(row);
+            if (month.days < month.expectedDays || month.hourSamples < month.days * 23)
+                partial = true;
+            if (period.length() > 0) period.append(" + ");
+            period.append(names[month.month - 1]).append(' ').append(month.year);
+        }
+        return saveFetchedResult(context, result.kwh, cost, months,
+                period.toString(), rows.toString(), partial);
+    }
+
+    /** Called from a trusted, local WebView navigation, after the user taps Save. */
+    static boolean saveSnapshot(Context context, double kwh, double euro, int months,
+                                String source, String period, String ratesJson, boolean resident) {
+        if (!valid(kwh, euro, months, period)
+                || (!"manuale".equals(source) && !"file".equals(source)
+                    && !"portale".equals(source) && !"enel".equals(source)))
+            return false;
+        try {
+            WidgetPricing pricing = WidgetPricing.parse(ratesJson, resident);
+            // Native and JavaScript calculations should agree to the cent.
+            if (Math.abs(pricing.estimatedCost(kwh, months) - euro) > 0.025) return false;
+        } catch (Exception ex) {
+            return false;
+        }
+        boolean ok = prefs(context).edit()
                 .putString(KEY_KWH, Double.toString(kwh))
                 .putString(KEY_EUR, Double.toString(euro))
                 .putInt(KEY_MONTHS, months)
                 .putString(KEY_SOURCE, source)
                 .putString(KEY_PERIOD, period)
+                .putString(KEY_RATES, ratesJson)
+                .putBoolean(KEY_RESIDENT, resident)
+                .remove(KEY_MONTHLY)
                 .putLong(KEY_TIMESTAMP, System.currentTimeMillis())
+                .putString(KEY_STATUS, "")
+                .putBoolean(KEY_BUSY, false)
                 .commit();
         if (ok) refresh(context);
         return ok;
     }
 
+    /** Called only after an actual successful background consumption fetch. */
+    static boolean saveFetchedResult(Context context, double kwh, double euro, int months,
+                                     String period, String monthlyJson, boolean partial) {
+        if (!valid(kwh, euro, months, period) || monthlyJson == null
+                || monthlyJson.length() > 2400)
+            return false;
+        // Never write a synthetic zero or a response without the expected months.
+        try {
+            org.json.JSONArray monthsData = new org.json.JSONArray(monthlyJson);
+            if (monthsData.length() != months) return false;
+        } catch (JSONException ex) { return false; }
+        boolean ok = prefs(context).edit()
+                .putString(KEY_KWH, Double.toString(kwh))
+                .putString(KEY_EUR, Double.toString(euro))
+                .putInt(KEY_MONTHS, months)
+                .putString(KEY_SOURCE, "enel")
+                .putString(KEY_PERIOD, period)
+                .putString(KEY_MONTHLY, monthlyJson)
+                .putLong(KEY_TIMESTAMP, System.currentTimeMillis())
+                .putString(KEY_STATUS, partial ? "Attenzione: consumi parziali" : "")
+                .putBoolean(KEY_BUSY, false)
+                .commit();
+        if (ok) refresh(context);
+        return ok;
+    }
+
+    static JSONObject getLatestSnapshot(Context context) {
+        SharedPreferences p = prefs(context);
+        if (p.getLong(KEY_TIMESTAMP, 0L) <= 0) return null;
+        try {
+            JSONObject data = new JSONObject();
+            data.put("kwh", Double.parseDouble(p.getString(KEY_KWH, "")));
+            data.put("euro", Double.parseDouble(p.getString(KEY_EUR, "")));
+            data.put("months", p.getInt(KEY_MONTHS, 2));
+            data.put("source", p.getString(KEY_SOURCE, "manuale"));
+            data.put("period", p.getString(KEY_PERIOD, ""));
+            String monthly = p.getString(KEY_MONTHLY, "");
+            if (monthly != null && !monthly.isEmpty())
+                data.put("monthly", new org.json.JSONArray(monthly));
+            return data;
+        } catch (Exception ignored) { return null; }
+    }
+
+    private static boolean valid(double kwh, double euro, int months, String period) {
+        return Double.isFinite(kwh) && kwh > 0 && kwh < 1_000_000
+                && Double.isFinite(euro) && euro >= 0 && euro <= 10_000_000
+                && (months == 1 || months == 2)
+                && period != null && period.length() <= 90
+                && period.indexOf('\n') < 0 && period.indexOf('\r') < 0;
+    }
+
+    static void setRefreshStatus(Context context, String status, boolean busy) {
+        prefs(context).edit().putString(KEY_STATUS, status).putBoolean(KEY_BUSY, busy).apply();
+        refresh(context);
+    }
+
     static void refresh(Context context) {
         AppWidgetManager manager = AppWidgetManager.getInstance(context);
-        ComponentName provider = new ComponentName(context, CostoLuceWidgetProvider.class);
-        int[] ids = manager.getAppWidgetIds(provider);
+        int[] ids = manager.getAppWidgetIds(new ComponentName(context, CostoLuceWidgetProvider.class));
         for (int id : ids) render(context, manager, id);
     }
 
@@ -62,27 +193,81 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         for (int id : ids) render(context, manager, id);
     }
 
+    @Override public void onReceive(Context context, Intent intent) {
+        if (intent != null && ACTION_REFRESH.equals(intent.getAction())) {
+            requestDataRefresh(context);
+            return;
+        }
+        super.onReceive(context, intent);
+    }
+
+    private void requestDataRefresh(Context context) {
+        SharedPreferences p = prefs(context);
+        long now = System.currentTimeMillis();
+        long last = p.getLong(KEY_LAST_REQUEST, 0L);
+        if (p.getBoolean(KEY_BUSY, false) && now - last < 110_000L) {
+            setRefreshStatus(context, "Aggiornamento gia in corso...", true);
+            return;
+        }
+        if (last > 0 && now >= last && now - last < 20_000L) {
+            setRefreshStatus(context, "Riprova tra qualche secondo.", false);
+            return;
+        }
+        if (readConfiguration(context) == null) {
+            setRefreshStatus(context, "Apri l'app e salva tariffe e consumi.", false);
+            return;
+        }
+        if (!new EnelCredentialStore(context).hasSaved()) {
+            setRefreshStatus(context, "Per nuovi kWh serve Enel collegato nell'app.", false);
+            return;
+        }
+        p.edit().putLong(KEY_LAST_REQUEST, now).commit();
+        setRefreshStatus(context, "Aggiornamento Enel richiesto...", true);
+        JobScheduler scheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
+        if (scheduler == null) {
+            setRefreshStatus(context, "Aggiornamento Android non disponibile.", false);
+            return;
+        }
+        try {
+            JobInfo.Builder builder = new JobInfo.Builder(REFRESH_JOB_ID,
+                    new ComponentName(context, WidgetUpdateJobService.class))
+                    .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY);
+            if (Build.VERSION.SDK_INT >= 31) builder.setExpedited(true);
+            int response = scheduler.schedule(builder.build());
+            if (response != JobScheduler.RESULT_SUCCESS && Build.VERSION.SDK_INT >= 31) {
+                // If expedited quota was exhausted, queue a regular connected-network job.
+                response = scheduler.schedule(new JobInfo.Builder(REFRESH_JOB_ID,
+                        new ComponentName(context, WidgetUpdateJobService.class))
+                        .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY).build());
+            }
+            if (response != JobScheduler.RESULT_SUCCESS)
+                setRefreshStatus(context, "Avvio aggiornamento non riuscito.", false);
+        } catch (RuntimeException e) {
+            setRefreshStatus(context, "Impossibile avviare la sincronizzazione.", false);
+        }
+    }
+
     private static void render(Context context, AppWidgetManager manager, int widgetId) {
         RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.costoluce_widget);
-        SharedPreferences prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
-        long savedAt = prefs.getLong(KEY_TIMESTAMP, 0L);
+        SharedPreferences p = prefs(context);
+        long savedAt = p.getLong(KEY_TIMESTAMP, 0L);
         if (savedAt <= 0L) {
             views.setTextViewText(R.id.widget_euro, "—");
             views.setTextViewText(R.id.widget_kwh, "Nessun dato");
             views.setTextViewText(R.id.widget_period, "Apri l'app e salva i consumi");
-            views.setTextViewText(R.id.widget_updated, "Non ancora aggiornato");
+            views.setTextViewText(R.id.widget_updated, "Nessun aggiornamento salvato");
         } else {
             try {
-                double kwh = Double.parseDouble(prefs.getString(KEY_KWH, ""));
-                double euro = Double.parseDouble(prefs.getString(KEY_EUR, ""));
+                double kwh = Double.parseDouble(p.getString(KEY_KWH, ""));
+                double euro = Double.parseDouble(p.getString(KEY_EUR, ""));
                 if (!Double.isFinite(kwh) || !Double.isFinite(euro) || kwh <= 0 || euro < 0)
-                    throw new NumberFormatException("Invalid stored summary");
+                    throw new NumberFormatException();
                 NumberFormat money = NumberFormat.getCurrencyInstance(IT);
                 NumberFormat consumption = NumberFormat.getNumberInstance(IT);
                 consumption.setMaximumFractionDigits(1);
                 consumption.setMinimumFractionDigits(0);
-                String period = prefs.getString(KEY_PERIOD, "");
-                String source = prefs.getString(KEY_SOURCE, "manuale");
+                String period = p.getString(KEY_PERIOD, "");
+                String source = p.getString(KEY_SOURCE, "manuale");
                 String sourceText;
                 switch (source) {
                     case "enel": sourceText = "Enel"; break;
@@ -91,12 +276,12 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
                     default: sourceText = "Manuale"; break;
                 }
                 if (period == null || period.trim().isEmpty())
-                    period = prefs.getInt(KEY_MONTHS, 2) + " mesi selezionati";
+                    period = p.getInt(KEY_MONTHS, 2) + " mesi selezionati";
                 views.setTextViewText(R.id.widget_euro, money.format(euro));
                 views.setTextViewText(R.id.widget_kwh, consumption.format(kwh) + " kWh");
                 views.setTextViewText(R.id.widget_period, period);
                 SimpleDateFormat date = new SimpleDateFormat("dd/MM 'alle' HH:mm", IT);
-                views.setTextViewText(R.id.widget_updated, sourceText + " · salvato " + date.format(new Date(savedAt)));
+                views.setTextViewText(R.id.widget_updated, sourceText + " · dati del " + date.format(new Date(savedAt)));
             } catch (RuntimeException ignored) {
                 views.setTextViewText(R.id.widget_euro, "—");
                 views.setTextViewText(R.id.widget_kwh, "Dato non valido");
@@ -104,14 +289,23 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
                 views.setTextViewText(R.id.widget_updated, "Dati da riconfigurare");
             }
         }
+        String status = p.getString(KEY_STATUS, "");
+        views.setTextViewText(R.id.widget_status,
+                status == null || status.isEmpty() ? "↻  Aggiorna consumi e costo" : status);
+        views.setTextViewText(R.id.widget_refresh,
+                p.getBoolean(KEY_BUSY, false) ? "…" : "↻");
 
         Intent open = new Intent(context, MainActivity.class);
-        open.setAction(Intent.ACTION_MAIN);
-        open.addCategory(Intent.CATEGORY_LAUNCHER);
+        open.setAction("com.costoluce.cloud.action.OPEN_WIDGET");
         open.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        PendingIntent pending = PendingIntent.getActivity(
-                context, 0, open, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-        views.setOnClickPendingIntent(R.id.widget_root, pending);
+        views.setOnClickPendingIntent(R.id.widget_root,
+                PendingIntent.getActivity(context, 0, open,
+                        PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
+        Intent refreshIntent = new Intent(context, CostoLuceWidgetProvider.class);
+        refreshIntent.setAction(ACTION_REFRESH);
+        views.setOnClickPendingIntent(R.id.widget_refresh,
+                PendingIntent.getBroadcast(context, 1002, refreshIntent,
+                        PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
         manager.updateAppWidget(widgetId, views);
     }
 }

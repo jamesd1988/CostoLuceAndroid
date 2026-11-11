@@ -1,4 +1,4 @@
-# Costo Luce 5.3.0 — widget Home Android (Enel beta)
+# Costo Luce 5.4.0 — aggiornamento consumi e costo dal widget (Enel beta)
 
 App Android per stimare i soli costi variabili dai kWh; Android Gradle Plugin e GitHub Actions.
 
@@ -55,3 +55,14 @@ Nota: la firma dell'APK di debug può cambiare a ogni run. Per sostituire una pr
 - Per aggiungerlo su Samsung: pressione prolungata schermata Home → Widget → Costo Luce 5.3.0.
 - Versione Android `5.3.0-home-widget`, versionCode 11, file APK `CostoLuce_v5.3.0_WidgetHome_S25.apk`.
 - Attenzione: prezzo stimato basato sulle tariffe attualmente configurate nell'app, non fattura definitiva.
+
+## Widget aggiornabile v5.4.0
+
+- Nuovo pulsante **↻** direttamente sul widget Android. L'interazione pianifica un `JobScheduler` Android con rete richiesta, quindi può eseguirsi senza aprire l'app (a seconda delle restrizioni di Android sulla batteria).
+- Il widget usa le credenziali Enel solo quando l'utente le ha già salvate cifrate con AndroidKeyStore nelle impostazioni dell'app. **Non** le memorizza nel widget e non le invia a terzi.
+- Recupera gli ultimi 1 o 2 mesi solari chiusi (secondo l'ultimo periodo configurato), ricalcola **kWh + costo stimato** usando i dieci corrispettivi e il criterio accisa salvati al momento di **Aggiorna widget Home**.
+- Mostra stato richiesta, errore o dati parziali e mantiene il precedente riepilogo in caso di mancata connessione; non spaccia mai un vecchio valore per aggiornato.
+- I valori aggiornati sul widget possono essere ripristinati nell'app quando viene riaperta. Anche un aggiornamento Enel dall'app aggiorna il widget se lo stesso era configurato.
+- Per consumi manuali/CSV senza login Enel salvato, il pulsante informa che non può acquisire automaticamente nuovi kWh. Non tenta di inventarli.
+- **Versione 5.4.0, versionCode 12**, APK `CostoLuce_v5.4.0_WidgetRefresh_S25.apk`.
+- Non è un servizio real-time, non è una sincronizzazione periodica; la possibilità effettiva di login Enel rimane **beta non verificata** su account reali.

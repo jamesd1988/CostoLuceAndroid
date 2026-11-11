@@ -35,6 +35,10 @@ public final class PortalRouter extends WebViewClient {
 
     @Override public void onPageFinished(WebView view, String url) {
         super.onPageFinished(view, url);
+        if (url != null && url.startsWith("file:///android_asset/index.html")) {
+            host.restoreWidgetSnapshot();
+            return;
+        }
         if (!isOfficial(url)) return;
         try (InputStream input = host.getAssets().open("portal_capture.js")) {
             ByteArrayOutputStream out = new ByteArrayOutputStream();

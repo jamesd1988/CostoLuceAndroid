@@ -78,8 +78,11 @@ public final class MainActivity extends Activity {
                 double kwh = Double.parseDouble(uri.getQueryParameter("kwh"));
                 double euro = Double.parseDouble(uri.getQueryParameter("euro"));
                 int months = Integer.parseInt(uri.getQueryParameter("months"));
+                String rates = uri.getQueryParameter("rates");
+                boolean resident = "1".equals(uri.getQueryParameter("resident"));
                 success = CostoLuceWidgetProvider.saveSnapshot(this, kwh, euro, months,
-                        uri.getQueryParameter("source"), uri.getQueryParameter("period"));
+                        uri.getQueryParameter("source"), uri.getQueryParameter("period"),
+                        rates, resident);
             } catch (RuntimeException ignored) {
                 // Invalid input: do not store or log any arbitrary content.
             }
@@ -118,6 +121,21 @@ public final class MainActivity extends Activity {
             return true;
         }
         return false;
+    }
+
+    /** Restore the latest validated widget value when the user opens the app. */
+    void restoreWidgetSnapshot() {
+        if (web == null || web.getUrl() == null || !web.getUrl().startsWith(HOME)) return;
+        JSONObject snapshot = CostoLuceWidgetProvider.getLatestSnapshot(this);
+        if (snapshot != null)
+            web.evaluateJavascript("window.onWidgetRestored(" + snapshot.toString() + ");", null);
+    }
+
+    @Override protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        if (intent != null && "com.costoluce.cloud.action.OPEN_WIDGET".equals(intent.getAction())) {
+            restoreWidgetSnapshot();
+        }
     }
 
     private void enelStatus(String message, boolean error) {
@@ -220,6 +238,12 @@ public final class MainActivity extends Activity {
                     });
                 });
                 if(persistIfValid) new EnelCredentialStore(this).save(credentials);
+                // Keep the Home widget and the in-app consumption summary in sync
+                // when the user already configured the widget with tariff data.
+                if (CostoLuceWidgetProvider.readConfiguration(this) != null) {
+                    try { CostoLuceWidgetProvider.saveResultFromEnel(this, result, selectedMonths); }
+                    catch (Exception ignored) { /* The in-app result must still be shown. */ }
+                }
                 if(!isFinishing()) runOnUiThread(() -> {
                     if (enelRequestId != requestId) return;
                     enelBusy=false;
