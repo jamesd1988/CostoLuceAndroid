@@ -37,6 +37,15 @@ public final class EnelConnector {
     private static final String SAML = "https://www.enel.it/bin/samlauth";
     private static final String AGGREGATE = "https://www.enel.it/bin/areaclienti/auth/aggregateConsumption";
     private static final int MAX_RESPONSE = 2_000_000;
+    private static final long MAX_SYNC_MS = 90000;
+    // Short per-connection limits plus one aggregate deadline: no indefinite spinner.
+    interface Progress { void step(String phase); }
+    private static void report(Progress p, String phase) { if (p != null) p.step(phase); }
+    private static long remaining(long deadline) throws IOException {
+        long ms = (deadline - System.nanoTime()) / 1_000_000L;
+        if (ms <= 0) throw new IOException("Tempo massimo di collegamento Enel superato (90 secondi). Verifica rete o autenticazione.");
+        return ms;
+    }
     private EnelConnector() { }
 
     static final class Credentials {
@@ -63,6 +72,11 @@ public final class EnelConnector {
     }
 
     static Result fetch(Credentials credentials, int months) throws IOException, JSONException {
+        return fetch(credentials, months, null);
+    }
+
+    static Result fetch(Credentials credentials, int months, Progress progress) throws IOException, JSONException {
+        final long deadline = System.nanoTime() + MAX_SYNC_MS * 1_000_000L;
         credentials.validate();
         if (months != 1 && months != 2) throw new IOException("Periodo non supportato.");
         // Last full calendar month(s): avoids presenting incomplete measures as a final total.
@@ -84,17 +98,22 @@ public final class EnelConnector {
         CookieHandler previous = CookieHandler.getDefault();
         try {
             CookieHandler.setDefault(jar);
-            String loginHtml = request(LOGIN, null);
+            report(progress, "Fase 1/4: apertura pagina di accesso Enel...");
+            String loginHtml = request(LOGIN, null, deadline);
             String key = hiddenValue(loginHtml, "sessionDataKey");
             if (key == null) throw new IOException("La pagina di accesso Enel è cambiata (sessionDataKey assente). La connessione automatica non è disponibile.");
+            report(progress, "Fase 2/4: verifica accesso Enel...");
             String authHtml = request(AUTH, "username="+encode(credentials.username)+"&password="+encode(credentials.password)
-                    +"&sessionDataKey="+encode(key)+"&tocommonauth=true");
+                    +"&sessionDataKey="+encode(key)+"&tocommonauth=true", deadline);
             String saml = hiddenValue(authHtml, "SAMLResponse");
             if (saml == null) throw new IOException("Autenticazione Enel non completata. Può essere richiesto un passaggio aggiuntivo o il login può essere cambiato.");
-            request(SAML, "SAMLResponse="+encode(saml));
+            report(progress, "Fase 3/4: conferma sessione Enel...");
+            request(SAML, "SAMLResponse="+encode(saml), deadline);
             String url = AGGREGATE + "?pod=" + encode(credentials.pod) + "&userNumber=" + encode(credentials.userNumber)
                     + "&validityFrom=" + from + "&validityTo=" + to;
-            String response = request(url, null);
+            report(progress, "Fase 4/4: recupero dei consumi elettrici...");
+            String response = request(url, null, deadline);
+            report(progress, "Analisi del totale kWh ricevuto da Enel...");
             if (!response.trim().startsWith("{")) throw new IOException("Enel non ha restituito dati JSON. Controlla l'accesso e riprova.");
             Result parsed = parseTotal(new JSONObject(response), from, to);
             return new Result(parsed.kwh, from.substring(0,2)+"/"+from.substring(2,4)+"/"+from.substring(4)
@@ -103,6 +122,16 @@ public final class EnelConnector {
             jar.getCookieStore().removeAll();
             CookieHandler.setDefault(previous);
         }
+    }
+
+    /** Public unauthenticated check: no username, password, POD, token or personal data transmitted. */
+    static String checkPublicLogin() throws IOException {
+        long deadline = System.nanoTime() + 25000L * 1000000L;
+        String html = request(LOGIN, null, deadline);
+        String key = hiddenValue(html, "sessionDataKey");
+        if (key == null || key.isEmpty())
+            return "Enel raggiungibile, ma la pagina di accesso non espone il parametro SAML atteso (sessionDataKey). Il metodo EnelGrid potrebbe non essere piu compatibile.";
+        return "Pagina Enel raggiungibile e parametro SAML iniziale presente. Per verificare la sessione serve l'accesso dal dispositivo.";
     }
 
     static Result parseTotal(JSONObject root, String from, String to) throws JSONException, IOException {
@@ -179,15 +208,16 @@ public final class EnelConnector {
         return "https".equalsIgnoreCase(url.getProtocol()) && (
             host.equals("www.enel.it") || host.equals("accounts.enel.com"));
     }
-    private static String request(String url, String data) throws IOException {
+    private static String request(String url, String data, long deadline) throws IOException {
         URL target = new URL(url);
         for(int redirects=0; redirects<6; redirects++) {
+            long wait = remaining(deadline);
             if(!allowed(target)) throw new IOException("Reindirizzamento a un dominio inatteso: accesso interrotto per sicurezza.");
             HttpURLConnection con=(HttpURLConnection)target.openConnection();
             try {
                 con.setInstanceFollowRedirects(false);
-                con.setConnectTimeout(12000);
-                con.setReadTimeout(18000);
+                con.setConnectTimeout((int)Math.min(8000L, wait));
+                con.setReadTimeout((int)Math.min(12000L, wait));
                 con.setRequestProperty("Accept", "text/html,application/json,*/*");
                 con.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 15) AppleWebKit/537.36 Chrome/131.0 Mobile Safari/537.36");
                 if(data != null) {
@@ -199,6 +229,7 @@ public final class EnelConnector {
                     try(OutputStream out=con.getOutputStream()){out.write(body);}
                 }
                 int code=con.getResponseCode();
+                remaining(deadline);
                 if(code==301||code==302||code==303||code==307||code==308) {
                     String location=con.getHeaderField("Location");
                     if(location==null) throw new IOException("Reindirizzamento Enel incompleto.");
@@ -211,7 +242,11 @@ public final class EnelConnector {
                 if(code<200||code>=300)throw new IOException("Servizio Enel non disponibile (HTTP "+code+").");
                 try(InputStream in=con.getInputStream(); ByteArrayOutputStream buf=new ByteArrayOutputStream()) {
                     byte[] chunk=new byte[8192];int n;
-                    while((n=in.read(chunk))!=-1){if(buf.size()+n>MAX_RESPONSE)throw new IOException("Risposta Enel troppo grande.");buf.write(chunk,0,n);}
+                    while((n=in.read(chunk))!=-1){
+                        remaining(deadline);
+                        if(buf.size()+n>MAX_RESPONSE)throw new IOException("Risposta Enel troppo grande.");
+                        buf.write(chunk,0,n);
+                    }
                     return buf.toString("UTF-8");
                 }
             } finally { con.disconnect(); }

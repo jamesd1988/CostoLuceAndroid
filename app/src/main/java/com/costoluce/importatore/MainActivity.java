@@ -10,6 +10,8 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import android.os.Handler;
+import android.os.Looper;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.net.Uri;
@@ -33,6 +35,8 @@ public final class MainActivity extends Activity {
     private int preferredMonths = 2;
     private final ExecutorService background = Executors.newSingleThreadExecutor();
     private boolean enelBusy = false;
+    private final Handler uiHandler = new Handler(Looper.getMainLooper());
+    private int enelRequestId = 0;
 
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -70,6 +74,7 @@ public final class MainActivity extends Activity {
         }
         if ("enel-config".equals(action)) { showEnelConfiguration(); return true; }
         if ("enel-clear".equals(action)) { confirmRemoveCredentials(); return true; }
+        if ("enel-check".equals(action)) { checkEnelPublic(); return true; }
         if ("sync".equals(action)) {
             preferredMonths = "1".equals(uri.getQueryParameter("months")) ? 1 : 2;
             openPortalInsideApp(); return true;
@@ -108,6 +113,20 @@ public final class MainActivity extends Activity {
             enelStatus("Credenziali cifrate non più leggibili. Configura nuovamente Enel Energia.", true);
         }
         showEnelConfiguration();
+    }
+
+    private void checkEnelPublic() {
+        if (enelBusy) { enelStatus("Altra operazione in corso. Riapri l'app se non risponde.", true); return; }
+        enelBusy=true;
+        enelStatus("Verifica della sola pagina pubblica Enel, senza usare alcuna credenziale...", false);
+        background.execute(() -> {
+            String result; boolean error;
+            try { result=EnelConnector.checkPublicLogin();error=result.contains("non espone"); }
+            catch (IOException e) { result="Verifica rete Enel fallita: " + e.getClass().getSimpleName() + ". " + e.getMessage(); error=true; }
+            catch (RuntimeException e) { result="Verifica pubblica fallita: " + e.getClass().getSimpleName(); error=true; }
+            final String message=result; final boolean isError=error;
+            if(!isFinishing()) runOnUiThread(() -> { enelBusy=false; enelStatus(message,isError); });
+        });
     }
 
     private EditText formField(LinearLayout parent, String hint, int inputType) {
@@ -162,13 +181,25 @@ public final class MainActivity extends Activity {
     private void downloadEnel(EnelConnector.Credentials credentials, boolean persistIfValid) {
         if (enelBusy) return;
         enelBusy=true;
-        enelStatus("Collegamento sicuro a Enel Energia in corso...", false);
+        final int requestId = ++enelRequestId;
+        enelStatus("Inizio collegamento Enel. Durata massima prevista: circa 90 secondi...", false);
         final int selectedMonths=preferredMonths;
+        // This UI watchdog guarantees visible feedback even when an HTTP library blocks.
+        uiHandler.postDelayed(() -> {
+            if(enelBusy && enelRequestId == requestId && !isFinishing()) {
+                enelStatus("Collegamento Enel non completato entro 100 secondi. La richiesta potrebbe essere bloccata dal login o dalla rete. Chiudi e riapri l'app prima di riprovare.", true);
+            }
+        }, 100000);
         background.execute(() -> {
             try {
-                EnelConnector.Result result=EnelConnector.fetch(credentials,selectedMonths);
+                EnelConnector.Result result=EnelConnector.fetch(credentials,selectedMonths, phase -> {
+                    if (!isFinishing()) runOnUiThread(() -> {
+                        if (enelRequestId == requestId && enelBusy) enelStatus(phase, false);
+                    });
+                });
                 if(persistIfValid) new EnelCredentialStore(this).save(credentials);
                 if(!isFinishing()) runOnUiThread(() -> {
+                    if (enelRequestId != requestId) return;
                     enelBusy=false;
                     if(web != null) web.loadUrl(HOME+"#enel="+String.format(java.util.Locale.ROOT,"%.3f",result.kwh)+"&months="+selectedMonths+"&days="+result.days);
                 });
@@ -176,7 +207,11 @@ public final class MainActivity extends Activity {
                 // Do not print credentials, HTTP bodies, tokens or authenticated URLs.
                 String msg=error instanceof java.io.IOException ? error.getMessage()
                         : "Dati Enel non disponibili o formato inatteso. La sincronizzazione automatica non è confermata.";
-                if(!isFinishing()) runOnUiThread(() -> { enelBusy=false; enelStatus(msg,true); });
+                if(!isFinishing()) runOnUiThread(() -> {
+                    if (enelRequestId != requestId) return;
+                    enelBusy=false;
+                    enelStatus("Collegamento interrotto: " + msg, true);
+                });
             }
         });
     }

@@ -11,8 +11,8 @@ android {
         applicationId 'com.costoluce.cloud'
         minSdk 24
         targetSdk 35
-        versionCode 7
-        versionName '5.0-enel-beta'
+        versionCode 8
+        versionName '5.1-enel-diagnostica'
     }
 
     compileOptions {

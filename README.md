@@ -1,4 +1,4 @@
-# Costo Luce 5.0 — Enel Energia (beta)
+# Costo Luce 5.1 — Enel Energia (diagnostica beta)
 
 App Android per stimare i soli costi variabili dai kWh; Android Gradle Plugin e GitHub Actions.
 
@@ -17,3 +17,12 @@ App Android per stimare i soli costi variabili dai kWh; Android Gradle Plugin e 
 Vedi `.github/workflows/android.yml`. Il workflow compila un APK di debug e verifica l'avvio su emulatore, ma **non prova il login reale**, che richiede account e dati di fornitura personali.
 
 Nota: la firma dell'APK di debug può cambiare a ogni run. Per sostituire una precedente build potrebbe essere necessario disinstallarla (perdendo i dati locali). Per release definitive servirà una firma persistente.
+
+## Diagnosi 5.1
+
+- Stato visibile per le quattro fasi di collegamento SAML e recupero kWh.
+- Tempo massimo complessivo del client di circa 90 secondi e indicazione visibile dopo 100 secondi.
+- Nessuna credenziale o contenuto delle risposte compare nella diagnostica o nei log CI.
+- Collegamento reale non verificato: NON inserire credenziali in GitHub Actions o in chat.
+
+- Pulsante **Diagnostica login Enel (senza password)**: controlla la sola pagina pubblica e la presenza del parametro SAML atteso, senza usare o trasmettere credenziali.

@@ -82,12 +82,13 @@
     </section>
 
     <section class="card importcard" aria-labelledby="import-title">
-      <div id="import-title" class="eyebrow">Enel Energia · collegamento diretto (beta)</div>
+      <div id="import-title" class="eyebrow">Enel Energia · collegamento diretto (beta 5.1)</div>
       <p class="step">Aggiorna automaticamente il <b>totale dei kWh</b> degli ultimi 1 o 2 mesi solari <b>completi</b>, tramite i servizi Enel Energia. La prima volta configura email, password, POD e numero utente. Puoi scegliere di salvarli cifrati sul telefono per il successivo aggiornamento con un tocco.</p>
       <div class="buttonrow">
         <a class="mainbtn" href="costoluce://enel-sync?months=2" id="enelSync">↻ Aggiorna da Enel</a>
         <a class="mainbtn alt" href="costoluce://enel-config" id="enelConfig">Configura account</a>
       </div>
+      <div class="buttonrow" style="margin-top:8px"><a class="mainbtn alt" href="costoluce://enel-check" id="enelCheck">Diagnostica login Enel (senza password)</a></div>
       <p class="importstatus" id="importStatus" role="status">Connessione sperimentale non verificata sul tuo account: potrebbe essere necessario modificare il metodo di login di Enel.</p>
       <p class="help">Non viene utilizzato il Portale Consumi ARERA. Il recupero utilizza un'interfaccia Enel non pubblica: se il fornitore cambia l'autenticazione, l'app segnala l'errore senza tentare di aggirare CAPTCHA o ulteriori verifiche. Nessuna credenziale viene inviata a ChatGPT.</p>
       <a class="smallbtn" href="costoluce://enel-clear">Scollega account e cancella credenziali salvate</a>
