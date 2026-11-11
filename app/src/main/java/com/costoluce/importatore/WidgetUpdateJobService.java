@@ -24,9 +24,16 @@ public final class WidgetUpdateJobService extends JobService {
                         CostoLuceWidgetProvider.readConfiguration(this);
                 if (config == null)
                     throw new IllegalStateException("Apri Costo Luce e premi Aggiorna widget Home per configurare le tariffe.");
-                CostoLuceWidgetProvider.setRefreshStatus(this, "Connessione Enel avviata...", true);
+                CostoLuceWidgetProvider.setRefreshStatus(this, "Enel: collegamento in corso...", true);
                 EnelConnector.Result result = EnelConnector.fetch(credentials, config.months, phase -> {
-                    if (!stopped.get()) CostoLuceWidgetProvider.setRefreshStatus(this, phase, true);
+                    if (stopped.get()) return;
+                    String label;
+                    if (phase.startsWith("Fase 1/4")) label = "Enel 1/4 · apertura login";
+                    else if (phase.startsWith("Fase 2/4")) label = "Enel 2/4 · verifica accesso";
+                    else if (phase.startsWith("Fase 3/4")) label = "Enel 3/4 · sessione";
+                    else if (phase.startsWith("Fase 4/4")) label = "Enel 4/4 · lettura kWh";
+                    else label = "Enel · controllo dei dati";
+                    CostoLuceWidgetProvider.setRefreshStatus(this, label, true);
                 });
                 if (result.kwh <= 0)
                     throw new IllegalStateException("Non sono disponibili kWh positivi nel periodo scelto.");
@@ -34,10 +41,17 @@ public final class WidgetUpdateJobService extends JobService {
                     if (!CostoLuceWidgetProvider.saveResultFromEnel(this, result, config.months))
                         throw new IllegalStateException("Dati mensili Enel non validi.");
                 }
-            } catch (Exception ignored) {
+            } catch (Exception error) {
                 if (!stopped.get()) {
-                    // Don't display exception messages or secrets from untrusted remote services.
-                    CostoLuceWidgetProvider.setRefreshStatus(this, "Errore: dati Enel non disponibili. Apri l'app.", false);
+                    // Never reveal remote messages, credentials or authenticated URLs.
+                    final String status;
+                    if (error instanceof java.io.IOException)
+                        status = "Enel non raggiungibile o login non valido. Dati invariati.";
+                    else if (error instanceof IllegalStateException)
+                        status = "Configurazione o dati Enel incompleti. Dati invariati.";
+                    else
+                        status = "Risposta Enel non utilizzabile. Dati invariati.";
+                    CostoLuceWidgetProvider.setRefreshStatus(this, status, false);
                 }
             } finally {
                 if (!stopped.get()) jobFinished(params, false);

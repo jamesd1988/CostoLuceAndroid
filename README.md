@@ -1,4 +1,4 @@
-# Costo Luce 5.5.0 — correzione aggiornamento widget (Enel beta)
+# Costo Luce 5.6.0 — aggiornamento widget senza aprire l'app (Enel beta)
 
 App Android per stimare i soli costi variabili dai kWh; Android Gradle Plugin e GitHub Actions.
 
@@ -73,3 +73,12 @@ Nota: la firma dell'APK di debug può cambiare a ogni run. Per sostituire una pr
 - L'APK viene pubblicato **subito dopo la compilazione**, senza dipendere dal test su emulatore né dal caricamento degli artifact Actions, entrambi problematici nei vecchi run.
 - Il precedente `android.yml` è eseguibile solo manualmente per diagnostica Android. Il nuovo workflow si avvia con modifiche su `main` o manualmente.
 - I runner GitHub sono comunque necessari: se Actions resta in stato `queued` senza job, rifare il workflow non risolve automaticamente un problema di infrastruttura o permessi.
+
+## Widget in background v5.6.0
+
+- Il tasto **↻** in alto a destra e la riga inferiore del widget inviano un `PendingIntent.getBroadcast` a `CostoLuceWidgetProvider`, **non avviano un'Activity**. Le altre parti continuano ad aprire la schermata principale, quando desiderato.
+- Il ricevitore cambia subito il testo di stato, poi pianifica un JobScheduler che recupera i consumi Enel in background. Il job usa esclusivamente credenziali già salvate con consenso tramite Android Keystore. A esito positivo aggiorna contemporaneamente kWh, periodo, stima dei costi e timestamp del widget con le tariffe configurate.
+- Se la rete, il login non ufficiale Enel o i dati non sono disponibili, **non** cambia il costo e il consumo precedentemente acquisiti e segnala l'errore in chiaro senza informazioni sensibili.
+- Non aggiorna in automatico tariffe ARERA/GME né può aggirare CAPTCHA o SPID. Senza credenziali Enel salvate e autenticazione funzionante il tasto non può reperire nuovi kWh.
+- Test del collegamento nel file `tests/test_widget_wiring.js`; il workflow release controlla che l'Activity precedente non sia più registrata nel Manifest.
+- Versione Android **5.6.0**, `versionCode 14`, file `CostoLuce_v5.6.0_WidgetBackgroundRefresh_S25.apk`. In caso di app firmata diversamente, una nuova installazione può richiedere rimozione del vecchio pacchetto e comportare perdita dei dati locali.

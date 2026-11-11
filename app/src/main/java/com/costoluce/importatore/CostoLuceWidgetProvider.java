@@ -223,34 +223,41 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
             return;
         }
         if (!new EnelCredentialStore(context).hasSaved()) {
-            setRefreshStatus(context, "Per nuovi kWh serve Enel collegato nell'app.", false);
+            setRefreshStatus(context, "Enel non collegato: salva le credenziali nell'app.", false);
             return;
         }
         p.edit().putLong(KEY_LAST_REQUEST, now).commit();
-        setRefreshStatus(context, "↻ Tocco ricevuto · attendo la rete Enel...", true);
+        setRefreshStatus(context, "↻ Aggiornamento richiesto: attendo la rete...", true);
         JobScheduler scheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
         if (scheduler == null) {
             setRefreshStatus(context, "Aggiornamento Android non disponibile.", false);
             return;
         }
         try {
-            JobInfo.Builder builder = new JobInfo.Builder(REFRESH_JOB_ID,
-                    new ComponentName(context, WidgetUpdateJobService.class))
-                    .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY);
-            if (Build.VERSION.SDK_INT >= 31) builder.setExpedited(true);
-            int response = scheduler.schedule(builder.build());
-            if (response != JobScheduler.RESULT_SUCCESS && Build.VERSION.SDK_INT >= 31) {
-                // If expedited quota was exhausted, queue a regular connected-network job.
+            int response = JobScheduler.RESULT_FAILURE;
+            if (Build.VERSION.SDK_INT >= 31) {
+                // User-initiated expedited work when available. If the platform
+                // rejects it, fall back to an ordinary network-constrained job.
+                try {
+                    response = scheduler.schedule(new JobInfo.Builder(REFRESH_JOB_ID,
+                            new ComponentName(context, WidgetUpdateJobService.class))
+                            .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                            .setExpedited(true).build());
+                } catch (IllegalArgumentException | IllegalStateException ignored) {
+                    response = JobScheduler.RESULT_FAILURE;
+                }
+            }
+            if (response != JobScheduler.RESULT_SUCCESS) {
                 response = scheduler.schedule(new JobInfo.Builder(REFRESH_JOB_ID,
                         new ComponentName(context, WidgetUpdateJobService.class))
                         .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY).build());
             }
             if (response != JobScheduler.RESULT_SUCCESS)
-                setRefreshStatus(context, "Android non ha avviato l'aggiornamento.", false);
+                setRefreshStatus(context, "Android ha rifiutato l'aggiornamento: riprova.", false);
         } catch (SecurityException e) {
-            setRefreshStatus(context, "Permesso rete mancante: aggiorna l'app.", false);
+            setRefreshStatus(context, "Impossibile usare la rete: permessi Android.", false);
         } catch (RuntimeException e) {
-            setRefreshStatus(context, "Impossibile avviare la sincronizzazione.", false);
+            setRefreshStatus(context, "Impossibile programmare il recupero Enel.", false);
         }
     }
 
@@ -298,7 +305,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         }
         String status = p.getString(KEY_STATUS, "");
         views.setTextViewText(R.id.widget_status,
-                status == null || status.isEmpty() ? "Tocca ↻ per aggiornare kWh e costo" : status);
+                status == null || status.isEmpty() ? "↻  Aggiorna consumi e costo" : status);
         views.setTextViewText(R.id.widget_refresh,
                 p.getBoolean(KEY_BUSY, false) ? "…" : "↻");
 
@@ -315,12 +322,13 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         views.setOnClickPendingIntent(R.id.widget_period, openPending);
         views.setOnClickPendingIntent(R.id.widget_updated, openPending);
 
-        // Launch a dedicated no-display activity directly from the user tap.
-        // The Activity is not a broadcast-to-activity trampoline and finishes
-        // immediately after enqueuing an Android JobScheduler task.
-        Intent refreshIntent = new Intent(context, WidgetRefreshActivity.class);
+        // Clicking Refresh must NEVER launch an Activity. Deliver the user's
+        // interaction to this explicit AppWidgetProvider broadcast receiver,
+        // then enqueue the Enel network JobService without a UI screen.
+        Intent refreshIntent = new Intent(context, CostoLuceWidgetProvider.class);
         refreshIntent.setAction(ACTION_REFRESH);
-        PendingIntent refreshPending = PendingIntent.getActivity(context, 1002, refreshIntent,
+        refreshIntent.addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
+        PendingIntent refreshPending = PendingIntent.getBroadcast(context, 1002, refreshIntent,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         views.setOnClickPendingIntent(R.id.widget_refresh, refreshPending);
         views.setOnClickPendingIntent(R.id.widget_status, refreshPending);
