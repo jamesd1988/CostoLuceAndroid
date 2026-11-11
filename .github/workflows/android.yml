@@ -44,9 +44,9 @@ jobs:
       - name: Compilazione ufficiale Android
         run: gradle --no-daemon --stacktrace :app:testDebugUnitTest :app:assembleDebug
       - name: Verifica presenza APK
-        run: test -s app/build/outputs/apk/debug/app-debug.apk
-          # Verify the generated APK includes the registered widget resources.
-          unzip -l app/build/outputs/apk/debug/app-debug.apk | grep -q 'resources.arsc'
+        run: |
+          test -s app/build/outputs/apk/debug/app-debug.apk
+          # Verify widget registration in the generated manifest
           $ANDROID_HOME/build-tools/35.0.0/aapt dump xmltree app/build/outputs/apk/debug/app-debug.apk AndroidManifest.xml | grep -q 'CostoLuceWidgetProvider'
       - name: Rinomina APK con numero versione
         run: |
