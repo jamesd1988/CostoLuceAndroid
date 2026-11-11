@@ -131,7 +131,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
                 if (Double.isFinite(lastKwh) && lastKwh > 0)
                     edit.putString(KEY_EUR, Double.toString(pricing.estimatedCost(lastKwh,
                             months, taxableFromMonthly(p.getString(KEY_MONTHLY, null),
-                                    lastKwh, months)));
+                                    lastKwh, months))));
             } catch (Exception ignored) { }
         }
 
