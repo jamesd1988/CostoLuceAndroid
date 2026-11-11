@@ -1,43 +1,19 @@
-# Costo Luce Cloud — Android (versione 4.1 auto-sync test)
+# Costo Luce 5.0 — Enel Energia (beta)
 
-**Obiettivo:** sostituire le precedenti APK prodotte con DEX artigianale con una build Android ufficiale prodotta da Gradle su GitHub Actions.
+App Android per stimare i soli costi variabili dai kWh; Android Gradle Plugin e GitHub Actions.
 
-## Funzioni
+## Nuova connessione diretta
 
-- Calcolo delle **sole quote variabili** in funzione dei kWh inseriti; componenti modificabili, IVA e stima accisa.
-- **Aggiorna consumi**: tenta di navigare automaticamente dopo il login nella sezione consumi elettrici, selezionare il periodo disponibile e trovare il totale in kWh. Funziona solo per etichette riconosciute: nessun accesso automatico a SPID/CIE e nessuna garanzia sulla pagina autenticata. L'utente effettua personalmente l'accesso SPID/CIE. Acquisizione **sperimentale**, non validata con una sessione reale: alcuni provider possono rifiutare l'accesso da WebView.
-- **Apri in Chrome** come alternativa per accedere al portale. L'app **non può leggere** il contenuto della sessione esterna di Chrome.
-- Importazione di file `.csv` / `.txt` dal telefono come ripiego (solo se necessario), oltre all'inserimento manuale dei kWh.
-- Nessuna richiesta di password SPID/CIE da parte dell'app, nessun salvataggio di token/cookie da parte del codice applicativo. Lo script di lettura viene iniettato esclusivamente sul dominio ufficiale `consumienergia.it`.
+- Pulsante **Aggiorna da Enel**: quando l’account è stato configurato, interroga i servizi Enel senza scaricare manualmente file o accedere al Portale Consumi ARERA.
+- Configurazione iniziale direttamente sul dispositivo: email, password Enel Energia, POD e **numero utente Enel**. Non inviare tali credenziali in chat né inserirle nel repository.
+- Credenziali **salvate solo su consenso esplicito**, cifrate con Android Keystore AES-GCM, mai nel sorgente, nei log, negli URL o nei server del progetto.
+- Importa i dati degli **ultimi uno o due mesi solari conclusi**, non il mese corrente, e somma la serie `hourlyConsumption` restituendo solo il totale kWh. Qualsiasi errore o dati ambigui interrompono l’importazione.
+- Tenta il login SAML e la lettura dell'endpoint Enel descritto dal progetto open-source **EnelGrid** (MIT): https://github.com/sathia-musso/enelgrid. L'integrazione è indipendente, non ufficiale, non affiliata a Enel Energia. Il codice è originale e segue lo schema pubblicamente descritto dall'autore.
+- L’API e l’autenticazione sono **non documentate pubblicamente da Enel** e potrebbero cambiare, presentare CAPTCHA/MFA o richiedere ulteriore consenso. Non aggiriamo tali controlli e **non abbiamo verificato il collegamento con un account reale**.
+- Nessun dato di energia o credenziale viene trasmesso a GitHub, ChatGPT o altri server; contatti HTTPS limitati a `www.enel.it` e `accounts.enel.com` durante il recupero.
 
-## Compilazione nel cloud
+## Test e compilazione
 
-1. Crea un repository privato su GitHub (ad esempio `CostoLuce-Android`).
-2. Carica il contenuto di questa cartella nella radice del repository, mantenendo `.github/workflows/android.yml`.
-3. In GitHub vai in **Actions** → **Android APK + test di avvio** → **Run workflow** (o esegui un push sul ramo `main`).
-4. Il job `build` usa **JDK 17, Gradle 8.9, Android Gradle Plugin 8.7.3, API 35**, compila con `:app:assembleDebug` ed espone l'APK negli Artifacts del workflow.
-5. Il job `smoke-test` installa l'APK nell'emulatore Android, apre MainActivity e verifica che il processo resti in esecuzione. In caso di errore conserva il logcat negli Artifacts.
-6. Scarica l'artifact `CostoLuce-GalaxyS25-debug` da GitHub Actions, estrai `app-debug.apk`, installalo sul Galaxy S25.
+Vedi `.github/workflows/android.yml`. Il workflow compila un APK di debug e verifica l'avvio su emulatore, ma **non prova il login reale**, che richiede account e dati di fornitura personali.
 
-**Nota:** la compilazione e la prova su emulatore non sono state eseguite in questo ambiente. Non considerare l'APK funzionante prima che il workflow sia verde e che il Galaxy S25 lo apra correttamente.
-
-## Requisiti e note
-
-- Non c'è Gradle Wrapper in questa versione: il workflow installa **Gradle 8.9** tramite `gradle/actions/setup-gradle@v4`. Non sono inclusi artefatti generati con strumenti personalizzati.
-- Package dell'app: `com.costoluce.cloud`. È distinto dalle build precedenti ed evita conflitti di firma in fase di installazione.
-- L'APK di **debug** è firmato automaticamente dal runner GitHub e destinato alle prove, non alla distribuzione commerciale. Per aggiornamenti incrementali futuri servirà una chiave di firma persistente, conservata come GitHub Actions Secret.
-- I consumi del Portale Consumi non sono necessariamente disponibili in tempo reale.
-- Le tariffe predefinite corrispondono alla stima ricavata dalla precedente fattura giugno-luglio 2026: non sono automaticamente aggiornate.
-- L'esenzione accisa è solo una stima, basata sull'ipotesi di consumo distribuito uniformemente nel periodo. L'utente deve verificare i requisiti della propria utenza.
-
-## Test JavaScript locali (se disponibile Node.js)
-
-```bash
-node tests/test_calculations.js
-node tests/test_import.js
-node tests/test_capture.js
-```
-
-## Automazione 4.1
-
-Il flusso mira a: Aggiorna consumi → SPID/CIE manuale → navigazione alla pagina consumi elettrici (se riconoscibile) → selezione di 1/2 mesi (se l’opzione esiste) → lettura totale. Nessun clic sui consensi/credenziali; non si utilizza scraping di sessioni Chrome esterne. Se ci sono più POD o periodo non identificabile, la sincronizzazione si ferma senza inventare dati. **La pagina privata reale non è stata verificata; il funzionamento end-to-end non è garantito.**
+Nota: la firma dell'APK di debug può cambiare a ogni run. Per sostituire una precedente build potrebbe essere necessario disinstallarla (perdendo i dati locali). Per release definitive servirà una firma persistente.

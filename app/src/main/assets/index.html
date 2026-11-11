@@ -82,18 +82,19 @@
     </section>
 
     <section class="card importcard" aria-labelledby="import-title">
-      <div id="import-title" class="eyebrow">Sincronizzazione consumi · test</div>
-      <p class="step">Premi <b>Aggiorna consumi</b> e accedi con SPID/CIE nel portale. L'app proverà a raggiungere automaticamente la sezione elettricità, selezionare il periodo e acquisire <b>il totale kWh visibile</b>, senza richiedere un download manuale.</p>
+      <div id="import-title" class="eyebrow">Enel Energia · collegamento diretto (beta)</div>
+      <p class="step">Aggiorna automaticamente il <b>totale dei kWh</b> degli ultimi 1 o 2 mesi solari <b>completi</b>, tramite i servizi Enel Energia. La prima volta configura email, password, POD e numero utente. Puoi scegliere di salvarli cifrati sul telefono per il successivo aggiornamento con un tocco.</p>
       <div class="buttonrow">
-        <a class="mainbtn" href="costoluce://sync?months=2" id="openSync">↻ Aggiorna consumi</a>
-        <a class="mainbtn alt" href="costoluce://portal" id="openPortal">Apri in Chrome ↗</a>
+        <a class="mainbtn" href="costoluce://enel-sync?months=2" id="enelSync">↻ Aggiorna da Enel</a>
+        <a class="mainbtn alt" href="costoluce://enel-config" id="enelConfig">Configura account</a>
       </div>
-      <p class="importstatus" id="importStatus" role="status">Premi Aggiorna: dopo SPID/CIE cercherò automaticamente il totale elettrico. La compatibilità con il portale autenticato è ancora da verificare.</p>
-      <p class="help">Il login avviene sul portale ufficiale. L'app legge soltanto la pagina di consumi sul dominio consumienergia.it, mai le pagine SPID/CIE, e non salva credenziali. Alcuni sistemi SPID/CIE potrebbero richiedere Chrome: in quel caso l'acquisizione diretta potrebbe non funzionare.</p>
-      <details class="fallback"><summary>Metodo alternativo: importa un CSV/TXT</summary>
-        <p class="step">Se il sito non consente il recupero automatico, aprilo in Chrome, esporta i consumi e importa il file qui.</p>
+      <p class="importstatus" id="importStatus" role="status">Connessione sperimentale non verificata sul tuo account: potrebbe essere necessario modificare il metodo di login di Enel.</p>
+      <p class="help">Non viene utilizzato il Portale Consumi ARERA. Il recupero utilizza un'interfaccia Enel non pubblica: se il fornitore cambia l'autenticazione, l'app segnala l'errore senza tentare di aggirare CAPTCHA o ulteriori verifiche. Nessuna credenziale viene inviata a ChatGPT.</p>
+      <a class="smallbtn" href="costoluce://enel-clear">Scollega account e cancella credenziali salvate</a>
+      <details class="fallback"><summary>Alternative manuali: inserisci kWh o importa CSV/TXT</summary>
+        <p class="step">Se il collegamento Enel non funziona, puoi continuare a usare il calcolatore con i kWh inseriti sopra oppure importare un file.</p>
         <div class="buttonrow"><a class="mainbtn alt" href="costoluce://import">Seleziona CSV/TXT</a></div>
-        <textarea class="pastebox" id="pasteSource" placeholder="Oppure incolla qui il totale o una tabella..." aria-label="Testo copiato dal portale"></textarea>
+        <textarea class="pastebox" id="pasteSource" placeholder="Oppure incolla qui il totale o una tabella..." aria-label="Testo dei consumi"></textarea>
         <button class="smallbtn" type="button" onclick="importPasted()">Calcola dal testo incollato</button>
       </details>
     </section>
@@ -119,7 +120,7 @@
     </section>
 
     <p class="note"><strong>Solo costi variabili:</strong> energia, perdite, dispacciamento, sbilanciamento, trasporto e perequazione a consumo, ASOS, ARIM, accisa e IVA. Sono esclusi quote fisse, potenza impegnata, canone RAI e altre eventuali voci.</p>
-    <p class="footer">La lettura diretta del portale è sperimentale e può essere impedita dal login SPID/CIE o dalla struttura delle pagine. In alternativa, importa un CSV/TXT o inserisci i kWh manualmente.<br>Stima indicativa, non una fattura ufficiale. L'accisa viene stimata ipotizzando consumi distribuiti uniformemente nei mesi. Le tariffe possono cambiare nel tempo.<br>Funziona anche senza connessione Internet.</p>
+    <p class="footer">La connessione diretta Enel è sperimentale: può essere impedita da modifiche all’autenticazione o ai servizi. In alternativa, inserisci i kWh manualmente o importa un CSV/TXT.<br>Stima indicativa, non una fattura ufficiale. L'accisa viene stimata ipotizzando consumi distribuiti uniformemente nei mesi. Le tariffe possono cambiare nel tempo.<br>Funziona anche senza connessione Internet.</p>
   </main>
 <script>
   'use strict';
@@ -151,7 +152,7 @@
   function save(){try{localStorage.setItem('costoluce_rates_v1',JSON.stringify(tariffs));}catch(e){}}
   function taxableMonthly(k){if(k<=150)return 0;if(k<=220)return k-150;if(k<=370)return 2*k-370;return k;}
   function safeNumber(s){const v=Number(String(s).replace(',','.'));return isFinite(v)&&v>=0?v:0;}
-  function setMonths(v){months=v;byId('m1').classList.toggle('active',v===1);byId('m2').classList.toggle('active',v===2);byId('openSync').href='costoluce://sync?months='+v;recalc();}
+  function setMonths(v){months=v;const link=byId('enelSync');if(link)link.href='costoluce://enel-sync?months='+v;byId('m1').classList.toggle('active',v===1);byId('m2').classList.toggle('active',v===2);byId('openSync').href='costoluce://sync?months='+v;recalc();}
   function toggleRates(){const el=byId('rates');const opened=el.classList.toggle('open');byId('editBtn').setAttribute('aria-expanded',opened?'true':'false');byId('chevron').style.transform=opened?'rotate(180deg)':'none';}
   function resetRates(){tariffs={...initial};save();fillRates();recalc();}
   function fillRates(){const dest=byId('rateFields');dest.innerHTML='';fields.forEach(([key,label])=>{const wrap=document.createElement('div');wrap.className='ratefield';const title=document.createElement('label');title.textContent=label;title.htmlFor='t_'+key;const inp=document.createElement('input');inp.id='t_'+key;inp.type='number';inp.inputMode='decimal';inp.min='0';inp.step='any';inp.value=String(Number(tariffs[key].toFixed(9)));inp.addEventListener('input',()=>{tariffs[key]=safeNumber(inp.value);save();recalc()});wrap.appendChild(title);wrap.appendChild(inp);dest.appendChild(wrap);});}
@@ -279,6 +280,19 @@
   function onImportError(message){const e=byId('importStatus');e.className='importstatus err';e.textContent=String(message);}
   window.onFileSelected=onFileSelected;
   window.onImportError=onImportError;
+  window.onEnelStatus=function(message,error){
+    const status=byId('importStatus');if(!status)return;
+    status.className='importstatus'+(error?' err':'');status.textContent=String(message||'');
+  };
+  const enelMatch=/^#enel=(\d{1,8}(?:\.\d{1,3})?)&months=([12])&days=(\d{1,3})$/.exec(location.hash);
+  if(enelMatch){
+    const k=Number(enelMatch[1]);const m=Number(enelMatch[2]);
+    if(Number.isFinite(k)&&k>=0&&k<1000000){
+      byId('kwh').value=String(k);setMonths(m);
+      byId('importStatus').className='importstatus ok';
+      byId('importStatus').textContent='Acquisiti '+decimal(k,3)+' kWh direttamente da Enel Energia per '+m+' mesi solari completi. Giornate con misure: '+enelMatch[3]+'. Se mancano giorni, il totale potrebbe essere parziale.';
+    }
+  }
   // Il valore viene passato dalla WebView del Portale tramite URL privato.
   // La verifica dell'origine https è eseguita anche dal codice Android.
   const portalMatch=/^#portal=(\d{1,8}(?:\.\d{1,3})?)$/.exec(location.hash);
