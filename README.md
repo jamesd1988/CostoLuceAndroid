@@ -82,3 +82,12 @@ Nota: la firma dell'APK di debug può cambiare a ogni run. Per sostituire una pr
 - Non aggiorna in automatico tariffe ARERA/GME né può aggirare CAPTCHA o SPID. Senza credenziali Enel salvate e autenticazione funzionante il tasto non può reperire nuovi kWh.
 - Test del collegamento nel file `tests/test_widget_wiring.js`; il workflow release controlla che l'Activity precedente non sia più registrata nel Manifest.
 - Versione Android **5.6.0**, `versionCode 14`, file `CostoLuce_v5.6.0_WidgetBackgroundRefresh_S25.apk`. In caso di app firmata diversamente, una nuova installazione può richiedere rimozione del vecchio pacchetto e comportare perdita dei dati locali.
+
+## Prima configurazione widget v5.7.0
+
+- Si possono salvare i **dieci corrispettivi, periodo 1/2 mesi e opzione residente** anche senza consumi reali, evitando lo stallo iniziale del widget vuoto.
+- Il pulsante **Salva configurazione widget** invia `costoluce://widget-config` solo quando i kWh provengono ancora dall'esempio iniziale; il codice nativo valida e salva le tariffe ma non inserisce mai kWh dimostrativi.
+- Se esistono consumi reali manuali/importati/Enel, rimane attivo `widget-save`, con snapshot validato.
+- Il widget mostra distintamente "Configurato · premi ↻ per i dati Enel" prima della prima acquisizione.
+- La sincronizzazione dal widget continua a richiedere credenziali Enel **salvate volontariamente e cifrate** e un accesso effettivamente funzionante. Il login Enel sperimentale non è ancora stato verificato con un account reale.
+- Versione **5.7.0**, codice versione 15, APK `CostoLuce_v5.7.0_WidgetSetupAndRefresh_S25.apk`.

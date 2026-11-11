@@ -21,7 +21,7 @@
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:text="COSTO LUCE  •  v5.6"
+            android:text="COSTO LUCE  •  v5.7"
             android:textSize="11sp"
             android:textColor="#C3D5FF"
             android:fontFamily="sans"

@@ -69,7 +69,8 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
     static boolean saveResultFromEnel(Context context, EnelConnector.Result result, int months)
             throws JSONException {
         WidgetConfiguration config = readConfiguration(context);
-        if (config == null || result == null || result.monthly == null || result.monthly.size() != months)
+        if (config == null || config.months != months || result == null
+                || result.monthly == null || result.monthly.size() != months)
             return false;
         WidgetPricing pricing = WidgetPricing.parse(config.ratesJson, config.resident);
         double cost = pricing.estimatedCost(result.kwh, months);
@@ -93,6 +94,32 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         }
         return saveFetchedResult(context, result.kwh, cost, months,
                 period.toString(), rows.toString(), partial);
+    }
+
+    /**
+     * Configure the widget without making up consumption data. A first Enel
+     * fetch from the Home widget can then populate the first real snapshot.
+     * This does not change the date or value of any previous measured usage.
+     */
+    static boolean saveConfiguration(Context context, int months, String ratesJson, boolean resident) {
+        if (months != 1 && months != 2 || ratesJson == null || ratesJson.length() > 1500)
+            return false;
+        try {
+            WidgetPricing.parse(ratesJson, resident);
+        } catch (Exception invalidRates) {
+            return false;
+        }
+        boolean hasEnel = new EnelCredentialStore(context).hasSaved();
+        boolean ok = prefs(context).edit()
+                .putInt(KEY_MONTHS, months)
+                .putString(KEY_RATES, ratesJson)
+                .putBoolean(KEY_RESIDENT, resident)
+                .putString(KEY_STATUS, hasEnel
+                        ? "Tariffe salvate. Tocca ↻ per leggere i consumi Enel."
+                        : "Tariffe salvate. Collega Enel per recuperare i kWh.")
+                .commit();
+        if (ok) refresh(context);
+        return ok;
     }
 
     /** Called from a trusted, local WebView navigation, after the user taps Save. */
@@ -267,9 +294,14 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         long savedAt = p.getLong(KEY_TIMESTAMP, 0L);
         if (savedAt <= 0L) {
             views.setTextViewText(R.id.widget_euro, "—");
-            views.setTextViewText(R.id.widget_kwh, "Nessun dato");
-            views.setTextViewText(R.id.widget_period, "Apri l'app e salva i consumi");
-            views.setTextViewText(R.id.widget_updated, "Nessun aggiornamento salvato");
+            views.setTextViewText(R.id.widget_kwh, "Nessun consumo disponibile");
+            if (readConfiguration(context) == null) {
+                views.setTextViewText(R.id.widget_period, "Configura le tariffe nell'app");
+                views.setTextViewText(R.id.widget_updated, "Prima configurazione necessaria");
+            } else {
+                views.setTextViewText(R.id.widget_period, "Configurato · premi ↻ per i dati Enel");
+                views.setTextViewText(R.id.widget_updated, "In attesa del primo recupero dei kWh");
+            }
         } else {
             try {
                 double kwh = Double.parseDouble(p.getString(KEY_KWH, ""));

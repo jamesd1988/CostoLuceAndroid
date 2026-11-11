@@ -68,6 +68,28 @@ public final class MainActivity extends Activity {
         try { uri = Uri.parse(url); } catch (Exception e) { return false; }
         if (!"costoluce".equalsIgnoreCase(uri.getScheme())) return false;
         String action = uri.getHost();
+        if ("widget-config".equals(action)) {
+            // Configuration is allowed before any consumption exists. Only the
+            // bundled local calculator may send tariffs to the widget.
+            if (web == null || web.getUrl() == null || !web.getUrl().startsWith(HOME))
+                return true;
+            boolean success = false;
+            try {
+                int months = Integer.parseInt(uri.getQueryParameter("months"));
+                String rates = uri.getQueryParameter("rates");
+                boolean resident = "1".equals(uri.getQueryParameter("resident"));
+                success = CostoLuceWidgetProvider.saveConfiguration(this, months, rates, resident);
+            } catch (RuntimeException ignored) { }
+            boolean enelReady = new EnelCredentialStore(this).hasSaved();
+            String message = !success
+                ? "Tariffe o periodo non validi: correggi i valori e riprova."
+                : enelReady
+                    ? "Configurazione widget salvata. Premi ↻ sulla Home per tentare di recuperare i kWh Enel."
+                    : "Tariffe e periodo salvati. Per recuperare nuovi kWh, collega Enel e abilita il salvataggio cifrato delle credenziali.";
+            web.evaluateJavascript("window.onWidgetSaveStatus("
+                    + JSONObject.quote(message) + ", " + (success ? "true" : "false") + ");", null);
+            return true;
+        }
         if ("widget-save".equals(action)) {
             // Only the locally packaged calculator may send the summary.
             // Never accept data from the embedded external ARERA portal.

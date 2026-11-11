@@ -21,8 +21,10 @@ const ctx={
   Number,Math,Intl,Date,Object,String,JSON,isFinite,encodeURIComponent,console
 };
 vm.createContext(ctx);vm.runInContext(code,ctx);
-assert.strictEqual(ctx.prepareWidgetSave(),false,'Initial demonstration must not be sent to widget');
-assert.match(byId('widgetStatus').textContent,/dimostrativo/);
+assert.strictEqual(ctx.prepareWidgetSave(),true,'Initial setup must allow tariff-only configuration');
+assert.match(byId('widgetSave').href,/^costoluce:\/\/widget-config\?months=2/);
+assert.doesNotMatch(byId('widgetSave').href,/kwh=479/,'Never use initial example consumption');
+assert.strictEqual(new URL(byId('widgetSave').href).searchParams.get('rates')!==null,true);
 byId('kwh').value='238';
 ctx.markManualInput();
 assert.strictEqual(ctx.prepareWidgetSave(),true);
@@ -55,7 +57,9 @@ assert.strictEqual(url.searchParams.get('source'),'enel');
 assert.match(url.searchParams.get('period'),/settembre 2026/);
 assert.strictEqual(url.searchParams.get('kwh'),'125.750');
 ctx.setMonths(1);
-assert.strictEqual(ctx.prepareWidgetSave(),false,'Changing Enel period invalidates previous summary');
+assert.strictEqual(ctx.prepareWidgetSave(),true,'Changing Enel period allows tariff-only setup');
+assert.match(byId('widgetSave').href,/^costoluce:\/\/widget-config\?/);
+assert.doesNotMatch(byId('widgetSave').href,/kwh=/,'Stale consumption must not be carried into a new period');
 ctx.window.onWidgetSaveStatus('Salvato correttamente',true);
 assert.match(byId('widgetStatus').textContent,/Salvato correttamente/);
-console.log('PASS: widget rejects demo, accepts manual/import/Enel data, correctly labels period, handles reset and statuses');
+console.log('PASS: widget config-only first setup without demo kWh, real manual/import/Enel snapshots, period change and statuses');

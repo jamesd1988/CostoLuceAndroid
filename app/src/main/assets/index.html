@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#f4f7fc" />
-  <title>Costo Luce 5.6.0</title>
+  <title>Costo Luce 5.7.0</title>
   <style>
     :root { --ink:#152844; --muted:#718198; --blue:#365cda; --blue2:#5472ed; --pale:#eaf0ff; --line:#e5eaf3; --bg:#f4f7fc; --green:#108266; }
     * { box-sizing:border-box; }
@@ -130,10 +130,11 @@
 
     <section class="card widgetcard" aria-labelledby="widget-title">
       <div class="eyebrow" id="widget-title">Widget sulla schermata Home</div>
-      <p class="step">Mostra il <b>costo variabile stimato</b> e i <b>kWh</b> dell'ultimo periodo salvato.
-      Prima inserisci i tuoi kWh o importali: il valore iniziale dimostrativo non viene salvato automaticamente.</p>
+      <p class="step">Salva le tariffe e il periodo una sola volta. Il pulsante ↻ sul widget
+      proverà a recuperare i consumi Enel anche se non hai ancora inserito kWh nell'app.
+      Per la prima acquisizione è necessario che Enel sia collegato con credenziali cifrate salvate.</p>
       <div class="buttonrow">
-        <a class="mainbtn" id="widgetSave" href="#" onclick="return prepareWidgetSave()">Aggiorna widget Home</a>
+        <a class="mainbtn" id="widgetSave" href="#" onclick="return prepareWidgetSave()">Salva configurazione widget</a>
       </div>
       <p id="widgetStatus" class="widgethint" role="status">Dopo aver salvato le tariffe, premi ↻ direttamente sul widget per provare a recuperare nuovi kWh Enel in background, senza aprire l'app, e ricalcolare il costo. Servono credenziali Enel salvate sul telefono e un login funzionante; il connettore è sperimentale.</p>
     </section>
@@ -485,18 +486,26 @@
     const kwh=safeNumber(byId('kwh').value);
     const cost=recalc();
     const message=byId('widgetStatus');
-    if(!hasWidgetInput||!Number.isFinite(kwh)||kwh<=0||kwh>=1000000||
+    const link=byId('widgetSave');
+    const common='months='+months+
+      '&resident='+(byId('resident').checked?'1':'0')+
+      '&rates='+encodeURIComponent(JSON.stringify(tariffs));
+    if(!hasWidgetInput){
+      // Never send the initial 479 kWh demo or assume consumption from old periods.
+      // Save configuration only, so a real first fetch is possible from the widget.
+      link.href='costoluce://widget-config?'+common;
+      return true;
+    }
+    if(!Number.isFinite(kwh)||kwh<=0||kwh>=1000000||
         !Number.isFinite(cost)||cost<0||cost>10000000){
-      message.textContent='Inserisci o importa prima un consumo reale in kWh; il valore dimostrativo non e valido per il widget.';
+      message.textContent='Consumo o tariffe non validi. Correggi i valori prima di salvare.';
       return false;
     }
     const period=widgetPeriod||months+' '+(months===1?'mese':'mesi')+' selezionati';
-    const link=byId('widgetSave');
     link.href='costoluce://widget-save?kwh='+encodeURIComponent(kwh.toFixed(3))+
-      '&euro='+encodeURIComponent(cost.toFixed(2))+'&months='+months+
+      '&euro='+encodeURIComponent(cost.toFixed(2))+
       '&source='+encodeURIComponent(widgetSource)+'&period='+encodeURIComponent(period)+
-      '&resident='+(byId('resident').checked?'1':'0')+
-      '&rates='+encodeURIComponent(JSON.stringify(tariffs));
+      '&'+common;
     return true;
   }
   window.onWidgetSaveStatus=function(message,success){
