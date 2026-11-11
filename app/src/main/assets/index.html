@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#f4f7fc" />
+  <title>Costo Luce</title>
+  <style>
+    :root { --ink:#152844; --muted:#718198; --blue:#365cda; --blue2:#5472ed; --pale:#eaf0ff; --line:#e5eaf3; --bg:#f4f7fc; --green:#108266; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--ink); font-family:Roboto, 'Segoe UI', Arial,sans-serif; -webkit-font-smoothing:antialiased; }
+    button, input, select { font:inherit; }
+    button {cursor:pointer; -webkit-tap-highlight-color:transparent;}
+    .shell {max-width:650px; margin:0 auto; padding:26px 18px calc(34px + env(safe-area-inset-bottom));}
+    .mast { display:flex; align-items:center; gap:12px; margin:3px 0 28px; }
+    .logo {width:45px;height:45px; background:linear-gradient(145deg,#6987ff,#3151cb); border-radius:15px; display:grid;place-items:center;box-shadow:0 8px 19px #3b57bb32}
+    .logo svg {width:25px;height:25px;}
+    h1 {font-size:23px; margin:0; letter-spacing:-.5px; font-weight:780;}
+    .sub {color:var(--muted);font-size:12px;margin:4px 0 0;}
+    .card {background:white; border:1px solid var(--line); border-radius:23px; padding:20px; box-shadow:0 8px 22px #213f6c07; margin-bottom:16px}
+    .eyebrow{color:var(--muted);font-weight:700;letter-spacing:.9px;text-transform:uppercase;font-size:11px;margin-bottom:14px}
+    .field-box{display:flex;align-items:baseline; gap:12px;border:1.5px solid #d6e0f4;border-radius:16px;padding:9px 17px;background:#fbfcff; transition:.2s}
+    .field-box:focus-within{border-color:var(--blue);box-shadow:0 0 0 3px #365cda18}
+    .biginput{border:0;outline:0;background:transparent;font-size:43px;letter-spacing:-1.3px;font-weight:780;color:var(--ink);width:100%;min-width:0;padding:8px 0; font-variant-numeric:tabular-nums}
+    .unit {font-size:16px;font-weight:800;color:var(--muted)}
+    .controlhead{font-size:13px;font-weight:730;margin:21px 0 9px}
+    .seg {display:flex;gap:4px;background:#f0f3fa;padding:5px;border-radius:13px}
+    .seg button{flex:1;border:0;border-radius:10px;background:transparent;color:#70809c;font-weight:750;font-size:13px;padding:11px 6px}
+    .seg button.active{background:white;color:var(--blue);box-shadow:0 2px 7px #163c7f15}
+    .switchrow{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:18px;font-size:13px;line-height:1.4}
+    .switchlabel b{display:block;font-size:13px}.switchlabel span{display:block;color:var(--muted);font-size:11px;margin-top:3px}
+    .switch{position:relative;display:inline-block;flex-shrink:0;width:44px;height:27px}.switch input{opacity:0;width:0;height:0}
+    .track{position:absolute;inset:0;border-radius:30px;background:#bac5d8;transition:.2s}
+    .track:after{content:'';position:absolute;left:3px;top:3px;width:21px;height:21px;border-radius:50%;background:white;box-shadow:0 1px 3px #3332;transition:.2s}
+    .switch input:checked+.track{background:var(--blue)}.switch input:checked+.track:after{transform:translateX(17px)}
+    .result {color:white; background:linear-gradient(135deg,#2147b2,#3d65e4);border:0;padding:22px 22px 19px;position:relative;overflow:hidden}
+    .result:before{content:'';width:210px;height:210px;border:35px solid #ffffff0e;border-radius:50%;position:absolute;right:-103px;top:-88px;pointer-events:none}
+    .result .eyebrow{color:#c9d7ff;margin-bottom:13px}.total {font-size:43px;font-weight:800;letter-spacing:-1.6px;font-variant-numeric:tabular-nums;position:relative;line-height:1.2}
+    .result-foot{display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-top:23px;padding-top:15px;border-top:1px solid #ffffff3d;position:relative}
+    .klabel{font-size:11px;color:#cbd8ff;margin-bottom:6px}.kvalue{font-size:17px;font-weight:750;font-variant-numeric:tabular-nums}
+    .sect-title{font-size:16px;font-weight:800;margin:4px 0 16px;letter-spacing:-.2px}
+    .lineitem{display:flex;gap:12px;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid #edf0f5;font-size:13px}
+    .lineitem:last-child{border-bottom:0}.lineitem .money{font-weight:750;font-variant-numeric:tabular-nums;white-space:nowrap}.lineitem .labeltext{font-weight:550}.lineitem .detail{color:var(--muted);font-size:11px;margin-top:4px}
+    .sumline{display:flex;justify-content:space-between;font-weight:820;padding:17px 0 0;font-size:14px}
+    .note{font-size:12px;line-height:1.6;color:#697c94;margin:12px 1px 18px}
+    .editbtn{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;border:1px solid var(--line);border-radius:16px;padding:16px 18px;background:white;color:var(--ink);font-weight:800;text-align:left;font-size:13px}
+    .editbtn svg{width:17px;height:17px;color:var(--muted)}
+    .rates{display:none;margin-top:12px}.rates.open{display:block}
+    .gridrates{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .ratefield{display:flex;flex-direction:column;gap:6px;min-width:0}.ratefield label{font-size:11px;font-weight:720;line-height:1.4;color:#62738d}
+    .ratefield input{border:1px solid #dfe5f0;border-radius:9px;background:#f8faff;padding:11px 9px;width:100%;min-width:0;outline:0;color:var(--ink);font-size:14px}
+    .ratefield input:focus{border-color:var(--blue)}
+    .reset{background:#eaf0ff;color:var(--blue);border:0;border-radius:10px;font-size:12px;font-weight:800;padding:11px 14px;margin-top:16px}
+    .help{font-size:11px;color:var(--muted);line-height:1.6;margin-top:12px}
+    .importcard{border-color:#d8e3fa;background:linear-gradient(180deg,#fff,#fafcff)}
+    .step{font-size:12px;color:#667a98;line-height:1.55;margin:0 0 14px}
+    .buttonrow{display:flex;gap:9px;flex-wrap:wrap}
+    .mainbtn{display:inline-flex;align-items:center;justify-content:center;flex:1;min-width:125px;min-height:43px;background:var(--blue);color:white;text-decoration:none;border:none;border-radius:13px;font-size:13px;font-weight:800;padding:11px 12px}
+    .mainbtn.alt{background:#edf2ff;color:#3155cc}
+    .pastebox{font-size:13px;line-height:1.4;padding:12px;border:1px solid #dfe7f5;border-radius:12px;resize:vertical;min-height:58px;width:100%;margin-top:12px;background:#fff;color:var(--ink)}
+    .importstatus{font-size:12px;color:#657993;line-height:1.5;margin:12px 0 0;overflow-wrap:anywhere}
+    .fallback{margin-top:12px;font-size:12px;color:var(--ink);border-top:1px solid var(--line);padding-top:13px}.fallback summary{cursor:pointer;font-weight:760;color:#365cda}.fallback .step{margin-top:10px}
+    .importstatus.ok{color:#05745a}.importstatus.err{color:#b02f38}
+    .smallbtn{margin-top:8px;background:none;border:none;color:var(--blue);font-size:12px;font-weight:800;padding:5px 0}
+    .footer{color:#8a96a9;font-size:11px;text-align:center;line-height:1.7;padding:4px 8px}
+    @media(max-width:350px){.shell{padding-left:12px;padding-right:12px}.card{padding:16px}.biginput{font-size:37px}.total{font-size:37px}}
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="mast">
+      <div class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m14.2 2.7-9.1 10h6.4L9.8 21.3l9.1-10h-6.4l1.7-8.6Z" fill="white" stroke="white" stroke-width="1.5" stroke-linejoin="round"/></svg></div>
+      <div><h1>Costo Luce</h1><p class="sub">Calcolatore · versione cloud 4.0</p></div>
+    </header>
+
+    <section class="card" aria-labelledby="calc-title">
+      <div id="calc-title" class="eyebrow">Consumo da calcolare</div>
+      <div class="field-box"><input class="biginput" id="kwh" type="number" inputmode="decimal" min="0" step="0.1" value="479" aria-label="Energia consumata in kilowattora"><span class="unit">kWh</span></div>
+      <div class="controlhead">Periodo di consumo</div>
+      <div class="seg" role="group" aria-label="Periodo"><button id="m1" type="button" onclick="setMonths(1)">1 mese</button><button id="m2" class="active" type="button" onclick="setMonths(2)">2 mesi</button></div>
+      <div class="switchrow"><div class="switchlabel"><b>Agevolazione accisa domestica</b><span>Residente con potenza fino a 3 kW</span></div><label class="switch"><input type="checkbox" id="resident" checked aria-label="Applica esenzione accisa per residenza"><span class="track"></span></label></div>
+    </section>
+
+    <section class="card importcard" aria-labelledby="import-title">
+      <div id="import-title" class="eyebrow">Sincronizzazione consumi · test</div>
+      <p class="step">Premi <b>Aggiorna consumi</b> e accedi con SPID/CIE nel portale. Seleziona la fornitura elettrica e il periodo desiderato: l'app proverà a riconoscere e acquisire <b>il totale kWh visibile</b>, senza richiedere un download manuale.</p>
+      <div class="buttonrow">
+        <a class="mainbtn" href="costoluce://sync" id="openSync">↻ Aggiorna consumi</a>
+        <a class="mainbtn alt" href="costoluce://portal" id="openPortal">Apri in Chrome ↗</a>
+      </div>
+      <p class="importstatus" id="importStatus" role="status">Modalità sperimentale. Nessun dato sincronizzato: il risultato non è garantito finché non proviamo il portale autenticato.</p>
+      <p class="help">Il login avviene sul portale ufficiale. L'app legge soltanto la pagina di consumi sul dominio consumienergia.it, mai le pagine SPID/CIE, e non salva credenziali. Alcuni sistemi SPID/CIE potrebbero richiedere Chrome: in quel caso l'acquisizione diretta potrebbe non funzionare.</p>
+      <details class="fallback"><summary>Metodo alternativo: importa un CSV/TXT</summary>
+        <p class="step">Se il sito non consente il recupero automatico, aprilo in Chrome, esporta i consumi e importa il file qui.</p>
+        <div class="buttonrow"><a class="mainbtn alt" href="costoluce://import">Seleziona CSV/TXT</a></div>
+        <textarea class="pastebox" id="pasteSource" placeholder="Oppure incolla qui il totale o una tabella..." aria-label="Testo copiato dal portale"></textarea>
+        <button class="smallbtn" type="button" onclick="importPasted()">Calcola dal testo incollato</button>
+      </details>
+    </section>
+
+    <section class="card result" aria-live="polite">
+      <div class="eyebrow">Totale variabile stimato · IVA inclusa</div>
+      <div class="total" id="total">—</div>
+      <div class="result-foot"><div><div class="klabel">Costo variabile / kWh</div><div id="perKwh" class="kvalue">—</div></div><div><div class="klabel">kWh soggetti ad accisa</div><div id="taxKwh" class="kvalue">—</div></div></div>
+    </section>
+
+    <section class="card" aria-labelledby="detail-title">
+      <h2 class="sect-title" id="detail-title">Dettaglio del consumo</h2>
+      <div id="breakdown"></div>
+      <div class="sumline"><span>Totale variabile</span><span id="total2">—</span></div>
+    </section>
+
+    <button class="editbtn" onclick="toggleRates()" aria-expanded="false" id="editBtn"><span>Modifica le tariffe</span><svg id="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg></button>
+    <section class="card rates" id="rates" aria-label="Tariffe personalizzabili">
+      <div class="eyebrow">Prezzi unitari della fattura</div>
+      <div class="gridrates" id="rateFields"></div>
+      <button class="reset" onclick="resetRates()">Ripristina tariffe Enel</button>
+      <div class="help">I valori iniziali provengono dalla tua fattura di giugno–luglio 2026. Per le componenti con prezzi mensili diversi viene usata la media ponderata sui consumi (238 e 241 kWh). Le perdite di rete sono calcolate al 10% del consumo, senza arrotondamento ai kWh interi.</div>
+    </section>
+
+    <p class="note"><strong>Solo costi variabili:</strong> energia, perdite, dispacciamento, sbilanciamento, trasporto e perequazione a consumo, ASOS, ARIM, accisa e IVA. Sono esclusi quote fisse, potenza impegnata, canone RAI e altre eventuali voci.</p>
+    <p class="footer">La lettura diretta del portale è sperimentale e può essere impedita dal login SPID/CIE o dalla struttura delle pagine. In alternativa, importa un CSV/TXT o inserisci i kWh manualmente.<br>Stima indicativa, non una fattura ufficiale. L'accisa viene stimata ipotizzando consumi distribuiti uniformemente nei mesi. Le tariffe possono cambiare nel tempo.<br>Funziona anche senza connessione Internet.</p>
+  </main>
+<script>
+  'use strict';
+  const initial = {
+    energy: 0.135,
+    losses: 10,
+    dispatch: (0.017139*238+0.025043*241)/479,
+    balancing: (0.000951*238+0.000625*241)/479,
+    transport: 0.0119,
+    equalization: 0.00283,
+    asos: (0.028657*238+0.031515*241)/479,
+    arim: 0.001638,
+    excise: 0.0227,
+    vat: 10
+  };
+  const fields = [
+    ['energy','Energia (€/kWh)'], ['losses','Perdite di rete (%)'],
+    ['dispatch','Dispacciamento (€/kWh)'], ['balancing','Sbilanciamento (€/kWh)'],
+    ['transport','Trasporto (€/kWh)'], ['equalization','Perequazione (€/kWh)'],
+    ['asos','ASOS (€/kWh)'], ['arim','ARIM (€/kWh)'],
+    ['excise','Accisa (€/kWh)'], ['vat','IVA (%)']
+  ];
+  let months=2;
+  let tariffs={...initial};
+  try {const saved=JSON.parse(localStorage.getItem('costoluce_rates_v1')||'null');if(saved && typeof saved==='object'){for(const key of Object.keys(initial)){if(typeof saved[key]==='number' && isFinite(saved[key]) && saved[key]>=0) tariffs[key]=saved[key]}}}catch(e){}
+  const euro=n=>new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'}).format(n);
+  const decimal=(n,d=2)=>new Intl.NumberFormat('it-IT',{maximumFractionDigits:d,minimumFractionDigits:d}).format(n);
+  const byId=id=>document.getElementById(id);
+  function save(){try{localStorage.setItem('costoluce_rates_v1',JSON.stringify(tariffs));}catch(e){}}
+  function taxableMonthly(k){if(k<=150)return 0;if(k<=220)return k-150;if(k<=370)return 2*k-370;return k;}
+  function safeNumber(s){const v=Number(String(s).replace(',','.'));return isFinite(v)&&v>=0?v:0;}
+  function setMonths(v){months=v;byId('m1').classList.toggle('active',v===1);byId('m2').classList.toggle('active',v===2);recalc();}
+  function toggleRates(){const el=byId('rates');const opened=el.classList.toggle('open');byId('editBtn').setAttribute('aria-expanded',opened?'true':'false');byId('chevron').style.transform=opened?'rotate(180deg)':'none';}
+  function resetRates(){tariffs={...initial};save();fillRates();recalc();}
+  function fillRates(){const dest=byId('rateFields');dest.innerHTML='';fields.forEach(([key,label])=>{const wrap=document.createElement('div');wrap.className='ratefield';const title=document.createElement('label');title.textContent=label;title.htmlFor='t_'+key;const inp=document.createElement('input');inp.id='t_'+key;inp.type='number';inp.inputMode='decimal';inp.min='0';inp.step='any';inp.value=String(Number(tariffs[key].toFixed(9)));inp.addEventListener('input',()=>{tariffs[key]=safeNumber(inp.value);save();recalc()});wrap.appendChild(title);wrap.appendChild(inp);dest.appendChild(wrap);});}
+  function recalc(){
+    const kwh=safeNumber(byId('kwh').value);const t=tariffs;
+    const taxKwh=byId('resident').checked?months*taxableMonthly(kwh/months):kwh;
+    const items=[
+      ['Energia elettrica',kwh*t.energy,decimal(t.energy,6)+' €/kWh'],
+      ['Perdite di rete',kwh*t.energy*t.losses/100,decimal(t.losses,1)+'% dei kWh, al prezzo energia'],
+      ['Dispacciamento',kwh*t.dispatch,decimal(t.dispatch,6)+' €/kWh'],
+      ['Sbilanciamento',kwh*t.balancing,decimal(t.balancing,6)+' €/kWh'],
+      ['Trasporto · quota consumi',kwh*t.transport,decimal(t.transport,6)+' €/kWh'],
+      ['Perequazione · quota consumi',kwh*t.equalization,decimal(t.equalization,6)+' €/kWh'],
+      ['Oneri ASOS',kwh*t.asos,decimal(t.asos,6)+' €/kWh'],
+      ['Oneri ARIM',kwh*t.arim,decimal(t.arim,6)+' €/kWh'],
+      ['Accisa',taxKwh*t.excise,decimal(t.excise,6)+' €/kWh imponibile']
+    ];
+    const preVat=items.reduce((s,it)=>s+it[1],0); const vat=preVat*t.vat/100;items.push(['IVA',vat,decimal(t.vat,1)+'% dell’imponibile']);const total=preVat+vat;
+    byId('total').textContent=euro(total);byId('total2').textContent=euro(total);
+    byId('perKwh').textContent=kwh?decimal(total/kwh,3)+' €/kWh':'—';
+    byId('taxKwh').textContent=decimal(taxKwh,1)+' kWh';
+    const dest=byId('breakdown');dest.innerHTML='';
+    for(const [name,value,desc] of items){const row=document.createElement('div');row.className='lineitem';const text=document.createElement('div');text.innerHTML='<div class="labeltext"></div><div class="detail"></div>';text.children[0].textContent=name;text.children[1].textContent=desc;const money=document.createElement('span');money.className='money';money.textContent=euro(value);row.appendChild(text);row.appendChild(money);dest.appendChild(row)}
+  }
+
+  /* Accetta solo consumi in kWh, mai letture cumulative in kWh non differenziate,
+     valori kW o dati gas. In caso di formato non riconosciuto mostra un errore. */
+  function parseEnergyNumber(raw){
+    let s=String(raw ?? '').trim().replace(/[\s\u00a0\u202f]/g,'');
+    if(!/^[+-]?(?:\d[\d.,]*|[.,]\d+)$/.test(s))return NaN;
+    const comma=s.lastIndexOf(','),dot=s.lastIndexOf('.');
+    if(comma>=0 && dot>=0){
+      const decimal=comma>dot?',':'.';s=s.replace(new RegExp('\\'+(decimal===','?'.':','),'g'),'').replace(decimal,'.');
+    }else if(comma>=0){
+      // In Italia la virgola e' separatore decimale.
+      s=s.replace(',','.');
+    }else if(dot>=0){
+      // Il punto e' decimale, tranne le migliaia esplicite (es. 1.250).
+      if(/^\d{1,3}(\.\d{3})+$/.test(s))s=s.replace(/\./g,'');
+    }
+    const n=Number(s);return Number.isFinite(n)&&n>=0&&n<=100000000?n:NaN;
+  }
+  function parseDelimitedLine(line,sep){
+    let parts=[],cur='',quote=false;
+    for(let i=0;i<line.length;i++){
+      const c=line[i];
+      if(c==='"'){if(quote && line[i+1]==='"'){cur+='"';i++;}else quote=!quote;}
+      else if(c===sep&&!quote){parts.push(cur.trim());cur='';}
+      else cur+=c;
+    }
+    parts.push(cur.trim());return parts;
+  }
+  function normalizeHeader(s){return String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim();}
+  function parseConsumption(raw){
+    const src=String(raw||'').replace(/^\uFEFF/,'').trim();
+    if(!src || src.length>1500000)throw Error('File vuoto o troppo grande (limite 1,5 MB).');
+    if(/^PK\u0003\u0004/.test(src))throw Error('File Excel rilevato: esporta in formato CSV.');
+    if(/\b(smc|metri cubi|gas naturale)\b/i.test(src.slice(0,2500)) && !/\bkwh\b/i.test(src.slice(0,2500)))throw Error('Sembrano consumi di gas, non di elettricità.');
+    if(/^\d+[.,]?\d*\s*(?:kwh)?$/i.test(src)){
+      const n=parseEnergyNumber(src.replace(/\s*kwh$/i,''));if(Number.isFinite(n))return {kwh:n,origin:'Valore totale inserito'};
+    }
+    const direct=/^(?:consumo|consumi|energia|prelievo)?\s*(?:totale|complessivo)?\s*(?:energia|consumo|consumi|prelievo)?\s*[:=;\t ]+\s*([\d.,]+)\s*kwh\s*$/im.exec(src);
+    if(direct && /(?:consumo|consumi|totale|energia|prelievo)/i.test(direct[0])){
+      const n=parseEnergyNumber(direct[1]);if(Number.isFinite(n))return {kwh:n,origin:'Totale esplicito'};
+    }
+    const lines=src.split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+    if(lines.length<2){
+      const match=/^(?:consumo|consumi|energia)?\s*totale\s*(?:\(?kwh\)?)\s*[:;=\t ]+\s*([\d.,]+)\s*$/i.exec(src);
+      if(match){const value=parseEnergyNumber(match[1]);if(Number.isFinite(value))return {kwh:value,origin:'Totale CSV'};}
+      throw Error('Non trovo una tabella di consumi in kWh.');
+    }
+    const sample=lines.slice(0,Math.min(12,lines.length));
+    const sep=[';', '\t', ','].map(d=>({d,score:sample.reduce((n,l)=>n+Math.min(5,parseDelimitedLine(l,d).length-1),0)})).sort((a,b)=>b.score-a.score)[0];
+    if(!sep || sep.score===0)throw Error('Formato non riconosciuto. Esporta un CSV con intestazioni e kWh.');
+    const table=lines.map(l=>parseDelimitedLine(l,sep.d));
+    for(let h=0;h<Math.min(18,table.length-1);h++){
+      const head=table[h].map(normalizeHeader);
+      if(head.every(v=>!v))continue;
+      const cols=head.map((v,i)=>({v,i}));
+      const inKwh=({v})=>/\bkwh\b/.test(v)||/^(f1|f2|f3)$/.test(v);
+      const disallow=({v})=>/potenza|lettura|contatore|progressiv|cumulat|stimata|immess|produzion|prezzo|costo|totale euro|kw\b/.test(v.replace(/kwh/g,''));
+      const totals=cols.filter(c=>/(totale|consumo complessivo|energia complessiva)/.test(c.v)&& !disallow(c));
+      const consumi=cols.filter(c=>/(consum|prelev|energia attiva|quantit|misura)/.test(c.v) && !disallow(c));
+      const fascia=cols.filter(c=>/^(f[123]|fascia f[123]|consumo f[123]|energia f[123])(?: kwh)?$/.test(c.v));
+      let chosen=[];
+      if(totals.length){chosen=[totals[0]];}
+      else if(consumi.length){chosen=[consumi[0]];}
+      else if(fascia.length){chosen=fascia;}
+      // Non interpretare un campo privo di unita' salvo 'consumo' con altri indizi kWh.
+      if(!chosen.length)continue;
+      if(!chosen.some(inKwh) && !src.slice(0,5000).toLowerCase().includes('kwh'))continue;
+      let sum=0,count=0,explicit=null;
+      for(let row=h+1;row<table.length;row++){
+        const r=table[row];
+        if(r.length<Math.max(...chosen.map(c=>c.i))+1)continue;
+        const rowLabel=r.slice(0,Math.min(2,r.length)).join(' ').toLowerCase();
+        const values=chosen.map(c=>parseEnergyNumber(r[c.i]));
+        if(values.some(n=>!Number.isFinite(n)))continue;
+        const value=values.reduce((a,b)=>a+b,0);
+        if(/^\s*(?:totale|total|somma|grand total)\s*(?:[;,]|$)/i.test(r[0])){explicit=value;continue;}
+        if(/\b(?:totale|total|somma)\b/i.test(rowLabel) && r.length<=chosen.length+2){explicit=value;continue;}
+        sum+=value;count++;
+      }
+      if(explicit!==null)return {kwh:explicit,origin:'Riga totale del CSV'};
+      if(count>0)return {kwh:sum,origin:count+' righe di consumo sommate'};
+    }
+    // Caso CSV con una sola riga esplicita: 'Totale kWh;479'.
+    for(const line of lines){const parts=parseDelimitedLine(line,sep.d);if(parts.length===2 && /\b(?:totale|consumo)\b/i.test(parts[0])&&/\bkwh\b/i.test(parts[0])){
+      const value=parseEnergyNumber(parts[1]);if(Number.isFinite(value))return {kwh:value,origin:'Totale CSV'};
+    }}
+    throw Error('Non riconosco in sicurezza i kWh: serve un CSV con colonna Consumo (kWh), Totale (kWh) oppure F1/F2/F3.');
+  }
+  function applyImportedText(raw){
+    const status=byId('importStatus');
+    try{
+      const result=parseConsumption(raw);
+      byId('kwh').value=String(Number(result.kwh.toFixed(3)));
+      status.className='importstatus ok';
+      status.textContent='Importati '+decimal(result.kwh,3)+' kWh · '+result.origin+'. Verifica che il periodo del file coincida con quello selezionato (1 o 2 mesi).';
+      recalc();
+    }catch(e){status.className='importstatus err';status.textContent='Importazione non riuscita: '+String(e.message||e);}
+  }
+  function importPasted(){applyImportedText(byId('pasteSource').value);}
+  function onFileSelected(text){applyImportedText(text);}
+  function onImportError(message){const e=byId('importStatus');e.className='importstatus err';e.textContent=String(message);}
+  window.onFileSelected=onFileSelected;
+  window.onImportError=onImportError;
+  // Il valore viene passato dalla WebView del Portale tramite URL privato.
+  // La verifica dell'origine https è eseguita anche dal codice Android.
+  const portalMatch=/^#portal=(\d{1,8}(?:\.\d{1,3})?)$/.exec(location.hash);
+  if(portalMatch){
+    const imported=Number(portalMatch[1]);
+    if(Number.isFinite(imported)&&imported>0&&imported<1000000){
+      byId('kwh').value=String(imported);
+      byId('importStatus').className='importstatus ok';
+      byId('importStatus').textContent='Acquisiti '+decimal(imported,3)+' kWh dalla pagina del Portale Consumi. Verifica l’intervallo selezionato sul portale e imposta qui il numero di mesi corrispondente.';
+    }
+  }
+
+  byId('kwh').addEventListener('input',recalc);byId('resident').addEventListener('change',recalc);fillRates();recalc();
+</script>
+</body>
+</html>

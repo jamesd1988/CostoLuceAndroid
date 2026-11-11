@@ -1,0 +1,30 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');
+const html=fs.readFileSync(__dirname+'/../app/src/main/assets/index.html','utf8');
+const code=html.match(/<script>([\s\S]*?)<\/script>/)[1];
+new vm.Script(code,{filename:'costoluce.js'});
+function fakeElement(tag='div'){
+  const e={tag,children:[],style:{},className:'',value:'',checked:false,textContent:'',attributes:{},_inner:''};
+  e.appendChild=(c)=>{e.children.push(c)};
+  e.addEventListener=()=>{};
+  e.setAttribute=(k,v)=>{e.attributes[k]=v};
+  e.classList={toggle:(c,v)=>typeof v==='boolean'?v:!e.className.includes(c)};
+  Object.defineProperty(e,'innerHTML',{get(){return this._inner},set(v){this._inner=v;this.children=(v.includes('labeltext')?[fakeElement('div'),fakeElement('div')]:[])}});
+  return e;
+}
+const nodes={};
+const getId=id=>nodes[id]??(nodes[id]=fakeElement());
+getId('kwh').value='479';getId('resident').checked=true;
+const localStorage={getItem:()=>null,setItem:()=>{}};
+const ctx={window:{},location:{hash:''},document:{getElementById:getId,createElement:fakeElement},localStorage,Intl,Number,Object,Math,String,JSON,isFinite,console};
+vm.createContext(ctx);vm.runInContext(code,ctx);
+assert.strictEqual(getId('taxKwh').textContent,'218,0 kWh');
+console.log('479kWh 2mesi:',getId('total').textContent,getId('perKwh').textContent, 'accisa:',getId('taxKwh').textContent);
+assert.match(getId('total').textContent,/119,71/);
+getId('kwh').value='238';ctx.setMonths(1);
+assert.strictEqual(getId('taxKwh').textContent,'106,0 kWh');
+console.log('238kWh 1mese:',getId('total').textContent,'accisa:',getId('taxKwh').textContent);
+getId('kwh').value='100';ctx.recalc();assert.strictEqual(getId('taxKwh').textContent,'0,0 kWh');
+getId('kwh').value='400';ctx.recalc();assert.strictEqual(getId('taxKwh').textContent,'400,0 kWh');
+getId('kwh').value='100';getId('resident').checked=false;ctx.recalc();assert.strictEqual(getId('taxKwh').textContent,'100,0 kWh');
+getId('kwh').value='0';ctx.recalc();assert.match(getId('total').textContent,/0,00/);
+console.log('PASS: validation for 0, 100, 238, 400, 479 kWh and tax mode.');

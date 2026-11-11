@@ -1,0 +1,89 @@
+name: Android APK + test di avvio
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Scarica i sorgenti
+        uses: actions/checkout@v4
+      - name: Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Android SDK
+        uses: android-actions/setup-android@v3
+      - name: SDK Android 35
+        run: sdkmanager --install 'platforms;android-35' 'build-tools;35.0.0'
+      - name: Gradle 8.9
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Test logica JavaScript
+        run: |
+          node tests/test_calculations.js
+          node tests/test_import.js
+          node tests/test_capture.js
+      - name: Compilazione ufficiale Android
+        run: gradle --no-daemon --stacktrace :app:assembleDebug
+      - name: Verifica presenza APK
+        run: test -s app/build/outputs/apk/debug/app-debug.apk
+      - name: Pubblica APK installabile
+        uses: actions/upload-artifact@v4
+        with:
+          name: CostoLuce-GalaxyS25-debug
+          path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 30
+
+  smoke-test:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Scarica progetto
+        uses: actions/checkout@v4
+      - name: Scarica APK prodotto in CI
+        uses: actions/download-artifact@v4
+        with:
+          name: CostoLuce-GalaxyS25-debug
+          path: ./apk
+      - name: Emulatore Android - prova apertura
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          script: |
+            adb install -r apk/app-debug.apk
+            adb logcat -c
+            adb shell am start -W -n com.costoluce.cloud/com.costoluce.importatore.MainActivity
+            sleep 12
+            adb logcat -d -v time > emulator-logcat.txt
+            adb shell pidof com.costoluce.cloud > app-pid.txt || true
+            test -s app-pid.txt || { echo "ERRORE: l'app non e' rimasta avviata"; exit 1; }
+            if grep -A 30 'FATAL EXCEPTION' emulator-logcat.txt | grep -q 'Process: com.costoluce.cloud'; then
+              echo 'ERRORE: crash AndroidRuntime'
+              exit 1
+            fi
+            echo "OK: processo app attivo dopo 12 secondi"
+      - name: Salva log diagnostici
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: CostoLuce-emulator-log
+          path: |
+            emulator-logcat.txt
+            app-pid.txt
+          if-no-files-found: ignore
+          retention-days: 14
