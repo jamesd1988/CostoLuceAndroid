@@ -66,3 +66,10 @@ Nota: la firma dell'APK di debug può cambiare a ogni run. Per sostituire una pr
 - Per consumi manuali/CSV senza login Enel salvato, il pulsante informa che non può acquisire automaticamente nuovi kWh. Non tenta di inventarli.
 - **Versione 5.4.0, versionCode 12**, APK `CostoLuce_v5.4.0_WidgetRefresh_S25.apk`.
 - Non è un servizio real-time, non è una sincronizzazione periodica; la possibilità effettiva di login Enel rimane **beta non verificata** su account reali.
+
+## Build semplificata 5.5.0
+
+- Workflow attivo: `.github/workflows/apk-release.yml`. Un solo job: test JS + JUnit + compilazione Android + verifica manifest + pubblicazione diretta su GitHub Releases.
+- L'APK viene pubblicato **subito dopo la compilazione**, senza dipendere dal test su emulatore né dal caricamento degli artifact Actions, entrambi problematici nei vecchi run.
+- Il precedente `android.yml` è eseguibile solo manualmente per diagnostica Android. Il nuovo workflow si avvia con modifiche su `main` o manualmente.
+- I runner GitHub sono comunque necessari: se Actions resta in stato `queued` senza job, rifare il workflow non risolve automaticamente un problema di infrastruttura o permessi.

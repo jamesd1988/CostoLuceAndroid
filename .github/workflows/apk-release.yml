@@ -1,0 +1,106 @@
+name: Costo Luce - APK 5.5.0
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/apk-release.yml"
+      - "app/**"
+      - "tests/**"
+      - "build.gradle"
+      - "settings.gradle"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Avoid competing releases after multiple rapid pushes.
+concurrency:
+  group: costoluce-apk-v5-5-0
+  cancel-in-progress: true
+
+jobs:
+  compile-and-publish:
+    name: Compila, verifica e pubblica APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Scarica progetto
+        uses: actions/checkout@v4
+
+      - name: Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Android SDK 35
+        shell: bash
+        run: |
+          set -euo pipefail
+          SDKMANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -path "*/bin/sdkmanager" | sort -V | tail -1)"
+          test -n "$SDKMANAGER"
+          "$SDKMANAGER" --install "platforms;android-35" "build-tools;35.0.0"
+
+      - name: Gradle 8.9
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.9"
+
+      - name: Verifica test JavaScript
+        shell: bash
+        run: |
+          set -euo pipefail
+          for test in \
+            tests/test_calculations.js \
+            tests/test_import.js \
+            tests/test_capture.js \
+            tests/test_navigation.js \
+            tests/test_monthly.js \
+            tests/test_widget.js \
+            tests/test_widget_wiring.js; do
+            echo "TEST: $test"
+            node "$test"
+          done
+
+      - name: Test e compilazione Android
+        run: gradle --no-daemon --stacktrace :app:testDebugUnitTest :app:assembleDebug
+
+      - name: Controllo APK e widget Android
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="app/build/outputs/apk/debug/app-debug.apk"
+          test -s "$APK"
+          AAPT="$ANDROID_HOME/build-tools/35.0.0/aapt"
+          "$AAPT" dump xmltree "$APK" AndroidManifest.xml > manifest-compiled.txt
+          "$AAPT" dump permissions "$APK" > permissions-compiled.txt
+          grep -q "CostoLuceWidgetProvider" manifest-compiled.txt
+          grep -q "WidgetUpdateJobService" manifest-compiled.txt
+          grep -q "WidgetRefreshActivity" manifest-compiled.txt
+          grep -q "android.permission.ACCESS_NETWORK_STATE" permissions-compiled.txt
+          grep -q "android.permission.INTERNET" permissions-compiled.txt
+          mkdir -p dist
+          cp "$APK" dist/CostoLuce_v5.5.0_WidgetRefreshFix_S25.apk
+          sha256sum dist/CostoLuce_v5.5.0_WidgetRefreshFix_S25.apk
+
+      # Release directly after the build. No emulator or upload-artifact dependency.
+      - name: Pubblica APK su GitHub Release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="v5.5.0"
+          APK="dist/CostoLuce_v5.5.0_WidgetRefreshFix_S25.apk"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$APK" --clobber
+          else
+            gh release create "$TAG" "$APK" \
+              --target "$GITHUB_SHA" \
+              --title "Costo Luce v5.5.0 - Widget refresh fix" \
+              --notes "APK Android di test. Pulsante widget con feedback immediato e permesso di rete corretto. Login Enel non verificato con account reale. APK debug: la firma puo cambiare tra build." \
+              --prerelease
+          fi
+          echo "### APK pubblicato" >> "$GITHUB_STEP_SUMMARY"
+          echo "https://github.com/$GITHUB_REPOSITORY/releases/download/v5.5.0/CostoLuce_v5.5.0_WidgetRefreshFix_S25.apk" >> "$GITHUB_STEP_SUMMARY"

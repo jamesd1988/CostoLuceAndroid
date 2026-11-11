@@ -1,9 +1,8 @@
-name: Android APK + test di avvio
+name: Android emulator (legacy - avvio manuale)
 
+# Archived for optional emulator diagnostics. APK compiled by apk-release.yml.
 on:
   workflow_dispatch:
-  push:
-    branches: [ main ]
 
 permissions:
   contents: write
