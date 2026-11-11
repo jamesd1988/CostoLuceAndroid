@@ -1,7 +1,7 @@
 const fs=require('fs'),vm=require('vm'),assert=require('assert');
 const html=fs.readFileSync(__dirname+'/../app/src/main/assets/index.html','utf8');
 const js=html.match(/<script>([\s\S]*?)<\/script>/)[1];
-const script=js.replace(/  byId\('kwh'\)\.addEventListener\('input',recalc\);[\s\S]*$/,'');
+const script=js.replace(/  byId\('kwh'\)\.addEventListener\('input',markManualInput\);[\s\S]*$/,'');
 const cx={console,Intl,localStorage:{getItem:()=>null},document:{getElementById:()=>({})},window:{},location:{hash:''}};
 vm.createContext(cx);vm.runInContext(script,cx);
 const sample=[
