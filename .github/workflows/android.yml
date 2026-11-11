@@ -6,7 +6,7 @@ on:
     branches: [ main ]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -43,13 +43,27 @@ jobs:
         run: gradle --no-daemon --stacktrace :app:assembleDebug
       - name: Verifica presenza APK
         run: test -s app/build/outputs/apk/debug/app-debug.apk
+      - name: Rinomina APK con numero versione
+        run: |
+          mkdir -p dist
+          cp app/build/outputs/apk/debug/app-debug.apk dist/CostoLuce_v5.1.1_EnelDiagnostica_S25.apk
+          test -s dist/CostoLuce_v5.1.1_EnelDiagnostica_S25.apk
       - name: Pubblica APK installabile
         uses: actions/upload-artifact@v4
         with:
-          name: CostoLuce-GalaxyS25-debug
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: CostoLuce_v5.1.1_EnelDiagnostica_S25
+          path: dist/CostoLuce_v5.1.1_EnelDiagnostica_S25.apk
           if-no-files-found: error
           retention-days: 30
+      - name: Pubblica release GitHub scaricabile direttamente
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view v5.1.1 > /dev/null 2>&1; then
+            gh release upload v5.1.1 dist/CostoLuce_v5.1.1_EnelDiagnostica_S25.apk --clobber
+          else
+            gh release create v5.1.1 dist/CostoLuce_v5.1.1_EnelDiagnostica_S25.apk --target "$GITHUB_SHA" --title "Costo Luce v5.1.1 - Enel Diagnostica" --notes "APK di prova Android. Collegamento Enel non verificato su account reale." --prerelease
+          fi
 
   smoke-test:
     needs: build
@@ -61,7 +75,7 @@ jobs:
       - name: Scarica APK prodotto in CI
         uses: actions/download-artifact@v4
         with:
-          name: CostoLuce-GalaxyS25-debug
+          name: CostoLuce_v5.1.1_EnelDiagnostica_S25
           path: ./apk
       - name: Emulatore Android - prova apertura
         uses: reactivecircus/android-emulator-runner@v2
@@ -71,7 +85,7 @@ jobs:
           arch: x86_64
           profile: pixel_6
           script: |
-            adb install -r apk/app-debug.apk
+            adb install -r apk/CostoLuce_v5.1.1_EnelDiagnostica_S25.apk
             adb logcat -c
             adb shell am start -W -n com.costoluce.cloud/com.costoluce.importatore.MainActivity
             sleep 12

@@ -1,4 +1,4 @@
-# Costo Luce 5.1 — Enel Energia (diagnostica beta)
+# Costo Luce 5.1.1 — Enel Energia (diagnostica beta)
 
 App Android per stimare i soli costi variabili dai kWh; Android Gradle Plugin e GitHub Actions.
 
@@ -26,3 +26,10 @@ Nota: la firma dell'APK di debug può cambiare a ogni run. Per sostituire una pr
 - Collegamento reale non verificato: NON inserire credenziali in GitHub Actions o in chat.
 
 - Pulsante **Diagnostica login Enel (senza password)**: controlla la sola pagina pubblica e la presenza del parametro SAML atteso, senza usare o trasmettere credenziali.
+
+## Nomi e distribuzione v5.1.1
+
+- Nome dell’app installata: **Costo Luce 5.1.1**.
+- Versione Android: **5.1.1-enel-diagnostica**, codice versione **9**.
+- APK prodotto: **CostoLuce_v5.1.1_EnelDiagnostica_S25.apk**.
+- Distribuzione diretta: GitHub Release `v5.1.1` (prerelease; installazione ancora sperimentale). Non richiede la Libreria ChatGPT.
