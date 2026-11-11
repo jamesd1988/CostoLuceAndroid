@@ -21,6 +21,7 @@ public final class MainActivity extends Activity {
     private static final int PICK_CSV = 411;
     private static final int MAX_FILE_BYTES = 1_500_000;
     private WebView web;
+    private int preferredMonths = 2;
 
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -52,7 +53,10 @@ public final class MainActivity extends Activity {
         try { uri = Uri.parse(url); } catch (Exception e) { return false; }
         if (!"costoluce".equalsIgnoreCase(uri.getScheme())) return false;
         String action = uri.getHost();
-        if ("sync".equals(action)) { openPortalInsideApp(); return true; }
+        if ("sync".equals(action)) {
+            preferredMonths = "1".equals(uri.getQueryParameter("months")) ? 1 : 2;
+            openPortalInsideApp(); return true;
+        }
         if ("portal".equals(action)) { openPortalInExternalBrowser(); return true; }
         if ("home".equals(action)) { returnHome(); return true; }
         if ("import".equals(action)) { selectConsumptionFile(); return true; }
@@ -71,6 +75,8 @@ public final class MainActivity extends Activity {
         }
         return false;
     }
+
+    int getPreferredMonths() { return preferredMonths; }
 
     void openPortalInsideApp() {
         if (web != null) web.loadUrl(PORTAL);

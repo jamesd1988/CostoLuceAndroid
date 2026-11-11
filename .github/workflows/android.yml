@@ -22,7 +22,6 @@ jobs:
           java-version: '17'
       - name: Android SDK preinstallato sul runner
         run: |
-          echo "ANDROID_HOME=$ANDROID_HOME"
           SDKMANAGER=$(find "$ANDROID_HOME/cmdline-tools" -type f -path "*/bin/sdkmanager" | sort -V | tail -1)
           test -n "$SDKMANAGER"
           echo "SDKMANAGER=$SDKMANAGER" >> "$GITHUB_ENV"
@@ -39,6 +38,7 @@ jobs:
           node tests/test_calculations.js
           node tests/test_import.js
           node tests/test_capture.js
+          node tests/test_navigation.js
       - name: Compilazione ufficiale Android
         run: gradle --no-daemon --stacktrace :app:assembleDebug
       - name: Verifica presenza APK
@@ -78,10 +78,7 @@ jobs:
             adb logcat -d -v time > emulator-logcat.txt
             adb shell pidof com.costoluce.cloud > app-pid.txt || true
             test -s app-pid.txt || { echo "ERRORE: l'app non e' rimasta avviata"; exit 1; }
-            if grep -A 30 'FATAL EXCEPTION' emulator-logcat.txt | grep -q 'Process: com.costoluce.cloud'; then
-              echo 'ERRORE: crash AndroidRuntime'
-              exit 1
-            fi
+            if grep -A 30 'FATAL EXCEPTION' emulator-logcat.txt | grep -q 'Process: com.costoluce.cloud'; then echo 'ERRORE: crash AndroidRuntime'; exit 1; fi
             echo "OK: processo app attivo dopo 12 secondi"
       - name: Salva log diagnostici
         if: always()

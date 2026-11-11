@@ -41,7 +41,8 @@ public final class PortalRouter extends WebViewClient {
             byte[] chunk = new byte[4096];
             int count;
             while ((count = input.read(chunk)) > 0) out.write(chunk, 0, count);
-            view.evaluateJavascript(new String(out.toByteArray(), StandardCharsets.UTF_8), null);
+            view.evaluateJavascript("window.__costoLuceMonths = " + host.getPreferredMonths() + ";" +
+                    new String(out.toByteArray(), StandardCharsets.UTF_8), null);
         } catch (Exception ignored) { /* Il calcolatore deve rimanere utilizzabile. */ }
     }
 }

@@ -1,11 +1,11 @@
-# Costo Luce Cloud — Android (versione 4.0 test)
+# Costo Luce Cloud — Android (versione 4.1 auto-sync test)
 
 **Obiettivo:** sostituire le precedenti APK prodotte con DEX artigianale con una build Android ufficiale prodotta da Gradle su GitHub Actions.
 
 ## Funzioni
 
 - Calcolo delle **sole quote variabili** in funzione dei kWh inseriti; componenti modificabili, IVA e stima accisa.
-- **Aggiorna consumi**: apre il Portale Consumi in una WebView e tenta di identificare il totale in kWh. L'utente effettua personalmente l'accesso SPID/CIE. Acquisizione **sperimentale**, non validata con una sessione reale: alcuni provider possono rifiutare l'accesso da WebView.
+- **Aggiorna consumi**: tenta di navigare automaticamente dopo il login nella sezione consumi elettrici, selezionare il periodo disponibile e trovare il totale in kWh. Funziona solo per etichette riconosciute: nessun accesso automatico a SPID/CIE e nessuna garanzia sulla pagina autenticata. L'utente effettua personalmente l'accesso SPID/CIE. Acquisizione **sperimentale**, non validata con una sessione reale: alcuni provider possono rifiutare l'accesso da WebView.
 - **Apri in Chrome** come alternativa per accedere al portale. L'app **non può leggere** il contenuto della sessione esterna di Chrome.
 - Importazione di file `.csv` / `.txt` dal telefono come ripiego (solo se necessario), oltre all'inserimento manuale dei kWh.
 - Nessuna richiesta di password SPID/CIE da parte dell'app, nessun salvataggio di token/cookie da parte del codice applicativo. Lo script di lettura viene iniettato esclusivamente sul dominio ufficiale `consumienergia.it`.
@@ -37,3 +37,7 @@ node tests/test_calculations.js
 node tests/test_import.js
 node tests/test_capture.js
 ```
+
+## Automazione 4.1
+
+Il flusso mira a: Aggiorna consumi → SPID/CIE manuale → navigazione alla pagina consumi elettrici (se riconoscibile) → selezione di 1/2 mesi (se l’opzione esiste) → lettura totale. Nessun clic sui consensi/credenziali; non si utilizza scraping di sessioni Chrome esterne. Se ci sono più POD o periodo non identificabile, la sincronizzazione si ferma senza inventare dati. **La pagina privata reale non è stata verificata; il funzionamento end-to-end non è garantito.**
