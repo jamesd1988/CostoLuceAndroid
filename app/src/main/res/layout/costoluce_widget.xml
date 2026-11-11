@@ -21,7 +21,7 @@
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:text="COSTO LUCE  •  v5.4"
+            android:text="COSTO LUCE  •  v5.5"
             android:textSize="11sp"
             android:textColor="#C3D5FF"
             android:fontFamily="sans"
@@ -29,8 +29,8 @@
             android:maxLines="1" />
         <TextView
             android:id="@+id/widget_refresh"
-            android:layout_width="42dp"
-            android:layout_height="38dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:layout_marginLeft="6dp"
             android:background="@drawable/costoluce_widget_refresh_bg"
             android:gravity="center"
@@ -92,7 +92,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="6dp"
-        android:text="↻ Aggiorna consumi e costo"
+        android:text="Tocca ↻ per aggiornare kWh e costo"
         android:textColor="#D6E6FF"
         android:textSize="11sp"
         android:maxLines="2"

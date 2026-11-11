@@ -24,7 +24,10 @@ public final class WidgetUpdateJobService extends JobService {
                         CostoLuceWidgetProvider.readConfiguration(this);
                 if (config == null)
                     throw new IllegalStateException("Apri Costo Luce e premi Aggiorna widget Home per configurare le tariffe.");
-                EnelConnector.Result result = EnelConnector.fetch(credentials, config.months);
+                CostoLuceWidgetProvider.setRefreshStatus(this, "Connessione Enel avviata...", true);
+                EnelConnector.Result result = EnelConnector.fetch(credentials, config.months, phase -> {
+                    if (!stopped.get()) CostoLuceWidgetProvider.setRefreshStatus(this, phase, true);
+                });
                 if (result.kwh <= 0)
                     throw new IllegalStateException("Non sono disponibili kWh positivi nel periodo scelto.");
                 if (!stopped.get() && !Thread.currentThread().isInterrupted()) {

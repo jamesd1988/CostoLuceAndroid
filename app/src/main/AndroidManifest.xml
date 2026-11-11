@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Required for JobScheduler jobs with network constraints on Android 14+. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <application
-        android:label="Costo Luce 5.4.0"
+        android:label="Costo Luce 5.5.0"
         android:theme="@android:style/Theme.Material.Light.NoActionBar"
         android:usesCleartextTraffic="false"
         android:allowBackup="false">
@@ -15,6 +17,12 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <!-- Explicit launcher for the one-tap widget refresh; no visible screen. -->
+        <activity
+            android:name=".WidgetRefreshActivity"
+            android:theme="@android:style/Theme.NoDisplay"
+            android:exported="false"
+            android:excludeFromRecents="true" />
         <service
             android:name=".WidgetUpdateJobService"
             android:permission="android.permission.BIND_JOB_SERVICE"

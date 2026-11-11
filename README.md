@@ -1,4 +1,4 @@
-# Costo Luce 5.4.0 — aggiornamento consumi e costo dal widget (Enel beta)
+# Costo Luce 5.5.0 — correzione aggiornamento widget (Enel beta)
 
 App Android per stimare i soli costi variabili dai kWh; Android Gradle Plugin e GitHub Actions.
 

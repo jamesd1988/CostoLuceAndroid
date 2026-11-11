@@ -201,7 +201,10 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         super.onReceive(context, intent);
     }
 
-    private void requestDataRefresh(Context context) {
+    static void requestDataRefresh(Context context) {
+        // Confirm every actual tap before checking any credentials or network state.
+        String time = new SimpleDateFormat("HH:mm:ss", IT).format(new Date());
+        setRefreshStatus(context, "↻ Tasto premuto alle " + time, false);
         SharedPreferences p = prefs(context);
         long now = System.currentTimeMillis();
         long last = p.getLong(KEY_LAST_REQUEST, 0L);
@@ -222,7 +225,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
             return;
         }
         p.edit().putLong(KEY_LAST_REQUEST, now).commit();
-        setRefreshStatus(context, "Aggiornamento Enel richiesto...", true);
+        setRefreshStatus(context, "↻ Tocco ricevuto · attendo la rete Enel...", true);
         JobScheduler scheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
         if (scheduler == null) {
             setRefreshStatus(context, "Aggiornamento Android non disponibile.", false);
@@ -241,7 +244,9 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
                         .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY).build());
             }
             if (response != JobScheduler.RESULT_SUCCESS)
-                setRefreshStatus(context, "Avvio aggiornamento non riuscito.", false);
+                setRefreshStatus(context, "Android non ha avviato l'aggiornamento.", false);
+        } catch (SecurityException e) {
+            setRefreshStatus(context, "Permesso rete mancante: aggiorna l'app.", false);
         } catch (RuntimeException e) {
             setRefreshStatus(context, "Impossibile avviare la sincronizzazione.", false);
         }
@@ -291,21 +296,32 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         }
         String status = p.getString(KEY_STATUS, "");
         views.setTextViewText(R.id.widget_status,
-                status == null || status.isEmpty() ? "↻  Aggiorna consumi e costo" : status);
+                status == null || status.isEmpty() ? "Tocca ↻ per aggiornare kWh e costo" : status);
         views.setTextViewText(R.id.widget_refresh,
                 p.getBoolean(KEY_BUSY, false) ? "…" : "↻");
 
+        // No click on widget_root: some launchers prefer the parent's click
+        // over the refresh button's click, making refresh look unresponsive.
         Intent open = new Intent(context, MainActivity.class);
         open.setAction("com.costoluce.cloud.action.OPEN_WIDGET");
         open.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        views.setOnClickPendingIntent(R.id.widget_root,
-                PendingIntent.getActivity(context, 0, open,
-                        PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
-        Intent refreshIntent = new Intent(context, CostoLuceWidgetProvider.class);
+        PendingIntent openPending = PendingIntent.getActivity(context, 0, open,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        views.setOnClickPendingIntent(R.id.widget_brand, openPending);
+        views.setOnClickPendingIntent(R.id.widget_euro, openPending);
+        views.setOnClickPendingIntent(R.id.widget_kwh, openPending);
+        views.setOnClickPendingIntent(R.id.widget_period, openPending);
+        views.setOnClickPendingIntent(R.id.widget_updated, openPending);
+
+        // Launch a dedicated no-display activity directly from the user tap.
+        // The Activity is not a broadcast-to-activity trampoline and finishes
+        // immediately after enqueuing an Android JobScheduler task.
+        Intent refreshIntent = new Intent(context, WidgetRefreshActivity.class);
         refreshIntent.setAction(ACTION_REFRESH);
-        views.setOnClickPendingIntent(R.id.widget_refresh,
-                PendingIntent.getBroadcast(context, 1002, refreshIntent,
-                        PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE));
+        PendingIntent refreshPending = PendingIntent.getActivity(context, 1002, refreshIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        views.setOnClickPendingIntent(R.id.widget_refresh, refreshPending);
+        views.setOnClickPendingIntent(R.id.widget_status, refreshPending);
         manager.updateAppWidget(widgetId, views);
     }
 }

@@ -41,6 +41,7 @@ jobs:
           node tests/test_navigation.js
           node tests/test_monthly.js
           node tests/test_widget.js
+          node tests/test_widget_wiring.js
       - name: Compilazione ufficiale Android
         run: gradle --no-daemon --stacktrace :app:testDebugUnitTest :app:assembleDebug
       - name: Verifica presenza APK
@@ -49,26 +50,28 @@ jobs:
           # Verify widget registration in the generated manifest
           $ANDROID_HOME/build-tools/35.0.0/aapt dump xmltree app/build/outputs/apk/debug/app-debug.apk AndroidManifest.xml | grep -q 'CostoLuceWidgetProvider'
           $ANDROID_HOME/build-tools/35.0.0/aapt dump xmltree app/build/outputs/apk/debug/app-debug.apk AndroidManifest.xml | grep -q 'WidgetUpdateJobService'
+          $ANDROID_HOME/build-tools/35.0.0/aapt dump xmltree app/build/outputs/apk/debug/app-debug.apk AndroidManifest.xml | grep -q 'WidgetRefreshActivity'
+          $ANDROID_HOME/build-tools/35.0.0/aapt dump permissions app/build/outputs/apk/debug/app-debug.apk | grep -q 'android.permission.ACCESS_NETWORK_STATE'
       - name: Rinomina APK con numero versione
         run: |
           mkdir -p dist
-          cp app/build/outputs/apk/debug/app-debug.apk dist/CostoLuce_v5.4.0_WidgetRefresh_S25.apk
-          test -s dist/CostoLuce_v5.4.0_WidgetRefresh_S25.apk
+          cp app/build/outputs/apk/debug/app-debug.apk dist/CostoLuce_v5.5.0_WidgetRefreshFix_S25.apk
+          test -s dist/CostoLuce_v5.5.0_WidgetRefreshFix_S25.apk
       - name: Pubblica APK installabile
         uses: actions/upload-artifact@v4
         with:
-          name: CostoLuce_v5.4.0_WidgetRefresh_S25
-          path: dist/CostoLuce_v5.4.0_WidgetRefresh_S25.apk
+          name: CostoLuce_v5.5.0_WidgetRefreshFix_S25
+          path: dist/CostoLuce_v5.5.0_WidgetRefreshFix_S25.apk
           if-no-files-found: error
           retention-days: 30
       - name: Pubblica release GitHub scaricabile direttamente
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if gh release view v5.4.0 > /dev/null 2>&1; then
-            gh release upload v5.4.0 dist/CostoLuce_v5.4.0_WidgetRefresh_S25.apk --clobber
+          if gh release view v5.5.0 > /dev/null 2>&1; then
+            gh release upload v5.5.0 dist/CostoLuce_v5.5.0_WidgetRefreshFix_S25.apk --clobber
           else
-            gh release create v5.4.0 dist/CostoLuce_v5.4.0_WidgetRefresh_S25.apk --target "$GITHUB_SHA" --title "Costo Luce v5.4.0 - Aggiorna widget" --notes "APK di prova Android. Collegamento Enel non verificato su account reale." --prerelease
+            gh release create v5.5.0 dist/CostoLuce_v5.5.0_WidgetRefreshFix_S25.apk --target "$GITHUB_SHA" --title "Costo Luce v5.5.0 - Correzione aggiornamento widget" --notes "APK di prova Android. Collegamento Enel non verificato su account reale." --prerelease
           fi
 
   smoke-test:
@@ -81,7 +84,7 @@ jobs:
       - name: Scarica APK prodotto in CI
         uses: actions/download-artifact@v4
         with:
-          name: CostoLuce_v5.4.0_WidgetRefresh_S25
+          name: CostoLuce_v5.5.0_WidgetRefreshFix_S25
           path: ./apk
       - name: Emulatore Android - prova apertura
         uses: reactivecircus/android-emulator-runner@v2
@@ -91,8 +94,11 @@ jobs:
           arch: x86_64
           profile: pixel_6
           script: |
-            adb install -r apk/CostoLuce_v5.4.0_WidgetRefresh_S25.apk
+            adb install -r apk/CostoLuce_v5.5.0_WidgetRefreshFix_S25.apk
             adb logcat -c
+            adb shell am start -W -n com.costoluce.cloud/com.costoluce.importatore.WidgetRefreshActivity
+            sleep 2
+            adb shell run-as com.costoluce.cloud cat shared_prefs/costoluce_widget_snapshot_v1.xml | grep -q 'refresh_status'
             adb shell am start -W -n com.costoluce.cloud/com.costoluce.importatore.MainActivity
             sleep 12
             adb logcat -d -v time > emulator-logcat.txt

@@ -11,8 +11,8 @@ android {
         applicationId 'com.costoluce.cloud'
         minSdk 24
         targetSdk 35
-        versionCode 12
-        versionName '5.4.0-widget-refresh'
+        versionCode 13
+        versionName '5.5.0-widget-refresh-fix'
     }
 
     compileOptions {
