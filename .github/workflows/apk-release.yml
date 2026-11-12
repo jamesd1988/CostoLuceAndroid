@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
-      COSTOLUCE_DEBUG_KEYSTORE: ${{ runner.temp }}/costoluce-signing/debug.keystore
+      COSTOLUCE_DEBUG_KEYSTORE: /tmp/costoluce-signing/debug.keystore
     steps:
       - name: Scarica progetto
         uses: actions/checkout@v4
