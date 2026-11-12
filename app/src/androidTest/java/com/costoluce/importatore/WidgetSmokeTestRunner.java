@@ -97,7 +97,7 @@ public class WidgetSmokeTestRunner extends Instrumentation {
             for(int id:targets){View target=view.findViewById(id);if(target.getWidth()<48*density-1||target.getHeight()<48*density-1)throw new AssertionError("Small touch target");}
             if(page==1){android.widget.ImageView chart=view.findViewById(R.id.widget_chart);if(chart.getHeight()<40*density)throw new AssertionError("Chart collapsed");}
         });
-        if(fontScale==1&&width<=400&&height<=350)capture("widget-"+(page==0?"summary":"history")+"-"+(width==280?"compact":width==340?"medium":"large")+"-6.4.1");
+        if(fontScale==1&&width<=400&&height<=350)capture("widget-"+(page==0?"summary":"history")+"-"+(width==280?"compact":width==340?"medium":"large")+"-6.4.2");
         // Measurement fixtures stay in detached views: never saved or published as Enel data.
         checkedOnMainSync(()->{
             if(page==0){
@@ -182,10 +182,10 @@ public class WidgetSmokeTestRunner extends Instrumentation {
         });
         if(prefs.getInt("page_4242",-1)!=savedPage||!"eur".equals(prefs.getString("display_unit","")))throw new AssertionError("Collapsing widget lost the saved page or unit");
         if(fontScale==1&&savedPage==0){
-            if(width==130&&height==64)capture("widget-2x1-6.4.1");
-            if(width==300&&height==64)capture("widget-wide-row-6.4.1");
-            if(width==180&&height==180)capture("widget-intermediate-6.4.1");
-            if(width==150&&height==80)capture("widget-compact-refresh-6.4.1");
+            if(width==130&&height==64)capture("widget-2x1-6.4.2");
+            if(width==300&&height==64)capture("widget-wide-row-6.4.2");
+            if(width==180&&height==180)capture("widget-intermediate-6.4.2");
+            if(width==150&&height==80)capture("widget-compact-refresh-6.4.2");
         }
         // Isolated measurement fixtures, never stored in the real widget preferences or exported screenshots.
         checkedOnMainSync(()->{
@@ -206,8 +206,8 @@ public class WidgetSmokeTestRunner extends Instrumentation {
                 View reused=CostoLuceWidgetProvider.createViewsForSize(fixture,4242,96,48).apply(fixture,null);
                 if(!reused.hasOnClickListeners())throw new AssertionError("Baseline mini value area must open app");
                 CostoLuceWidgetProvider.createViewsForSize(fixture,4242,width,height).reapply(fixture,reused);
-                android.widget.TextView refresh=reused.findViewById(R.id.widget_small_refresh);
-                if(refresh.getVisibility()!=View.VISIBLE||!"…".equals(refresh.getText().toString())||reused.hasOnClickListeners())throw new AssertionError("Compact busy feedback or parent listener reset failed");
+                android.widget.ImageView refresh=reused.findViewById(R.id.widget_small_refresh);
+                if(refresh.getVisibility()!=View.VISIBLE||refresh.getDrawable()==null||!refresh.getContentDescription().toString().contains("in corso")||reused.hasOnClickListeners())throw new AssertionError("Compact busy feedback or parent listener reset failed");
                 for(int settle=0;settle<2;settle++){reused.measure(View.MeasureSpec.makeMeasureSpec(Math.round(width*density),View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(Math.round(height*density),View.MeasureSpec.EXACTLY));reused.layout(0,0,reused.getMeasuredWidth(),reused.getMeasuredHeight());}assertBounds(reused);
             }
         });
@@ -220,13 +220,13 @@ public class WidgetSmokeTestRunner extends Instrumentation {
         try {
             Context c=getTargetContext();
             Activity activity=startActivitySync(new Intent(c,MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-            Thread.sleep(2500);previewWeb=findWeb(activity.findViewById(android.R.id.content));capture("app-6.4.1");
+            Thread.sleep(2500);previewWeb=findWeb(activity.findViewById(android.R.id.content));capture("app-6.4.2");
             android.webkit.WebView web=findWeb(activity.findViewById(android.R.id.content));
             if(web==null)throw new AssertionError("Missing WebView");
             assertScript(web,"showView('rates');if(document.querySelectorAll('.rate-card').length!==10)throw Error('Default rows');openRateEditor('energy');if(!document.getElementById('rateName').disabled)throw Error('Energy lock');closeRateEditor()");
-            capture("tariffe-6.4.1");
+            capture("tariffe-6.4.2");
             assertScript(web,"openRateEditor('transport','fixed');if(document.getElementById('rateAmount').value!=='')throw Error('Automatic conversion');document.getElementById('rateName').value='Quota fissa mensile';document.getElementById('rateAmount').value='8,00'");
-            capture("tariffe-editor-6.4.1");
+            capture("tariffe-editor-6.4.2");
             assertScript(web,"if(!saveRateEditor())throw Error('Save');setRateFilter('fixed');if(document.querySelectorAll('.rate-card').length!==1)throw Error('Filter');if(JSON.parse(localStorage.getItem('costoluce_rates_v1'))._meta.transport.name!=='Quota fissa mensile')throw Error('Persistence')");
             Thread.sleep(1200);waitForIdleSync();
             CostoLuceWidgetProvider.WidgetConfiguration saved=CostoLuceWidgetProvider.readConfiguration(c);

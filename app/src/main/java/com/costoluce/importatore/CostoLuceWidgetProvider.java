@@ -504,7 +504,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
             float fontScale=context.getResources().getConfiguration().fontScale;
             views.setImageViewBitmap(R.id.widget_chart,MonthlyChart.draw(context,history,spec,spec.chartHeight(fontScale,showStatus),bitmapPixels));
         }else{
-            views.setTextViewText(R.id.widget_brand,spec.compact()?"Costo Luce":"Costo Luce · v6.4.1");
+            views.setTextViewText(R.id.widget_brand,spec.compact()?"Costo Luce":"Costo Luce · v6.4.2");
             views.setViewVisibility(R.id.widget_chart_note,android.view.View.GONE);
             if("enel".equals(p.getString(KEY_SOURCE,"")))try{org.json.JSONArray rows=new org.json.JSONArray(p.getString(KEY_MONTHLY,"[]"));if(rows.length()>0)views.setTextViewText(R.id.widget_period,compactPeriod(rows));}catch(Exception ignored){}
         }
@@ -554,7 +554,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         views.setViewVisibility(R.id.widget_small_refresh,refreshShown?android.view.View.VISIBLE:android.view.View.GONE);
         Intent refresh=new Intent(context,CostoLuceWidgetProvider.class).setAction(ACTION_REFRESH).addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
         views.setOnClickPendingIntent(R.id.widget_small_refresh,PendingIntent.getBroadcast(context,1002,refresh,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE));
-        views.setTextViewText(R.id.widget_small_refresh,p.getBoolean(KEY_BUSY,false)?"…":"↻");
+        setRefreshAppearance(views,R.id.widget_small_refresh,p.getBoolean(KEY_BUSY,false));
         float fontScale=context.getResources().getConfiguration().fontScale;
         float available=spec.height-(spec.statsOnly()?8:16);
         if(spec.smallSummary())available-=(spec.smallRefresh()?48:Math.max(20,14*fontScale))+(spec.smallDate()?14*fontScale+4:0);
@@ -564,6 +564,10 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         views.setTextViewTextSize(R.id.widget_small_kwh,android.util.TypedValue.COMPLEX_UNIT_PX,fitSmallValue(context,energy,width,primaryHeight,spec.statsOnly()?22:26,true));
         views.setTextViewTextSize(R.id.widget_small_cost,android.util.TypedValue.COMPLEX_UNIT_PX,fitSmallValue(context,cost,width,secondaryHeight,spec.statsOnly()?18:20,false));
         return views;
+    }
+    private static void setRefreshAppearance(RemoteViews views,int id,boolean busy){
+        views.setImageViewResource(id,busy?R.drawable.costoluce_refresh_busy:R.drawable.costoluce_refresh_icon);
+        views.setContentDescription(id,busy?"Aggiornamento Enel in corso":"Aggiorna i consumi Enel in background");
     }
     private static float fitSmallValue(Context context,String text,float widthDp,float heightDp,int desiredSp,boolean bold){
         android.util.DisplayMetrics dm=context.getResources().getDisplayMetrics();
@@ -631,8 +635,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         String status = p.getString(KEY_STATUS, "");
         views.setTextViewText(R.id.widget_status,
                 status == null || status.isEmpty() ? "↻  Aggiorna consumi e costo" : status);
-        views.setTextViewText(R.id.widget_refresh,
-                p.getBoolean(KEY_BUSY, false) ? "…" : "↻");
+        setRefreshAppearance(views,R.id.widget_refresh,p.getBoolean(KEY_BUSY,false));
 
         // No click on widget_root: some launchers prefer the parent's click
         // over the refresh button's click, making refresh look unresponsive.
@@ -658,7 +661,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         views.setOnClickPendingIntent(R.id.widget_refresh, refreshPending);
         views.setOnClickPendingIntent(R.id.widget_status, refreshPending);
         boolean chart = p.getInt("page_"+widgetId,0)==1;
-        views.setTextViewText(R.id.widget_brand,chart?"Consumi ultimi 4 mesi":"COSTO LUCE · v6.4.1");
+        views.setTextViewText(R.id.widget_brand,chart?"Consumi ultimi 4 mesi":"COSTO LUCE · v6.4.2");
         views.setViewVisibility(R.id.widget_units,chart?android.view.View.VISIBLE:android.view.View.GONE);
         views.setViewVisibility(R.id.widget_refresh,chart?android.view.View.GONE:android.view.View.VISIBLE);
         boolean showKwh="kwh".equals(p.getString("display_unit","eur"));

@@ -1,9 +1,9 @@
-Costo Luce 6.4.1 — Aggiornamento nel widget compatto
+Costo Luce 6.4.2 — Nuovo design del tasto aggiorna
 
-- Pulsante ↻ sulla destra anche nel formato compatto a una riga, quando può convivere con kWh e costo leggibili. Funziona anche nella riga larga.
-- Area del pulsante 48 × 48 dp; aggiornamento in background tramite broadcast e JobScheduler, senza apertura dell’app. Durante il recupero compare «…».
-- Rimossa l’azione del contenitore quando il pulsante è visibile, anche riutilizzando una vista appena ridimensionata, per non intercettarne il tocco.
-- Nei limiti estremi da 96 × 48 dp rimangono solo i due valori. Il pulsante viene mostrato da 120 × 56 dp se le cifre entrano mantenendo una dimensione leggibile; se non entrano, basta allargare il widget.
-- Misure iniziali 2 × 1, dati Enel reali, credenziali e tariffe rimangono quelli già salvati.
+- Tasto ridisegnato con icona vettoriale a due frecce, centrata e indipendente dai caratteri del telefono.
+- Superficie circolare da 40 dp, all’interno di un’area di tocco da 48 × 48 dp: meno ingombro visivo, stesso spazio comodo per il dito.
+- Colori navy/teal più discreti, bordo sottile e feedback circolare alla pressione.
+- Indicatore grafico dedicato durante il recupero, con descrizione accessibile “Aggiornamento Enel in corso”.
+- Stile coerente nei widget compatti, intermedi e completi. Refresh in background, credenziali, tariffe e consumi restano invariati.
 
-Test JavaScript, JVM e Android 15, compresi formato 150 × 80 dp, testo al 130%, valori lunghi, stato di aggiornamento e riutilizzo della vista dopo ridimensionamento. Le immagini CI mostrano dati mancanti senza introdurre consumi dimostrativi. APK di test.
+Test JavaScript, JVM, compilazione e controlli Android delle diverse dimensioni, incluso testo ingrandito e stato di aggiornamento. Le immagini CI non contengono consumi dimostrativi. APK di test.

@@ -168,3 +168,9 @@ La selezione della pagina completa non viene modificata quando il widget si rest
 Il formato di una riga mostra il refresh a destra se dispone di almeno 120 × 56 dp e i due valori restano leggibili nella larghezza residua (almeno 11 dp di testo effettivo). Il pulsante è 48 × 48 dp, più 4 dp di separazione. Il formato minimo estremo 96 × 48 dp continua a mostrare solo le cifre; importi particolarmente lunghi possono richiedere più larghezza per far comparire anche il refresh.
 
 Il tap di ↻ usa lo stesso broadcast foreground e il medesimo JobScheduler delle pagine complete; non apre un’Activity. Lo stato busy è rappresentato da «…». L'azione del contenitore viene azzerata esplicitamente durante ogni ricostruzione, così un precedente layout senza pulsante non lascia un'azione che intercetti il refresh. La prova Android riapplica una vista da 96 × 48 a 150 × 80 dp e controlla azione del genitore, feedback busy, dimensione del tasto e bordi.
+
+## Costo Luce 6.4.2 — Tasto aggiorna vettoriale
+
+Il tasto aggiorna usa un ImageButton con icona vettoriale a due frecce (24 dp), padding di 12 dp e area interattiva 48 × 48 dp. Lo sfondo circolare è rientrato di 4 dp per lato: la superficie visibile è 40 dp. Il ripple resta contenuto nel cerchio; le forme non dichiarano minimi intrinseci che possano far crescere il widget. La stessa risorsa è usata nei formati compatti, intermedi e completi.
+
+Durante l'aggiornamento viene mostrata un'icona vettoriale di attesa, con descrizione accessibile dedicata. Il meccanismo di broadcast e JobScheduler non cambia. Le prove esistenti controllano ancora dimensione del bersaglio, stato busy e assenza dell'azione del contenitore che intercetta il tocco.
