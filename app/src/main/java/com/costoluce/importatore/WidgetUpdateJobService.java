@@ -35,6 +35,8 @@ public final class WidgetUpdateJobService extends JobService {
                     else label = "Enel · controllo dei dati";
                     CostoLuceWidgetProvider.setRefreshStatus(this, label, true);
                 });
+                // History includes measured zeros even when billing has no positive total.
+                CostoLuceWidgetProvider.saveHistory(this,result);
                 if (result.kwh <= 0)
                     throw new IllegalStateException("Non sono disponibili kWh positivi nel periodo scelto.");
                 if (!stopped.get() && !Thread.currentThread().isInterrupted()) {

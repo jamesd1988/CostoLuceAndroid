@@ -43,12 +43,6 @@ public final class MainActivity extends Activity {
         try {
             web = new WebView(this);
             web.setBackgroundColor(android.graphics.Color.rgb(10,25,40));
-            // Android 15 draws edge-to-edge: keep web content outside system bars.
-            web.setOnApplyWindowInsetsListener((view,insets) -> {
-                view.setPadding(insets.getSystemWindowInsetLeft(),insets.getSystemWindowInsetTop(),
-                        insets.getSystemWindowInsetRight(),insets.getSystemWindowInsetBottom());
-                return insets;
-            });
             WebSettings settings = web.getSettings();
             settings.setJavaScriptEnabled(true); // Necessario per il calcolatore e per il portale.
             settings.setDomStorageEnabled(true);
@@ -58,7 +52,22 @@ public final class MainActivity extends Activity {
             settings.setJavaScriptCanOpenWindowsAutomatically(false);
             web.setWebViewClient(new PortalRouter(this));
             web.loadUrl(HOME);
-            setContentView(web);
+            android.widget.FrameLayout container = new android.widget.FrameLayout(this);
+            container.setBackgroundColor(android.graphics.Color.rgb(3,19,41));
+            container.addView(web,new android.widget.FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,ViewGroup.LayoutParams.MATCH_PARENT));
+            // Insets belong to the native container: WebView content ignores View padding.
+            container.setOnApplyWindowInsetsListener((view,insets) -> {
+                int top=insets.getSystemWindowInsetTop(),bottom=insets.getSystemWindowInsetBottom();
+                int left=insets.getSystemWindowInsetLeft(),right=insets.getSystemWindowInsetRight();
+                if(android.os.Build.VERSION.SDK_INT>=30){
+                    android.graphics.Insets bars=insets.getInsets(android.view.WindowInsets.Type.systemBars()|android.view.WindowInsets.Type.displayCutout());
+                    top=bars.top;bottom=bars.bottom;left=bars.left;right=bars.right;
+                }
+                view.setPadding(left,top,right,bottom);return insets;
+            });
+            setContentView(container);
+            container.requestApplyInsets();
         } catch (RuntimeException | LinkageError error) {
             // Diagnostica visibile senza PC se WebView non riesce ad inizializzarsi.
             TextView diagnostic = new TextView(this);
