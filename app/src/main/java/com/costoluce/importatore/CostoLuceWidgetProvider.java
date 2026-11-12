@@ -331,7 +331,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
     }
 
     @Override public void onAppWidgetOptionsChanged(Context context, AppWidgetManager manager, int id, android.os.Bundle options) {
-        render(context,manager,id);
+        manager.updateAppWidget(id,createViews(context,id,options==null?new android.os.Bundle():options));
     }
     @Override public void onDeleted(Context context, int[] ids) {
         SharedPreferences.Editor e=prefs(context).edit();for(int id:ids)e.remove("page_"+id);e.apply();
@@ -504,7 +504,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
             float fontScale=context.getResources().getConfiguration().fontScale;
             views.setImageViewBitmap(R.id.widget_chart,MonthlyChart.draw(context,history,spec,spec.chartHeight(fontScale,showStatus),bitmapPixels));
         }else{
-            views.setTextViewText(R.id.widget_brand,spec.compact()?"Costo Luce":"Costo Luce · v6.3");
+            views.setTextViewText(R.id.widget_brand,spec.compact()?"Costo Luce":"Costo Luce · v6.3.1");
             views.setViewVisibility(R.id.widget_chart_note,android.view.View.GONE);
             if("enel".equals(p.getString(KEY_SOURCE,"")))try{org.json.JSONArray rows=new org.json.JSONArray(p.getString(KEY_MONTHLY,"[]"));if(rows.length()>0)views.setTextViewText(R.id.widget_period,compactPeriod(rows));}catch(Exception ignored){}
         }
@@ -592,7 +592,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         views.setOnClickPendingIntent(R.id.widget_refresh, refreshPending);
         views.setOnClickPendingIntent(R.id.widget_status, refreshPending);
         boolean chart = p.getInt("page_"+widgetId,0)==1;
-        views.setTextViewText(R.id.widget_brand,chart?"Consumi ultimi 4 mesi":"COSTO LUCE · v6.3");
+        views.setTextViewText(R.id.widget_brand,chart?"Consumi ultimi 4 mesi":"COSTO LUCE · v6.3.1");
         views.setViewVisibility(R.id.widget_units,chart?android.view.View.VISIBLE:android.view.View.GONE);
         views.setViewVisibility(R.id.widget_refresh,chart?android.view.View.GONE:android.view.View.VISIBLE);
         boolean showKwh="kwh".equals(p.getString("display_unit","eur"));

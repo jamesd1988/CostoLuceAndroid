@@ -1,4 +1,4 @@
-name: Costo Luce - APK 6.3.0
+name: Costo Luce - APK 6.3.1
 
 on:
   push:
@@ -16,7 +16,7 @@ permissions:
 
 # Avoid competing releases after multiple rapid pushes.
 concurrency:
-  group: costoluce-apk-v6-3-0
+  group: costoluce-apk-v6-3-1
   cancel-in-progress: true
 
 jobs:
@@ -113,10 +113,10 @@ jobs:
             grep -q 'PASS: WebView launch' instrumentation.txt
             if grep -q 'FAIL:' instrumentation.txt; then exit 1; fi
             mkdir -p dist
-            adb exec-out run-as com.costoluce.cloud cat files/screenshots/app-6.3.png > dist/app-6.3.png
-            adb exec-out run-as com.costoluce.cloud cat files/screenshots/tariffe-6.3.png > dist/tariffe-6.3.png
-            adb exec-out run-as com.costoluce.cloud cat files/screenshots/tariffe-editor-6.3.png > dist/tariffe-editor-6.3.png
-            for size in compact medium large; do for page in summary history; do adb exec-out run-as com.costoluce.cloud cat "files/screenshots/widget-$page-$size-6.3.png" > "dist/widget-$page-$size-6.3.png"; done; done
+            adb exec-out run-as com.costoluce.cloud cat files/screenshots/app-6.3.1.png > dist/app-6.3.1.png
+            adb exec-out run-as com.costoluce.cloud cat files/screenshots/tariffe-6.3.1.png > dist/tariffe-6.3.1.png
+            adb exec-out run-as com.costoluce.cloud cat files/screenshots/tariffe-editor-6.3.1.png > dist/tariffe-editor-6.3.1.png
+            for size in compact medium large; do for page in summary history; do adb exec-out run-as com.costoluce.cloud cat "files/screenshots/widget-$page-$size-6.3.1.png" > "dist/widget-$page-$size-6.3.1.png"; done; done
             test "$(file dist/*.png | grep -c 'PNG image data')" -eq 9
       - name: Controllo APK e widget Android
         shell: bash
@@ -136,8 +136,8 @@ jobs:
           grep -q "android.permission.ACCESS_NETWORK_STATE" permissions-compiled.txt
           grep -q "android.permission.INTERNET" permissions-compiled.txt
           mkdir -p dist
-          cp "$APK" dist/CostoLuce_v6.3.0_WidgetAdattivo.apk
-          sha256sum dist/CostoLuce_v6.3.0_WidgetAdattivo.apk
+          cp "$APK" dist/CostoLuce_v6.3.1_ResizeVerticale.apk
+          sha256sum dist/CostoLuce_v6.3.1_ResizeVerticale.apk
 
       # Publish only after JVM, build and emulator checks have passed.
       - name: Pubblica APK su GitHub Release
@@ -146,8 +146,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          TAG="v6.3.0"
-          APK="dist/CostoLuce_v6.3.0_WidgetAdattivo.apk"
+          TAG="v6.3.1"
+          APK="dist/CostoLuce_v6.3.1_ResizeVerticale.apk"
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" "$APK" dist/*.png --clobber
             gh api --method PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/$TAG" -f sha="$GITHUB_SHA" -F force=true
@@ -155,9 +155,9 @@ jobs:
           else
             gh release create "$TAG" "$APK" dist/*.png \
               --target "$GITHUB_SHA" \
-              --title "Costo Luce v6.3.0 - Widget adattivo compatto, medio e grande" \
+              --title "Costo Luce v6.3.1 - Correzione ridimensionamento verticale" \
               --notes-file RELEASE_NOTES.md \
               --prerelease
           fi
           echo "### APK pubblicato" >> "$GITHUB_STEP_SUMMARY"
-          echo "https://github.com/$GITHUB_REPOSITORY/releases/download/v6.3.0/CostoLuce_v6.3.0_WidgetAdattivo.apk" >> "$GITHUB_STEP_SUMMARY"
+          echo "https://github.com/$GITHUB_REPOSITORY/releases/download/v6.3.1/CostoLuce_v6.3.1_ResizeVerticale.apk" >> "$GITHUB_STEP_SUMMARY"

@@ -9,6 +9,7 @@ import java.io.*;
 /** Runs only in CI: inflate both real RemoteViews pages and capture their empty-data states. */
 public class WidgetSmokeTestRunner extends Instrumentation {
     private android.webkit.WebView previewWeb;
+    private String resizeEvidence="";
     private void clearSystemDialog()throws Exception{
         for(int attempt=0;attempt<3;attempt++){
             android.view.accessibility.AccessibilityNodeInfo root=getUiAutomation().getRootInActiveWindow();
@@ -91,7 +92,7 @@ public class WidgetSmokeTestRunner extends Instrumentation {
             for(int id:targets){View target=view.findViewById(id);if(target.getWidth()<48*density-1||target.getHeight()<48*density-1)throw new AssertionError("Small touch target");}
             if(page==1){android.widget.ImageView chart=view.findViewById(R.id.widget_chart);if(chart.getHeight()<40*density)throw new AssertionError("Chart collapsed");}
         });
-        if(fontScale==1&&width<=400&&height<=350)capture("widget-"+(page==0?"summary":"history")+"-"+(width==280?"compact":width==340?"medium":"large")+"-6.3");
+        if(fontScale==1&&width<=400&&height<=350)capture("widget-"+(page==0?"summary":"history")+"-"+(width==280?"compact":width==340?"medium":"large")+"-6.3.1");
         // Measurement fixtures stay in detached views: never saved or published as Enel data.
         runOnMainSync(()->{
             if(page==0){
@@ -109,6 +110,39 @@ public class WidgetSmokeTestRunner extends Instrumentation {
         });
     }
 
+    private void checkIntrinsicResize(Context c){
+        runOnMainSync(()->{
+            float density=c.getResources().getDisplayMetrics().density;
+            int fixtureId=getContext().getResources().getIdentifier("widget_legacy_background","drawable",getContext().getPackageName());
+            if(fixtureId==0)fixtureId=getContext().getResources().getIdentifier("widget_legacy_background","drawable","com.costoluce.importatore.test");
+            android.graphics.drawable.Drawable legacy=getContext().getDrawable(fixtureId);
+            if(legacy==null||legacy.getMinimumHeight()<319*density||legacy.getMinimumWidth()<399*density)throw new AssertionError("Legacy background fixture did not reproduce intrinsic minimum");
+            for(int page=0;page<2;page++){
+                c.getSharedPreferences(CostoLuceWidgetProvider.PREFS,Context.MODE_PRIVATE).edit().putInt("page_4242",page).commit();
+                android.widget.RemoteViews remote=CostoLuceWidgetProvider.createViewsForSize(c,4242,280,260);
+                View fixed=remote.apply(c,null),before=remote.apply(c,null);
+                before.setBackground(legacy.getConstantState().newDrawable(getContext().getResources()));
+                if(fixed.getBackground().getMinimumHeight()>2*density||fixed.getBackground().getMinimumWidth()>2*density)throw new AssertionError("Decorative background still imposes a widget minimum");
+                int w=View.MeasureSpec.makeMeasureSpec(Math.round(280*density),View.MeasureSpec.EXACTLY),natural=View.MeasureSpec.makeMeasureSpec(0,View.MeasureSpec.UNSPECIFIED);
+                before.measure(w,natural);fixed.measure(w,natural);
+                if(before.getMeasuredHeight()<319*density)throw new AssertionError("Legacy background no longer reproduces the resize regression");
+                if(fixed.getMeasuredHeight()>261*density||fixed.getMeasuredHeight()>=before.getMeasuredHeight())throw new AssertionError("Widget still requests excess natural height: "+fixed.getMeasuredHeight()/density);
+                // Exercise the real host in both bounded and non-exact measurement, including reuse after shrinking.
+                android.appwidget.AppWidgetProviderInfo info=null;
+                for(android.appwidget.AppWidgetProviderInfo candidate:android.appwidget.AppWidgetManager.getInstance(c).getInstalledProviders())if(new ComponentName(c,CostoLuceWidgetProvider.class).equals(candidate.provider)){info=candidate;break;}
+                if(info==null)throw new AssertionError("Widget provider not installed for host test");
+                android.appwidget.AppWidgetHostView host=new android.appwidget.AppWidgetHostView(c);host.setAppWidget(4242,info);host.setPadding(0,0,0,0);host.updateAppWidget(remote);
+                for(int height:new int[]{500,350,300,260}){
+                    host.measure(w,View.MeasureSpec.makeMeasureSpec(Math.round(height*density),View.MeasureSpec.EXACTLY));host.layout(0,0,host.getMeasuredWidth(),host.getMeasuredHeight());assertBounds(host);
+                }
+                host.measure(w,View.MeasureSpec.makeMeasureSpec(Math.round(260*density),View.MeasureSpec.AT_MOST));host.layout(0,0,host.getMeasuredWidth(),host.getMeasuredHeight());
+                if(host.getMeasuredHeight()>261*density)throw new AssertionError("Host remained taller than the resize bounds");assertBounds(host);
+                android.util.Log.i("CostoLuceResizeTest","page="+page+" legacyNaturalDp="+before.getMeasuredHeight()/density+" fixedNaturalDp="+fixed.getMeasuredHeight()/density);
+                resizeEvidence+=" page="+page+" legacy="+before.getMeasuredHeight()/density+"dp fixed="+fixed.getMeasuredHeight()/density+"dp;";
+            }
+        });
+    }
+
     @Override public void onCreate(Bundle arguments){super.onCreate(arguments);start();}
     @Override public void onStart(){
         Bundle result=new Bundle();
@@ -116,13 +150,13 @@ public class WidgetSmokeTestRunner extends Instrumentation {
         try {
             Context c=getTargetContext();
             Activity activity=startActivitySync(new Intent(c,MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-            Thread.sleep(2500);previewWeb=findWeb(activity.findViewById(android.R.id.content));capture("app-6.3");
+            Thread.sleep(2500);previewWeb=findWeb(activity.findViewById(android.R.id.content));capture("app-6.3.1");
             android.webkit.WebView web=findWeb(activity.findViewById(android.R.id.content));
             if(web==null)throw new AssertionError("Missing WebView");
             assertScript(web,"showView('rates');if(document.querySelectorAll('.rate-card').length!==10)throw Error('Default rows');openRateEditor('energy');if(!document.getElementById('rateName').disabled)throw Error('Energy lock');closeRateEditor()");
-            capture("tariffe-6.3");
+            capture("tariffe-6.3.1");
             assertScript(web,"openRateEditor('transport','fixed');if(document.getElementById('rateAmount').value!=='')throw Error('Automatic conversion');document.getElementById('rateName').value='Quota fissa mensile';document.getElementById('rateAmount').value='8,00'");
-            capture("tariffe-editor-6.3");
+            capture("tariffe-editor-6.3.1");
             assertScript(web,"if(!saveRateEditor())throw Error('Save');setRateFilter('fixed');if(document.querySelectorAll('.rate-card').length!==1)throw Error('Filter');if(JSON.parse(localStorage.getItem('costoluce_rates_v1'))._meta.transport.name!=='Quota fissa mensile')throw Error('Persistence')");
             Thread.sleep(1200);waitForIdleSync();
             CostoLuceWidgetProvider.WidgetConfiguration saved=CostoLuceWidgetProvider.readConfiguration(c);
@@ -136,6 +170,7 @@ public class WidgetSmokeTestRunner extends Instrumentation {
             double nativeCost=pricing.estimatedCost(479,2,218,2);
             assertScript(web,"if(Math.abs(calculateCosts(479,2,218,2).total-"+nativeCost+")>0.000001)throw Error('App/widget pricing mismatch');if(!undoRateDeletion()||!rateMeta.dispatch.enabled)throw Error('Restore default');openRateEditor(customKeys[0]);requestDeleteRate();if(!confirmDeleteRate()||customKeys.length!==0)throw Error('Delete custom');if(!undoRateDeletion()||customKeys.length!==1)throw Error('Restore custom');openRateEditor('energy');if(!document.getElementById('rateDeleteButton').hidden||requestDeleteRate())throw Error('Protected Energy');closeRateEditor()");
             assertScript(web,"resetRates();setRateFilter('all');showView('home')");Thread.sleep(1000);
+            checkIntrinsicResize(c);
             int[][] sizes={{280,260},{340,300},{400,350},{280,500},{500,260}};
             for(int[] size:sizes)for(int page=0;page<2;page++)checkWidget(activity,c,size[0],size[1],page,1);
             for(int page=0;page<2;page++)checkWidget(activity,c,280,260,page,1.3f);
@@ -144,7 +179,7 @@ public class WidgetSmokeTestRunner extends Instrumentation {
             options.putInt(android.appwidget.AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH,500);options.putInt(android.appwidget.AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT,500);
             CostoLuceWidgetProvider.createViews(c,4242,options);
             if(android.os.Build.VERSION.SDK_INT>=31){java.util.ArrayList<android.util.SizeF> exact=new java.util.ArrayList<>();exact.add(new android.util.SizeF(280,260));exact.add(new android.util.SizeF(500,260));options.putParcelableArrayList(android.appwidget.AppWidgetManager.OPTION_APPWIDGET_SIZES,exact);CostoLuceWidgetProvider.createViews(c,4242,options);}
-            result.putString("stream","PASS: WebView launch and both RemoteViews pages inflated without crash.");
+            result.putString("stream","PASS: WebView launch and both RemoteViews pages inflated without crash. Resize regression:"+resizeEvidence);
             sendStatus(0,test);finish(Activity.RESULT_OK,result);
         }catch(Throwable e){test.putString("stack",e.toString());sendStatus(-2,test);result.putString("stream","FAIL: "+e.toString());finish(Activity.RESULT_CANCELED,result);}
     }
