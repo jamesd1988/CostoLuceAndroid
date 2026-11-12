@@ -126,3 +126,10 @@ Verifica: suite JavaScript, test JVM su accisa e periodi, nuovi test storico su 
 ### Aggiornamento senza perdita di credenziali
 
 Il workflow precedente generava un certificato debug su un runner effimero: la chiave privata 5.9 non è nel repository. Un APK può conservare i dati installati solo se Android accetta la firma come aggiornamento. Il nuovo workflow può riusare la precedente debug.keystore tramite il secret ANDROID_DEBUG_KEYSTORE_BASE64 (password/alias standard Android debug); in assenza conserva la nuova firma di test nella cache per le build successive. La cache non sostituisce un backup durevole di firma. La compatibilità con l’APK 5.x già installato non è garantita. Non disinstallare la versione precedente per superare un errore di firma: si perderebbero credenziali e dati locali. Serve la chiave privata originale per un aggiornamento compatibile.
+
+
+## Costo Luce 6.1 — Tariffe personalizzabili
+
+Le voci predefinite e i prezzi restano quelli esistenti. Ogni nome è modificabile, eccetto Energia €/kWh. Le voci monetarie possono essere variabili (€/kWh) o fisse (€/mese); cambiando tipo il campo importo viene svuotato e richiede un valore esplicito. IVA e perdite rimangono percentuali. Rinominarle non cambia la loro base di calcolo. L’accisa variabile conserva l’imponibile mensile e l’agevolazione già applicati.
+
+I filtri Tutte / Variabili / Fisse agiscono sulla lista delle voci. Il pannello Modifica voce consente nome, tipo, importo, Annulla e Salva modifiche. Le personalizzazioni sono persistenti e vengono trasferite al widget, che usa lo stesso modello di calcolo. La migrazione mantiene i prezzi numerici salvati in costoluce_rates_v1 e aggiunge soltanto metadati opzionali _meta; credenziali e alias AndroidKeyStore restano invariati. I totali includono le quote fisse configurate e l’IVA; le quote mensili si contano nei mesi iniziati del periodo Enel, oppure nei mesi selezionati in modalità manuale. Lo storico in kWh usa sempre soltanto misure Enel reali.

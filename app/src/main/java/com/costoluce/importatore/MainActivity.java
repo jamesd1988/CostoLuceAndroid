@@ -40,6 +40,7 @@ public final class MainActivity extends Activity {
 
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if(android.os.Build.VERSION.SDK_INT>=30){getWindow().setDecorFitsSystemWindows(false);getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING);}
         try {
             web = new WebView(this);
             web.setBackgroundColor(android.graphics.Color.rgb(10,25,40));
@@ -61,7 +62,7 @@ public final class MainActivity extends Activity {
                 int top=insets.getSystemWindowInsetTop(),bottom=insets.getSystemWindowInsetBottom();
                 int left=insets.getSystemWindowInsetLeft(),right=insets.getSystemWindowInsetRight();
                 if(android.os.Build.VERSION.SDK_INT>=30){
-                    android.graphics.Insets bars=insets.getInsets(android.view.WindowInsets.Type.systemBars()|android.view.WindowInsets.Type.displayCutout());
+                    android.graphics.Insets bars=insets.getInsets(android.view.WindowInsets.Type.systemBars()|android.view.WindowInsets.Type.displayCutout()|android.view.WindowInsets.Type.ime());
                     top=bars.top;bottom=bars.bottom;left=bars.left;right=bars.right;
                 }
                 view.setPadding(left,top,right,bottom);return insets;

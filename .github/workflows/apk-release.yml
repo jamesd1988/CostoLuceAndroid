@@ -1,4 +1,4 @@
-name: Costo Luce - APK 6.0.0
+name: Costo Luce - APK 6.1.0
 
 on:
   push:
@@ -16,7 +16,7 @@ permissions:
 
 # Avoid competing releases after multiple rapid pushes.
 concurrency:
-  group: costoluce-apk-v6-0-0
+  group: costoluce-apk-v6-1-0
   cancel-in-progress: true
 
 jobs:
@@ -60,6 +60,7 @@ jobs:
             tests/test_navigation.js \
             tests/test_monthly.js \
             tests/test_history.js \
+            tests/test_tariffs.js \
             tests/test_widget.js \
             tests/test_widget_wiring.js; do
             echo "TEST: $test"
@@ -111,10 +112,12 @@ jobs:
             grep -q 'PASS: WebView launch' instrumentation.txt
             if grep -q 'FAIL:' instrumentation.txt; then exit 1; fi
             mkdir -p dist
-            adb exec-out run-as com.costoluce.cloud cat files/screenshots/app-6.0.png > dist/app-6.0.png
-            adb exec-out run-as com.costoluce.cloud cat files/screenshots/widget-summary-6.0.png > dist/widget-summary-6.0.png
-            adb exec-out run-as com.costoluce.cloud cat files/screenshots/widget-history-6.0.png > dist/widget-history-6.0.png
-            test "$(file dist/*.png | grep -c 'PNG image data')" -eq 3
+            adb exec-out run-as com.costoluce.cloud cat files/screenshots/app-6.1.png > dist/app-6.1.png
+            adb exec-out run-as com.costoluce.cloud cat files/screenshots/widget-summary-6.1.png > dist/widget-summary-6.1.png
+            adb exec-out run-as com.costoluce.cloud cat files/screenshots/widget-history-6.1.png > dist/widget-history-6.1.png
+            adb exec-out run-as com.costoluce.cloud cat files/screenshots/tariffe-6.1.png > dist/tariffe-6.1.png
+            adb exec-out run-as com.costoluce.cloud cat files/screenshots/tariffe-editor-6.1.png > dist/tariffe-editor-6.1.png
+            test "$(file dist/*.png | grep -c 'PNG image data')" -eq 5
       - name: Controllo APK e widget Android
         shell: bash
         run: |
@@ -133,8 +136,8 @@ jobs:
           grep -q "android.permission.ACCESS_NETWORK_STATE" permissions-compiled.txt
           grep -q "android.permission.INTERNET" permissions-compiled.txt
           mkdir -p dist
-          cp "$APK" dist/CostoLuce_v6.0.0_NavyTeal_S25.apk
-          sha256sum dist/CostoLuce_v6.0.0_NavyTeal_S25.apk
+          cp "$APK" dist/CostoLuce_v6.1.0_TariffePersonalizzate.apk
+          sha256sum dist/CostoLuce_v6.1.0_TariffePersonalizzate.apk
 
       # Publish only after JVM, build and emulator checks have passed.
       - name: Pubblica APK su GitHub Release
@@ -143,18 +146,18 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          TAG="v6.0.0"
-          APK="dist/CostoLuce_v6.0.0_NavyTeal_S25.apk"
+          TAG="v6.1.0"
+          APK="dist/CostoLuce_v6.1.0_TariffePersonalizzate.apk"
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" "$APK" dist/*.png --clobber
             gh api --method PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/$TAG" -f sha="$GITHUB_SHA" -F force=true
-            gh release edit "$TAG" --target "$GITHUB_SHA"
+            gh release edit "$TAG" --target "$GITHUB_SHA" --notes-file RELEASE_NOTES.md
           else
             gh release create "$TAG" "$APK" dist/*.png \
               --target "$GITHUB_SHA" \
-              --title "Costo Luce v6.0.0 - Navy e teal, storico Enel e widget a due pagine" \
-              --notes "Widget navy/teal a due pagine con frecce/dot, storico di quattro mesi richiesto a Enel, mesi mancanti espliciti, corrente parziale. Toggle persistente euro/kWh condiviso con il widget. Bimestre ottobre-novembre e accisa mensile preservati. Refresh senza apertura app, anche periodico ogni circa sei ore secondo Android. Login e disponibilita storica da verificare sul dispositivo. Nessuna credenziale nel widget. APK di test: la firma precedente 5.x non e presente nel repository; la compatibilita di aggiornamento con 5.x non e garantita. NON disinstallare la vecchia app per forzare aggiornamento: Android eliminerebbe dati e credenziali." \
+              --title "Costo Luce v6.1.0 - Tariffe personalizzabili, quote fisse e variabili" \
+              --notes-file RELEASE_NOTES.md \
               --prerelease
           fi
           echo "### APK pubblicato" >> "$GITHUB_STEP_SUMMARY"
-          echo "https://github.com/$GITHUB_REPOSITORY/releases/download/v6.0.0/CostoLuce_v6.0.0_NavyTeal_S25.apk" >> "$GITHUB_STEP_SUMMARY"
+          echo "https://github.com/$GITHUB_REPOSITORY/releases/download/v6.1.0/CostoLuce_v6.1.0_TariffePersonalizzate.apk" >> "$GITHUB_STEP_SUMMARY"

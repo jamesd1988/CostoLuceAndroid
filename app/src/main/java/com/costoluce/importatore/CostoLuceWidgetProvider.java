@@ -103,7 +103,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
             if (period.length() > 0) period.append(" + ");
             period.append(names[month.month - 1]).append(' ').append(month.year);
         }
-        double cost = pricing.estimatedCost(result.kwh, months, monthlyTaxable);
+        double cost = pricing.estimatedCost(result.kwh, months, monthlyTaxable, activeBillingMonths(rows.toString(),months));
         return saveFetchedResult(context, result.kwh, cost, months,
                 period.toString(), rows.toString(), partial);
     }
@@ -134,7 +134,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
      * This does not change the date or value of any previous measured usage.
      */
     static boolean saveConfiguration(Context context, int months, String ratesJson, boolean resident) {
-        if (months != 1 && months != 2 || ratesJson == null || ratesJson.length() > 1500)
+        if (months != 1 && months != 2 || ratesJson == null || ratesJson.length() > 8000)
             return false;
         final WidgetPricing pricing;
         try { pricing = WidgetPricing.parse(ratesJson, resident); }
@@ -154,7 +154,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
                 if (Double.isFinite(lastKwh) && lastKwh > 0)
                     edit.putString(KEY_EUR, Double.toString(pricing.estimatedCost(lastKwh,
                             months, taxableFromMonthly(p.getString(KEY_MONTHLY, null),
-                                    lastKwh, months))));
+                                    lastKwh, months), activeBillingMonths(p.getString(KEY_MONTHLY,null),months))));
             } catch (Exception ignored) { }
         }
 
@@ -167,6 +167,12 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         boolean ok = edit.commit();
         if (ok) refresh(context);
         return ok;
+    }
+
+    private static int activeBillingMonths(String monthlyJson,int months) throws JSONException {
+        if(monthlyJson==null||monthlyJson.isEmpty())return months;
+        org.json.JSONArray rows=new org.json.JSONArray(monthlyJson);if(rows.length()!=months)throw new JSONException("Periodo non valido.");
+        int active=0;for(int i=0;i<rows.length();i++)if(!rows.getJSONObject(i).optBoolean("future",false))active++;return active;
     }
 
     private static double taxableFromMonthly(String monthlyJson, double total, int months)
@@ -206,7 +212,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         try {
             WidgetPricing pricing = WidgetPricing.parse(ratesJson, resident);
             double taxable = taxableFromMonthly(monthlyJson, kwh, months);
-            if (Math.abs(pricing.estimatedCost(kwh, months, taxable) - euro) > 0.025)
+            if (Math.abs(pricing.estimatedCost(kwh, months, taxable, activeBillingMonths(monthlyJson,months)) - euro) > 0.025)
                 return false;
         } catch (Exception ex) {
             return false;
@@ -280,6 +286,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         if (p.getString(KEY_RATES, null) == null) return null;
         try {
             JSONObject state = new JSONObject();
+            state.put("rates", new JSONObject(p.getString(KEY_RATES,"{}")));
             state.put("unit", p.getString("display_unit", "eur"));
             state.put("months", p.getInt(KEY_CONFIG_MONTHS, p.getInt(KEY_MONTHS, 2)));
             state.put("resident", p.getBoolean(KEY_RESIDENT, false));
@@ -509,7 +516,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         views.setOnClickPendingIntent(R.id.widget_refresh, refreshPending);
         views.setOnClickPendingIntent(R.id.widget_status, refreshPending);
         boolean chart = p.getInt("page_"+widgetId,0)==1;
-        views.setTextViewText(R.id.widget_brand,chart?"Consumi ultimi 4 mesi":"COSTO LUCE · v6.0");
+        views.setTextViewText(R.id.widget_brand,chart?"Consumi ultimi 4 mesi":"COSTO LUCE · v6.1");
         views.setViewVisibility(R.id.widget_units,chart?android.view.View.VISIBLE:android.view.View.GONE);
         views.setViewVisibility(R.id.widget_refresh,chart?android.view.View.GONE:android.view.View.VISIBLE);
         boolean showKwh="kwh".equals(p.getString("display_unit","eur"));
@@ -537,6 +544,9 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         views.setViewVisibility(R.id.widget_chart,chart?android.view.View.VISIBLE:android.view.View.GONE);
         views.setTextViewText(R.id.widget_dots, chart ? "○  ●" : "●  ○");
         views.setTextViewText(R.id.widget_caption, "kwh".equals(p.getString("display_unit","eur")) ? "CONSUMO DEL PERIODO" : "COSTO VARIABILE STIMATO");
+        if(!"kwh".equals(p.getString("display_unit","eur"))){
+            try{WidgetConfiguration c=readConfiguration(context);if(c!=null&&WidgetPricing.parse(c.ratesJson,c.resident).hasFixedCosts())views.setTextViewText(R.id.widget_caption,"COSTO TOTALE STIMATO");}catch(Exception ignored){}
+        }
         if ("kwh".equals(p.getString("display_unit","eur")) && savedAt>0) {
             try {
                 NumberFormat usage=NumberFormat.getNumberInstance(IT);usage.setMaximumFractionDigits(1);
