@@ -127,8 +127,8 @@
         <TextView android:id="@+id/widget_dots" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:text="●  ○" android:textColor="#63E6CE" android:gravity="center" android:contentDescription="Cambia pagina del widget" />
         <TextView android:id="@+id/widget_next" android:layout_width="48dp" android:layout_height="match_parent" android:text="›" android:textSize="28sp" android:textColor="#63E6CE" android:gravity="center" android:contentDescription="Cambia pagina" />
     </LinearLayout>
-    <!-- Flexible space: footer stays at the bottom when Samsung resizes the widget. -->
-    <LinearLayout
+    <!-- Only the summary needs a spacer; the chart itself fills available height. -->
+    <LinearLayout android:id="@+id/widget_spacer"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"

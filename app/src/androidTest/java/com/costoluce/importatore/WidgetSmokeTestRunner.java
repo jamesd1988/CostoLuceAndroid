@@ -32,6 +32,7 @@ public class WidgetSmokeTestRunner extends Instrumentation {
                     View view=remote.apply(c,null);
                     if(view.findViewById(R.id.widget_summary).getVisibility()!=(selected==0?View.VISIBLE:View.GONE))throw new AssertionError("Wrong summary visibility");
                     if(view.findViewById(R.id.widget_chart).getVisibility()!=(selected==1?View.VISIBLE:View.GONE))throw new AssertionError("Wrong chart visibility");
+                    if(view.findViewById(R.id.widget_spacer).getVisibility()!=(selected==0?View.VISIBLE:View.GONE))throw new AssertionError("Chart must own remaining height");
                     android.widget.FrameLayout root=new android.widget.FrameLayout(activity);
                     root.setBackgroundColor(android.graphics.Color.rgb(8,17,29));
                     android.widget.FrameLayout.LayoutParams lp=new android.widget.FrameLayout.LayoutParams((int)(340*c.getResources().getDisplayMetrics().density),(int)(320*c.getResources().getDisplayMetrics().density));

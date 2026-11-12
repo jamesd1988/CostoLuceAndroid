@@ -501,6 +501,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         views.setOnClickPendingIntent(R.id.widget_refresh, refreshPending);
         views.setOnClickPendingIntent(R.id.widget_status, refreshPending);
         boolean chart = p.getInt("page_"+widgetId,0)==1;
+        views.setViewVisibility(R.id.widget_spacer,chart?android.view.View.GONE:android.view.View.VISIBLE);
         views.setViewVisibility(R.id.widget_summary,chart?android.view.View.GONE:android.view.View.VISIBLE);
         views.setViewVisibility(R.id.widget_chart,chart?android.view.View.VISIBLE:android.view.View.GONE);
         views.setTextViewText(R.id.widget_dots, chart ? "○  ●" : "●  ○");

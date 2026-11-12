@@ -42,6 +42,13 @@ public final class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         try {
             web = new WebView(this);
+            web.setBackgroundColor(android.graphics.Color.rgb(10,25,40));
+            // Android 15 draws edge-to-edge: keep web content outside system bars.
+            web.setOnApplyWindowInsetsListener((view,insets) -> {
+                view.setPadding(insets.getSystemWindowInsetLeft(),insets.getSystemWindowInsetTop(),
+                        insets.getSystemWindowInsetRight(),insets.getSystemWindowInsetBottom());
+                return insets;
+            });
             WebSettings settings = web.getSettings();
             settings.setJavaScriptEnabled(true); // Necessario per il calcolatore e per il portale.
             settings.setDomStorageEnabled(true);
