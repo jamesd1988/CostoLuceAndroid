@@ -162,7 +162,11 @@ public class WidgetSmokeTestRunner extends Instrumentation {
             android.widget.FrameLayout root=new android.widget.FrameLayout(activity);root.setBackgroundColor(android.graphics.Color.rgb(8,17,29));
             android.widget.FrameLayout.LayoutParams lp=new android.widget.FrameLayout.LayoutParams(Math.round(width*density),Math.round(height*density));lp.gravity=Gravity.CENTER;root.addView(view,lp);activity.setContentView(root);
         });
-        waitForIdleSync();Thread.sleep(200);runOnMainSync(()->assertBounds(rendered.get()));
+        waitForIdleSync();Thread.sleep(200);runOnMainSync(()->{
+            View root=rendered.get();assertBounds(root);
+            android.graphics.Outline outline=new android.graphics.Outline();root.getOutlineProvider().getOutline(root,outline);
+            if(!root.getClipToOutline()||!outline.canClip())throw new AssertionError("Decorative waves are not clipped to rounded widget bounds");
+        });
         if(prefs.getInt("page_4242",-1)!=savedPage||!"eur".equals(prefs.getString("display_unit","")))throw new AssertionError("Collapsing widget lost the saved page or unit");
         if(fontScale==1&&savedPage==0){
             if(width==130&&height==64)capture("widget-2x1-6.4.0");
