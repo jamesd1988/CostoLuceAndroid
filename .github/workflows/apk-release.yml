@@ -57,6 +57,7 @@ jobs:
             tests/test_capture.js \
             tests/test_navigation.js \
             tests/test_monthly.js \
+            tests/test_history.js \
             tests/test_widget.js \
             tests/test_widget_wiring.js; do
             echo "TEST: $test"
@@ -122,7 +123,7 @@ jobs:
           cp "$APK" dist/CostoLuce_v6.0.0_NavyTeal_S25.apk
           sha256sum dist/CostoLuce_v6.0.0_NavyTeal_S25.apk
 
-      # Release directly after the build. No emulator or upload-artifact dependency.
+      # Publish only after JVM, build and emulator checks have passed.
       - name: Pubblica APK su GitHub Release
         shell: bash
         env:

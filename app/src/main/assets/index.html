@@ -104,6 +104,7 @@
     <section class="card result" aria-live="polite">
       <div class="eyebrow"><span id="summaryLabel">Totale variabile stimato · IVA inclusa</span></div>
       <div class="total" id="total">—</div>
+      <p id="summaryPeriod" class="sub" style="color:#b8d6df;line-height:1.5"></p>
       <div class="result-foot"><div><div class="klabel">Costo variabile / kWh</div><div id="perKwh" class="kvalue">—</div></div><div><div class="klabel">kWh soggetti ad accisa</div><div id="taxKwh" class="kvalue">—</div></div></div>
     </section>
     <section class="card history-card"><div class="eyebrow">Ultimi quattro mesi · Enel</div><div id="historyChart" class="history-chart" role="img" aria-label="Storico mensile Enel"></div><p class="help">Il mese corrente è parziale. I mesi senza misure sono mancanti. Costi stimati con le tariffe impostate, quote fisse escluse.</p></section>
@@ -325,8 +326,9 @@
     ];
     const preVat=items.reduce((s,it)=>s+it[1],0); const vat=preVat*t.vat/100;items.push(['IVA',vat,decimal(t.vat,1)+'% dell’imponibile']);const total=preVat+vat;
     lastCalculatedCost=total;
-    byId('total').textContent=displayUnit==='kwh'?decimal(kwh,1)+' kWh':euro(total);
-    byId('summaryLabel').textContent=displayUnit==='kwh'?'Consumo del periodo selezionato':'Totale variabile stimato · IVA inclusa';renderHistory();byId('total2').textContent=euro(total);
+    byId('total').textContent=String(byId('kwh').value).trim()===''?'—':displayUnit==='kwh'?decimal(kwh,1)+' kWh':euro(total);
+    byId('summaryLabel').textContent=displayUnit==='kwh'?'Consumo del periodo selezionato':'Totale variabile stimato · IVA inclusa';
+    byId('summaryPeriod').textContent=(months===2?'Bimestre · ':'Mese · ')+selectedPeriod(months).map(m=>italianMonth(m.year,m.month)).join(' + ')+' · in corso';renderHistory();byId('total2').textContent=euro(total);
     byId('perKwh').textContent=kwh?decimal(total/kwh,3)+' €/kWh':'—';
     byId('taxKwh').textContent=decimal(taxKwh,1)+' kWh';
     const dest=byId('breakdown');dest.innerHTML='';

@@ -166,6 +166,11 @@ public final class MainActivity extends Activity {
                 + (snapshot == null ? "null" : snapshot.toString()) + ");", null);
     }
 
+    @Override protected void onResume() {
+        super.onResume();
+        if (web != null && web.getProgress() == 100) restoreWidgetSnapshot();
+    }
+
     @Override protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         if (intent != null && "com.costoluce.cloud.action.OPEN_WIDGET".equals(intent.getAction())) {

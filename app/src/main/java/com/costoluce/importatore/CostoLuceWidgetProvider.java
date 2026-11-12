@@ -506,7 +506,10 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         views.setTextViewText(R.id.widget_dots, chart ? "○  ●" : "●  ○");
         views.setTextViewText(R.id.widget_caption, "kwh".equals(p.getString("display_unit","eur")) ? "CONSUMO DEL PERIODO" : "COSTO VARIABILE STIMATO");
         if ("kwh".equals(p.getString("display_unit","eur")) && savedAt>0) {
-            views.setTextViewText(R.id.widget_euro, p.getString(KEY_KWH,"—")+" kWh");
+            try {
+                NumberFormat usage=NumberFormat.getNumberInstance(IT);usage.setMaximumFractionDigits(1);
+                views.setTextViewText(R.id.widget_euro,usage.format(Double.parseDouble(p.getString(KEY_KWH,"0")))+" kWh");
+            } catch(RuntimeException ignored) { views.setTextViewText(R.id.widget_euro,"—"); }
             try { views.setTextViewText(R.id.widget_kwh,NumberFormat.getCurrencyInstance(IT).format(Double.parseDouble(p.getString(KEY_EUR,"0")))+" stimati"); }
             catch (RuntimeException ignored) { }
         }
