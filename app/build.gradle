@@ -16,6 +16,16 @@ android {
         testInstrumentationRunner 'com.costoluce.importatore.WidgetSmokeTestRunner'
     }
 
+    signingConfigs {
+        debug {
+            def ciStore = System.getenv('COSTOLUCE_DEBUG_KEYSTORE')
+            if (ciStore) storeFile file(ciStore)
+            storePassword 'android'
+            keyAlias 'AndroidDebugKey'
+            keyPassword 'android'
+        }
+    }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17

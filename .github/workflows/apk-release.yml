@@ -24,6 +24,8 @@ jobs:
     name: Compila, verifica e pubblica APK
     runs-on: ubuntu-latest
     timeout-minutes: 25
+    env:
+      COSTOLUCE_DEBUG_KEYSTORE: ${{ runner.temp }}/costoluce-signing/debug.keystore
     steps:
       - name: Scarica progetto
         uses: actions/checkout@v4
@@ -69,15 +71,21 @@ jobs:
       - name: Ripristina firma APK di test
         uses: actions/cache@v4
         with:
-          path: ~/.android/debug.keystore
-          key: costoluce-debug-signing-v1
+          path: ${{ env.COSTOLUCE_DEBUG_KEYSTORE }}
+          key: costoluce-debug-signing-explicit-v2
       - name: Firma precedente opzionale
         env:
           PREVIOUS_KEYSTORE: ${{ secrets.ANDROID_DEBUG_KEYSTORE_BASE64 }}
         run: |
           if [ -n "$PREVIOUS_KEYSTORE" ]; then
-            mkdir -p ~/.android
-            printf '%s' "$PREVIOUS_KEYSTORE" | base64 --decode > ~/.android/debug.keystore
+            mkdir -p "$(dirname "$COSTOLUCE_DEBUG_KEYSTORE")"
+            printf '%s' "$PREVIOUS_KEYSTORE" | base64 --decode > "$COSTOLUCE_DEBUG_KEYSTORE"
+          fi
+      - name: Prepara certificato di test se assente
+        run: |
+          if [ ! -s "$COSTOLUCE_DEBUG_KEYSTORE" ]; then
+            mkdir -p "$(dirname "$COSTOLUCE_DEBUG_KEYSTORE")"
+            keytool -genkeypair -keystore "$COSTOLUCE_DEBUG_KEYSTORE" -storepass android -keypass android -alias AndroidDebugKey -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
           fi
       - name: Test e compilazione Android
         run: gradle --no-daemon --stacktrace :app:testDebugUnitTest :app:assembleDebug
