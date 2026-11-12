@@ -8,6 +8,11 @@ import java.io.*;
 
 /** Runs only in CI: inflate both real RemoteViews pages and capture their empty-data states. */
 public class WidgetSmokeTestRunner extends Instrumentation {
+    private void checkedOnMainSync(Runnable work){
+        java.util.concurrent.atomic.AtomicReference<Throwable> failure=new java.util.concurrent.atomic.AtomicReference<>();
+        super.runOnMainSync(()->{try{work.run();}catch(Throwable error){failure.set(error);}});
+        if(failure.get()!=null)throw new AssertionError("UI check: "+failure.get(),failure.get());
+    }
     private android.webkit.WebView previewWeb;
     private String resizeEvidence="";
     private void clearSystemDialog()throws Exception{
@@ -27,12 +32,12 @@ public class WidgetSmokeTestRunner extends Instrumentation {
         clearSystemDialog();waitForIdleSync();
         if(previewWeb!=null&&previewWeb.isAttachedToWindow()){
             java.util.concurrent.CountDownLatch rendered=new java.util.concurrent.CountDownLatch(1);
-            runOnMainSync(()->previewWeb.postVisualStateCallback(System.nanoTime(),new android.webkit.WebView.VisualStateCallback(){@Override public void onComplete(long id){rendered.countDown();}}));
+            checkedOnMainSync(()->previewWeb.postVisualStateCallback(System.nanoTime(),new android.webkit.WebView.VisualStateCallback(){@Override public void onComplete(long id){rendered.countDown();}}));
             if(!rendered.await(12,java.util.concurrent.TimeUnit.SECONDS))throw new AssertionError("WebView did not render the requested state");
         }
         if(previewWeb!=null&&previewWeb.isAttachedToWindow()){
             java.util.concurrent.CountDownLatch frames=new java.util.concurrent.CountDownLatch(1);
-            runOnMainSync(()->{previewWeb.invalidate();android.view.Choreographer.getInstance().postFrameCallback(t->android.view.Choreographer.getInstance().postFrameCallback(next->frames.countDown()));});
+            checkedOnMainSync(()->{previewWeb.invalidate();android.view.Choreographer.getInstance().postFrameCallback(t->android.view.Choreographer.getInstance().postFrameCallback(next->frames.countDown()));});
             if(!frames.await(8,java.util.concurrent.TimeUnit.SECONDS))throw new AssertionError("No committed display frame");
         }
         // Drain the emulator's buffered display frames before exporting the current state.
@@ -52,7 +57,7 @@ public class WidgetSmokeTestRunner extends Instrumentation {
     private void assertScript(android.webkit.WebView web,String body)throws Exception{
         java.util.concurrent.CountDownLatch done=new java.util.concurrent.CountDownLatch(1);
         java.util.concurrent.atomic.AtomicReference<String> answer=new java.util.concurrent.atomic.AtomicReference<>();
-        runOnMainSync(()->web.evaluateJavascript("(function(){"+body+";return 'PASS';})()",v->{answer.set(v);done.countDown();}));
+        checkedOnMainSync(()->web.evaluateJavascript("(function(){"+body+";return 'PASS';})()",v->{answer.set(v);done.countDown();}));
         if(!done.await(12,java.util.concurrent.TimeUnit.SECONDS)||!"\"PASS\"".equals(answer.get()))throw new AssertionError("Tariff UI assertion failed: "+answer.get());
     }
     private void assertBounds(View view){
@@ -72,7 +77,7 @@ public class WidgetSmokeTestRunner extends Instrumentation {
         android.content.res.Configuration config=new android.content.res.Configuration(c.getResources().getConfiguration());config.fontScale=fontScale;
         Context sizedContext=activity.createConfigurationContext(config);
         java.util.concurrent.atomic.AtomicReference<View> applied=new java.util.concurrent.atomic.AtomicReference<>();
-        runOnMainSync(()->{
+        checkedOnMainSync(()->{
             android.widget.RemoteViews remote=CostoLuceWidgetProvider.createViewsForSize(sizedContext,4242,width,height);
             View view=remote.apply(sizedContext,null);applied.set(view);
             if(view.findViewById(R.id.widget_summary).getVisibility()!=(page==0?View.VISIBLE:View.GONE))throw new AssertionError("Wrong summary visibility");
@@ -85,7 +90,7 @@ public class WidgetSmokeTestRunner extends Instrumentation {
             android.widget.FrameLayout.LayoutParams lp=new android.widget.FrameLayout.LayoutParams(Math.round(width*density),Math.round(height*density));lp.gravity=Gravity.CENTER;root.addView(view,lp);activity.setContentView(root);
         });
         waitForIdleSync();Thread.sleep(300);
-        runOnMainSync(()->{
+        checkedOnMainSync(()->{
             View view=applied.get();assertBounds(view);
             float density=c.getResources().getDisplayMetrics().density;
             int[] targets=page==0?new int[]{R.id.widget_refresh,R.id.widget_prev,R.id.widget_next,R.id.widget_dots}:new int[]{R.id.widget_unit_kwh,R.id.widget_unit_eur,R.id.widget_prev,R.id.widget_next,R.id.widget_dots};
@@ -94,7 +99,7 @@ public class WidgetSmokeTestRunner extends Instrumentation {
         });
         if(fontScale==1&&width<=400&&height<=350)capture("widget-"+(page==0?"summary":"history")+"-"+(width==280?"compact":width==340?"medium":"large")+"-6.4.1");
         // Measurement fixtures stay in detached views: never saved or published as Enel data.
-        runOnMainSync(()->{
+        checkedOnMainSync(()->{
             if(page==0){
                 android.widget.RemoteViews remote=CostoLuceWidgetProvider.createViewsForSize(sizedContext,4242,width,height);
                 remote.setTextViewText(R.id.widget_euro,"1.234,56 €");remote.setTextViewText(R.id.widget_kwh,"4.567,8 kWh");
@@ -111,7 +116,7 @@ public class WidgetSmokeTestRunner extends Instrumentation {
     }
 
     private void checkIntrinsicResize(Context c){
-        runOnMainSync(()->{
+        checkedOnMainSync(()->{
             float density=c.getResources().getDisplayMetrics().density;
             int fixtureId=getContext().getResources().getIdentifier("widget_legacy_background","drawable",getContext().getPackageName());
             if(fixtureId==0)fixtureId=getContext().getResources().getIdentifier("widget_legacy_background","drawable","com.costoluce.importatore.test");
@@ -149,7 +154,7 @@ public class WidgetSmokeTestRunner extends Instrumentation {
         android.content.res.Configuration configuration=new android.content.res.Configuration(c.getResources().getConfiguration());configuration.fontScale=fontScale;
         Context sized=activity.createConfigurationContext(configuration);WidgetLayoutSpec spec=new WidgetLayoutSpec(width,height);
         java.util.concurrent.atomic.AtomicReference<View> rendered=new java.util.concurrent.atomic.AtomicReference<>();
-        runOnMainSync(()->{
+        checkedOnMainSync(()->{
             android.widget.RemoteViews remote=CostoLuceWidgetProvider.createViewsForSize(sized,4242,width,height);
             View view=remote.apply(sized,null);rendered.set(view);
             if(view.findViewById(R.id.widget_chart)!=null||view.findViewById(R.id.widget_prev)!=null||view.findViewById(R.id.widget_brand)!=null)throw new AssertionError("Small widget retained full-page chrome");
@@ -162,12 +167,12 @@ public class WidgetSmokeTestRunner extends Instrumentation {
             android.widget.FrameLayout root=new android.widget.FrameLayout(activity);root.setBackgroundColor(android.graphics.Color.rgb(8,17,29));
             android.widget.FrameLayout.LayoutParams lp=new android.widget.FrameLayout.LayoutParams(Math.round(width*density),Math.round(height*density));lp.gravity=Gravity.CENTER;root.addView(view,lp);activity.setContentView(root);
         });
-        waitForIdleSync();Thread.sleep(200);runOnMainSync(()->{
+        waitForIdleSync();Thread.sleep(200);checkedOnMainSync(()->{
             View root=rendered.get();assertBounds(root);
             android.graphics.Outline outline=new android.graphics.Outline();root.getOutlineProvider().getOutline(root,outline);
             if(!root.getClipToOutline()||!outline.canClip())throw new AssertionError("Decorative waves are not clipped to rounded widget bounds");
         });
-        runOnMainSync(()->{
+        checkedOnMainSync(()->{
             View root=rendered.get(),refresh=root.findViewById(R.id.widget_small_refresh);
             if(spec.statsOnly()&&refresh.getVisibility()!=(spec.statsRefreshPossible()?View.VISIBLE:View.GONE))throw new AssertionError("Missing compact refresh");
             if(refresh.getVisibility()==View.VISIBLE){
@@ -183,7 +188,7 @@ public class WidgetSmokeTestRunner extends Instrumentation {
             if(width==150&&height==80)capture("widget-compact-refresh-6.4.1");
         }
         // Isolated measurement fixtures, never stored in the real widget preferences or exported screenshots.
-        runOnMainSync(()->{
+        checkedOnMainSync(()->{
             Context fixture=new android.content.ContextWrapper(sized){@Override public SharedPreferences getSharedPreferences(String name,int mode){return super.getSharedPreferences(name.equals(CostoLuceWidgetProvider.PREFS)?"widget_small_measurement_fixture":name,mode);}};
             fixture.getSharedPreferences(CostoLuceWidgetProvider.PREFS,Context.MODE_PRIVATE).edit().clear().putLong("saved_at",1700000000000L).putString("kwh","4567.8").putString("estimated_euro","1234.56").putString("period","Ott + Nov 2026").putInt("page_4242",savedPage).commit();
             View measured=CostoLuceWidgetProvider.createViewsForSize(fixture,4242,width,height).apply(fixture,null);
