@@ -12,7 +12,7 @@ android {
         minSdk 24
         targetSdk 35
         versionCode 21
-        versionName '6.2.0'
+        versionName '6.3.0'
         testInstrumentationRunner 'com.costoluce.importatore.WidgetSmokeTestRunner'
     }
 
@@ -37,3 +37,4 @@ dependencies {
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.json:json:20240303'
 }
+
