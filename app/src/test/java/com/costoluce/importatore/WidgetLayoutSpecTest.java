@@ -20,7 +20,19 @@ public class WidgetLayoutSpecTest {
     }
     @Test public void invalidLauncherBoundsAreLimited(){
         WidgetLayoutSpec small=new WidgetLayoutSpec(-100,0),large=new WidgetLayoutSpec(9000,9000);
-        assertEquals(160,small.width);assertEquals(180,small.height);
+        assertEquals(64,small.width);assertEquals(32,small.height);
         assertEquals(1600,large.width);assertEquals(1600,large.height);
+    }
+    @Test public void smallestLayoutsDropWholeSectionsInsteadOfShrinkingFullPages(){
+        assertTrue(new WidgetLayoutSpec(96,48).statsOnly());
+        assertTrue(new WidgetLayoutSpec(130,96).statsOnly());
+        assertTrue(new WidgetLayoutSpec(300,64).wideStats());
+        assertTrue(new WidgetLayoutSpec(130,160).smallSummary());
+        assertTrue(new WidgetLayoutSpec(240,220).smallSummary());
+        assertTrue(new WidgetLayoutSpec(130,500).smallSummary());
+        assertTrue(new WidgetLayoutSpec(280,260).fullPages());
+        assertFalse(new WidgetLayoutSpec(180,180).smallRefresh());
+        assertTrue(new WidgetLayoutSpec(240,180).smallRefresh());
+        assertFalse(new WidgetLayoutSpec(180,130).smallDate());
     }
 }

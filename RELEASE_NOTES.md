@@ -1,9 +1,11 @@
-Costo Luce 6.3.1 — Correzione ridimensionamento verticale
+Costo Luce 6.4.0 — Widget adattivo da 2 × 1
 
-- Rimosso il minimo implicito di 400 × 320 dp introdotto dalla decorazione vettoriale dello sfondo. Le onde mantengono lo stesso disegno e si adattano al contenitore, senza imporre una misura minima al widget.
-- L’evento di ridimensionamento usa direttamente le nuove dimensioni fornite dal launcher.
-- Rimangono i tre livelli di dettaglio e il minimo richiesto di 280 × 260 dp, soggetto alla griglia della Home.
-- Nuova prova di regressione Android: confronto con lo sfondo della 6.3.0, misura dell’altezza richiesta senza forzarla e verifica in AppWidgetHostView dopo riduzioni successive da 500 a 260 dp, anche con misura AT_MOST.
-- Credenziali, tariffe, consumi Enel reali, accisa, navigazione e refresh in background restano invariati.
+- Dimensione iniziale richiesta alla Home: 2 colonne × 1 riga su Android 12+. Limiti di ridimensionamento abbassati a 96 × 48 dp per permettere una riga; le misure effettive dipendono dalla griglia del launcher.
+- Una riga: solo kWh e costo stimato, senza logo, data, periodo, grafico o frecce. Toccare il widget apre l’app. Il refresh automatico in background continua a funzionare.
+- Una riga larga: i due valori si dispongono affiancati, usando la larghezza disponibile.
+- Formati intermedi: compaiono il periodo, poi la data di aggiornamento; il pulsante di refresh viene mostrato solo dove dispone di spazio sufficiente.
+- Formati completi da 280 × 260 dp: riepilogo e grafico a quattro mesi con navigazione. Più spazio aggiunge scala, anni e dettagli già disponibili.
+- Ridurre il widget dalla pagina grafico mostra comunque i due valori; allargandolo viene ripristinata la pagina selezionata. Il toggle € / kWh dell’app e delle pagine complete resta salvato.
+- Credenziali, tariffe personalizzate, consumi reali Enel, periodo di fatturazione e accisa non cambiano. Nessun valore dimostrativo nei widget pubblicati.
 
-Test JavaScript, JVM, compilazione e controlli Android 15 prima della pubblicazione. Le immagini CI mostrano dati mancanti e non inseriscono consumi dimostrativi. Il comportamento sulla Home Samsung segnalata va verificato con questo aggiornamento sul telefono: la prova su emulatore non sostituisce quel riscontro. APK di test.
+Verifiche JavaScript, JVM e Android 15: formati da 96 × 48 dp, una riga larga, riepiloghi intermedi e pagine complete; testo normale e al 130%, valori numerici lunghi, bordi e persistenza di pagina/unità. Le immagini CI mostrano valori mancanti senza account collegato. La griglia specifica della Home Samsung va verificata sul telefono. APK di test.
