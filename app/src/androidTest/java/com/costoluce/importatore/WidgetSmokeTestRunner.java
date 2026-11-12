@@ -29,7 +29,14 @@ public class WidgetSmokeTestRunner extends Instrumentation {
             runOnMainSync(()->previewWeb.postVisualStateCallback(System.nanoTime(),new android.webkit.WebView.VisualStateCallback(){@Override public void onComplete(long id){rendered.countDown();}}));
             if(!rendered.await(12,java.util.concurrent.TimeUnit.SECONDS))throw new AssertionError("WebView did not render the requested state");
         }
-        Thread.sleep(500);clearSystemDialog();
+        if(previewWeb!=null&&previewWeb.isAttachedToWindow()){
+            java.util.concurrent.CountDownLatch frames=new java.util.concurrent.CountDownLatch(1);
+            runOnMainSync(()->{previewWeb.invalidate();android.view.Choreographer.getInstance().postFrameCallback(t->android.view.Choreographer.getInstance().postFrameCallback(next->frames.countDown()));});
+            if(!frames.await(8,java.util.concurrent.TimeUnit.SECONDS))throw new AssertionError("No committed display frame");
+        }
+        // Drain the emulator's buffered display frames before exporting the current state.
+        for(int frame=0;frame<3;frame++){Thread.sleep(500);Bitmap old=getUiAutomation().takeScreenshot();if(old!=null)old.recycle();}
+        clearSystemDialog();Thread.sleep(500);
         Bitmap b=getUiAutomation().takeScreenshot();
         if(b==null)throw new AssertionError("Missing screenshot");
         File dir=new File(getTargetContext().getFilesDir(),"screenshots");dir.mkdirs();
