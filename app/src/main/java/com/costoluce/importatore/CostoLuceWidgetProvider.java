@@ -116,7 +116,12 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         }
     }
     static org.json.JSONArray history(Context context) {
-        try { return HistoryMonths.slots(prefs(context).getString("history_json", "[]"), java.util.Calendar.getInstance()); }
+        SharedPreferences p = prefs(context);
+        // Upgrade: reuse the verified Enel months from 5.x until the first wider fetch.
+        // Manual totals cannot supply a monthly history.
+        String previous = "enel".equals(p.getString(KEY_SOURCE,""))
+                ? p.getString(KEY_MONTHLY,"[]") : "[]";
+        try { return HistoryMonths.slots(p.getString("history_json", previous), java.util.Calendar.getInstance()); }
         catch (JSONException e) { return new org.json.JSONArray(); }
     }
     static void saveUnit(Context context, String unit) {
