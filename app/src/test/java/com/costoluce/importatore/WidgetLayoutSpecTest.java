@@ -34,5 +34,8 @@ public class WidgetLayoutSpecTest {
         assertFalse(new WidgetLayoutSpec(180,180).smallRefresh());
         assertTrue(new WidgetLayoutSpec(240,180).smallRefresh());
         assertFalse(new WidgetLayoutSpec(180,130).smallDate());
+        assertFalse(new WidgetLayoutSpec(96,48).statsRefreshPossible());
+        assertTrue(new WidgetLayoutSpec(130,64).statsRefreshPossible());
+        assertTrue(new WidgetLayoutSpec(150,80).statsRefreshPossible());
     }
 }

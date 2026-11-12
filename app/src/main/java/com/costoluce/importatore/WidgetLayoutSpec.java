@@ -16,6 +16,7 @@ final class WidgetLayoutSpec {
     boolean smallSummary(){return !statsOnly()&&(width<280||height<260);}
     boolean fullPages(){return !statsOnly()&&!smallSummary();}
     boolean wideStats(){return statsOnly()&&width>=260;}
+    boolean statsRefreshPossible(){return statsOnly()&&width>=120&&height>=56;}
     boolean smallDate(){return smallSummary()&&height>=150;}
     boolean smallRefresh(){return smallSummary()&&width>=200&&height>=160;}
     int contentWidth(){return width-2*padding;}

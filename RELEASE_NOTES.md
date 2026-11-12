@@ -1,11 +1,9 @@
-Costo Luce 6.4.0 — Widget adattivo da 2 × 1
+Costo Luce 6.4.1 — Aggiornamento nel widget compatto
 
-- Dimensione iniziale richiesta alla Home: 2 colonne × 1 riga su Android 12+. Limiti di ridimensionamento abbassati a 96 × 48 dp per permettere una riga; le misure effettive dipendono dalla griglia del launcher.
-- Una riga: solo kWh e costo stimato, senza logo, data, periodo, grafico o frecce. Toccare il widget apre l’app. Il refresh automatico in background continua a funzionare.
-- Una riga larga: i due valori si dispongono affiancati, usando la larghezza disponibile.
-- Formati intermedi: compaiono il periodo, poi la data di aggiornamento; il pulsante di refresh viene mostrato solo dove dispone di spazio sufficiente.
-- Formati completi da 280 × 260 dp: riepilogo e grafico a quattro mesi con navigazione. Più spazio aggiunge scala, anni e dettagli già disponibili.
-- Ridurre il widget dalla pagina grafico mostra comunque i due valori; allargandolo viene ripristinata la pagina selezionata. Il toggle € / kWh dell’app e delle pagine complete resta salvato.
-- Credenziali, tariffe personalizzate, consumi reali Enel, periodo di fatturazione e accisa non cambiano. Nessun valore dimostrativo nei widget pubblicati.
+- Pulsante ↻ sulla destra anche nel formato compatto a una riga, quando può convivere con kWh e costo leggibili. Funziona anche nella riga larga.
+- Area del pulsante 48 × 48 dp; aggiornamento in background tramite broadcast e JobScheduler, senza apertura dell’app. Durante il recupero compare «…».
+- Rimossa l’azione del contenitore quando il pulsante è visibile, anche riutilizzando una vista appena ridimensionata, per non intercettarne il tocco.
+- Nei limiti estremi da 96 × 48 dp rimangono solo i due valori. Il pulsante viene mostrato da 120 × 56 dp se le cifre entrano mantenendo una dimensione leggibile; se non entrano, basta allargare il widget.
+- Misure iniziali 2 × 1, dati Enel reali, credenziali e tariffe rimangono quelli già salvati.
 
-Verifiche JavaScript, JVM e Android 15: formati da 96 × 48 dp, una riga larga, riepiloghi intermedi e pagine complete; testo normale e al 130%, valori numerici lunghi, bordi e persistenza di pagina/unità. Le immagini CI mostrano valori mancanti senza account collegato. La griglia specifica della Home Samsung va verificata sul telefono. APK di test.
+Test JavaScript, JVM e Android 15, compresi formato 150 × 80 dp, testo al 130%, valori lunghi, stato di aggiornamento e riutilizzo della vista dopo ridimensionamento. Le immagini CI mostrano dati mancanti senza introdurre consumi dimostrativi. APK di test.

@@ -504,7 +504,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
             float fontScale=context.getResources().getConfiguration().fontScale;
             views.setImageViewBitmap(R.id.widget_chart,MonthlyChart.draw(context,history,spec,spec.chartHeight(fontScale,showStatus),bitmapPixels));
         }else{
-            views.setTextViewText(R.id.widget_brand,spec.compact()?"Costo Luce":"Costo Luce · v6.4.0");
+            views.setTextViewText(R.id.widget_brand,spec.compact()?"Costo Luce":"Costo Luce · v6.4.1");
             views.setViewVisibility(R.id.widget_chart_note,android.view.View.GONE);
             if("enel".equals(p.getString(KEY_SOURCE,"")))try{org.json.JSONArray rows=new org.json.JSONArray(p.getString(KEY_MONTHLY,"[]"));if(rows.length()>0)views.setTextViewText(R.id.widget_period,compactPeriod(rows));}catch(Exception ignored){}
         }
@@ -522,15 +522,27 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
             energy=usage.format(kwh)+" kWh";cost=NumberFormat.getCurrencyInstance(IT).format(eur);
         }catch(RuntimeException ignored){}
         views.setTextViewText(R.id.widget_small_kwh,energy);views.setTextViewText(R.id.widget_small_cost,cost);
+        boolean refreshShown=spec.smallRefresh();
+        if(spec.statsRefreshPossible()){
+            float candidateWidth=spec.width-20-52;if(spec.wideStats())candidateWidth/=2;
+            float usableHeight=spec.height-8,density=context.getResources().getDisplayMetrics().density;
+            refreshShown=fitSmallValue(context,energy,candidateWidth,spec.wideStats()?usableHeight:usableHeight*.56f,22,true)>=11*density
+                    &&fitSmallValue(context,cost,candidateWidth,spec.wideStats()?usableHeight:usableHeight*.44f,18,false)>=11*density;
+        }
         String period=p.getString(KEY_PERIOD,"");if(period==null||period.trim().isEmpty())period="Periodo corrente";
         if("enel".equals(p.getString(KEY_SOURCE,"")))try{org.json.JSONArray rows=new org.json.JSONArray(p.getString(KEY_MONTHLY,"[]"));if(rows.length()>0)period=compactPeriod(rows);}catch(Exception ignored){}
         String date=savedAt>0?new SimpleDateFormat("dd/MM · HH:mm",IT).format(new Date(savedAt)):"In attesa di dati";
         String status=p.getString(KEY_STATUS,"");
         String description="Consumi: "+energy+". Costo stimato: "+cost+". "+period+". Ultimo aggiornamento: "+date+(status==null||status.isEmpty()?"":". "+status);
-        views.setContentDescription(R.id.widget_small_root,description+". Tocca per aprire Costo Luce.");
+        views.setContentDescription(R.id.widget_small_root,description+". Tocca i valori per aprire Costo Luce.");
         Intent open=new Intent(context,MainActivity.class).setAction("com.costoluce.cloud.action.OPEN_WIDGET").addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP|Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent openPending=PendingIntent.getActivity(context,0,open,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
-        if(spec.statsOnly())views.setOnClickPendingIntent(R.id.widget_small_root,openPending);
+        // Clear a parent action left by a previous smaller rendering of the same layout.
+        views.setOnClickPendingIntent(R.id.widget_small_root,null);
+        if(spec.statsOnly()){
+            if(!refreshShown)views.setOnClickPendingIntent(R.id.widget_small_root,openPending);
+            for(int id:new int[]{R.id.widget_small_kwh,R.id.widget_small_cost})views.setOnClickPendingIntent(id,openPending);
+        }
         else{
             if(!spec.smallRefresh())views.setOnClickPendingIntent(R.id.widget_small_root,openPending);
             views.setTextViewText(R.id.widget_small_period,period);
@@ -538,14 +550,15 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
             views.setViewVisibility(R.id.widget_small_updated,spec.smallDate()?android.view.View.VISIBLE:android.view.View.GONE);
             views.setViewVisibility(R.id.widget_small_refresh,spec.smallRefresh()?android.view.View.VISIBLE:android.view.View.GONE);
             for(int id:new int[]{R.id.widget_small_kwh,R.id.widget_small_cost,R.id.widget_small_period,R.id.widget_small_updated})views.setOnClickPendingIntent(id,openPending);
-            Intent refresh=new Intent(context,CostoLuceWidgetProvider.class).setAction(ACTION_REFRESH).addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
-            views.setOnClickPendingIntent(R.id.widget_small_refresh,PendingIntent.getBroadcast(context,1002,refresh,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE));
-            views.setTextViewText(R.id.widget_small_refresh,p.getBoolean(KEY_BUSY,false)?"…":"↻");
         }
+        views.setViewVisibility(R.id.widget_small_refresh,refreshShown?android.view.View.VISIBLE:android.view.View.GONE);
+        Intent refresh=new Intent(context,CostoLuceWidgetProvider.class).setAction(ACTION_REFRESH).addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
+        views.setOnClickPendingIntent(R.id.widget_small_refresh,PendingIntent.getBroadcast(context,1002,refresh,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE));
+        views.setTextViewText(R.id.widget_small_refresh,p.getBoolean(KEY_BUSY,false)?"…":"↻");
         float fontScale=context.getResources().getConfiguration().fontScale;
         float available=spec.height-(spec.statsOnly()?8:16);
         if(spec.smallSummary())available-=(spec.smallRefresh()?48:Math.max(20,14*fontScale))+(spec.smallDate()?14*fontScale+4:0);
-        float width=spec.width-20;
+        float width=spec.width-20-(spec.statsOnly()&&refreshShown?52:0);
         if(spec.wideStats())width/=2;
         float primaryHeight=spec.wideStats()?available:available*.56f,secondaryHeight=spec.wideStats()?available:available*.44f;
         views.setTextViewTextSize(R.id.widget_small_kwh,android.util.TypedValue.COMPLEX_UNIT_PX,fitSmallValue(context,energy,width,primaryHeight,spec.statsOnly()?22:26,true));
@@ -645,7 +658,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         views.setOnClickPendingIntent(R.id.widget_refresh, refreshPending);
         views.setOnClickPendingIntent(R.id.widget_status, refreshPending);
         boolean chart = p.getInt("page_"+widgetId,0)==1;
-        views.setTextViewText(R.id.widget_brand,chart?"Consumi ultimi 4 mesi":"COSTO LUCE · v6.4.0");
+        views.setTextViewText(R.id.widget_brand,chart?"Consumi ultimi 4 mesi":"COSTO LUCE · v6.4.1");
         views.setViewVisibility(R.id.widget_units,chart?android.view.View.VISIBLE:android.view.View.GONE);
         views.setViewVisibility(R.id.widget_refresh,chart?android.view.View.GONE:android.view.View.VISIBLE);
         boolean showKwh="kwh".equals(p.getString("display_unit","eur"));
