@@ -8,8 +8,28 @@ import java.io.*;
 
 /** Runs only in CI: inflate both real RemoteViews pages and capture their empty-data states. */
 public class WidgetSmokeTestRunner extends Instrumentation {
+    private android.webkit.WebView previewWeb;
+    private void clearSystemDialog()throws Exception{
+        for(int attempt=0;attempt<3;attempt++){
+            android.view.accessibility.AccessibilityNodeInfo root=getUiAutomation().getRootInActiveWindow();
+            if(root==null||root.findAccessibilityNodeInfosByText("isn't responding").isEmpty())return;
+            boolean system=!root.findAccessibilityNodeInfosByText("Pixel Launcher").isEmpty()||!root.findAccessibilityNodeInfosByText("System UI").isEmpty();
+            if(!system)throw new AssertionError("An application ANR covers the preview");
+            java.util.List<android.view.accessibility.AccessibilityNodeInfo> buttons=root.findAccessibilityNodeInfosByText("Close app");
+            if(buttons.isEmpty())throw new AssertionError("Cannot dismiss system launcher dialog");
+            android.view.accessibility.AccessibilityNodeInfo button=buttons.get(0);
+            if(!button.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK)&&button.getParent()!=null)button.getParent().performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK);
+            Thread.sleep(700);
+        }
+    }
     private void capture(String name) throws Exception {
-        waitForIdleSync(); Thread.sleep(1000);
+        clearSystemDialog();waitForIdleSync();
+        if(previewWeb!=null&&previewWeb.isAttachedToWindow()){
+            java.util.concurrent.CountDownLatch rendered=new java.util.concurrent.CountDownLatch(1);
+            runOnMainSync(()->previewWeb.postVisualStateCallback(System.nanoTime(),new android.webkit.WebView.VisualStateCallback(){@Override public void onComplete(long id){rendered.countDown();}}));
+            if(!rendered.await(12,java.util.concurrent.TimeUnit.SECONDS))throw new AssertionError("WebView did not render the requested state");
+        }
+        Thread.sleep(500);clearSystemDialog();
         Bitmap b=getUiAutomation().takeScreenshot();
         if(b==null)throw new AssertionError("Missing screenshot");
         File dir=new File(getTargetContext().getFilesDir(),"screenshots");dir.mkdirs();
@@ -34,7 +54,7 @@ public class WidgetSmokeTestRunner extends Instrumentation {
         try {
             Context c=getTargetContext();
             Activity activity=startActivitySync(new Intent(c,MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-            Thread.sleep(2500);capture("app-6.1");
+            Thread.sleep(2500);previewWeb=findWeb(activity.findViewById(android.R.id.content));capture("app-6.1");
             android.webkit.WebView web=findWeb(activity.findViewById(android.R.id.content));
             if(web==null)throw new AssertionError("Missing WebView");
             assertScript(web,"showView('rates');if(document.querySelectorAll('.rate-card').length!==10)throw Error('Default rows');openRateEditor('energy');if(!document.getElementById('rateName').disabled)throw Error('Energy lock');closeRateEditor()");
