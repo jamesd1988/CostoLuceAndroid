@@ -193,10 +193,10 @@ public class WidgetSmokeTestRunner extends Instrumentation {
             fixture.getSharedPreferences(CostoLuceWidgetProvider.PREFS,Context.MODE_PRIVATE).edit().clear().putLong("saved_at",1700000000000L).putString("kwh","4567.8").putString("estimated_euro","1234.56").putString("period","Ott + Nov 2026").putInt("page_4242",savedPage).commit();
             View measured=CostoLuceWidgetProvider.createViewsForSize(fixture,4242,width,height).apply(fixture,null);
             float density=c.getResources().getDisplayMetrics().density;
-            measured.measure(View.MeasureSpec.makeMeasureSpec(Math.round(width*density),View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(Math.round(height*density),View.MeasureSpec.EXACTLY));measured.layout(0,0,measured.getMeasuredWidth(),measured.getMeasuredHeight());assertBounds(measured);
+            for(int settle=0;settle<2;settle++){measured.measure(View.MeasureSpec.makeMeasureSpec(Math.round(width*density),View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(Math.round(height*density),View.MeasureSpec.EXACTLY));measured.layout(0,0,measured.getMeasuredWidth(),measured.getMeasuredHeight());}assertBounds(measured);
             for(int id:new int[]{R.id.widget_small_kwh,R.id.widget_small_cost}){
                 android.widget.TextView value=measured.findViewById(id);
-                if(value.getLayout()==null||value.getLayout().getEllipsisCount(0)>0)throw new AssertionError("Clipped small value at "+width+"x"+height+" font="+fontScale);
+                if(value.getLayout()==null||value.getLayout().getEllipsisCount(0)>0)throw new AssertionError("Clipped small value id="+id+" at "+width+"x"+height+" font="+fontScale+" pixels="+value.getTextSize()+" width="+value.getWidth());
                 if(value.getTextSize()/density<10.5f)throw new AssertionError("Small value became illegible at "+width+"x"+height);
             }
             if(!((android.widget.TextView)measured.findViewById(R.id.widget_small_kwh)).getText().toString().contains("4.567,8"))throw new AssertionError("Small consumption was not real snapshot value");
@@ -208,7 +208,7 @@ public class WidgetSmokeTestRunner extends Instrumentation {
                 CostoLuceWidgetProvider.createViewsForSize(fixture,4242,width,height).reapply(fixture,reused);
                 android.widget.TextView refresh=reused.findViewById(R.id.widget_small_refresh);
                 if(refresh.getVisibility()!=View.VISIBLE||!"…".equals(refresh.getText().toString())||reused.hasOnClickListeners())throw new AssertionError("Compact busy feedback or parent listener reset failed");
-                reused.measure(View.MeasureSpec.makeMeasureSpec(Math.round(width*density),View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(Math.round(height*density),View.MeasureSpec.EXACTLY));reused.layout(0,0,reused.getMeasuredWidth(),reused.getMeasuredHeight());assertBounds(reused);
+                for(int settle=0;settle<2;settle++){reused.measure(View.MeasureSpec.makeMeasureSpec(Math.round(width*density),View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(Math.round(height*density),View.MeasureSpec.EXACTLY));reused.layout(0,0,reused.getMeasuredWidth(),reused.getMeasuredHeight());}assertBounds(reused);
             }
         });
     }

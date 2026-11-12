@@ -526,7 +526,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         if(spec.statsRefreshPossible()){
             float candidateWidth=spec.width-20-52;if(spec.wideStats())candidateWidth/=2;
             float usableHeight=spec.height-8,density=context.getResources().getDisplayMetrics().density;
-            refreshShown=fitSmallValue(context,energy,candidateWidth,spec.wideStats()?usableHeight:usableHeight*.56f,22,true)>=11*density
+            refreshShown=fitSmallValue(context,energy,candidateWidth,spec.wideStats()?usableHeight:usableHeight*.56f,22,true)>=12*density
                     &&fitSmallValue(context,cost,candidateWidth,spec.wideStats()?usableHeight:usableHeight*.44f,18,false)>=11*density;
         }
         String period=p.getString(KEY_PERIOD,"");if(period==null||period.trim().isEmpty())period="Periodo corrente";
@@ -571,7 +571,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         paint.setTypeface(android.graphics.Typeface.create("sans-serif",bold?android.graphics.Typeface.BOLD:android.graphics.Typeface.NORMAL));
         float pixels=android.util.TypedValue.applyDimension(android.util.TypedValue.COMPLEX_UNIT_SP,desiredSp,dm);paint.setTextSize(pixels);
         android.graphics.Paint.FontMetrics fm=paint.getFontMetrics();
-        float ratio=Math.min(1,Math.min(Math.max(1,(widthDp-1)*dm.density)/Math.max(1,paint.measureText(text)),Math.max(1,(heightDp-1)*dm.density)/(fm.descent-fm.ascent)));
+        float ratio=Math.min(1,Math.min(Math.max(1,(widthDp-3)*dm.density)/Math.max(1,paint.measureText(text)),Math.max(1,(heightDp-1)*dm.density)/(fm.descent-fm.ascent)));
         return pixels*ratio;
     }
 
