@@ -26,6 +26,7 @@ import java.util.Locale;
  */
 public final class CostoLuceWidgetProvider extends AppWidgetProvider {
     static final String PREFS = "costoluce_widget_snapshot_v1";
+    static final String ACTION_PAGE = "com.costoluce.cloud.action.WIDGET_PAGE";
     static final String ACTION_REFRESH = "com.costoluce.cloud.action.WIDGET_REFRESH";
     private static final int REFRESH_JOB_ID = 225901;
     private static final String KEY_KWH = "kwh";
@@ -69,6 +70,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
     /** Shared by both in-app sync and the one-tap Home widget refresh. */
     static boolean saveResultFromEnel(Context context, EnelConnector.Result result, int months)
             throws JSONException {
+        saveHistory(context, result);
         WidgetConfiguration config = readConfiguration(context);
         if (config == null || config.months != months || result == null
                 || result.monthly == null || result.monthly.size() != months)
@@ -105,6 +107,21 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
                 period.toString(), rows.toString(), partial);
     }
 
+    static void saveHistory(Context context, EnelConnector.Result result) throws JSONException {
+        if (result != null && !result.history.isEmpty() && result.history.size() <= 4) {
+            prefs(context).edit().putString("history_json", HistoryMonths.serialize(result.history).toString())
+                    .putLong("history_at",System.currentTimeMillis()).commit();
+            refresh(context);
+        }
+    }
+    static org.json.JSONArray history(Context context) {
+        try { return HistoryMonths.slots(prefs(context).getString("history_json", "[]"), java.util.Calendar.getInstance()); }
+        catch (JSONException e) { return new org.json.JSONArray(); }
+    }
+    static void saveUnit(Context context, String unit) {
+        if (!"kwh".equals(unit) && !"eur".equals(unit)) return;
+        prefs(context).edit().putString("display_unit", unit).apply(); refresh(context);
+    }
     /**
      * Configure the widget without making up consumption data. A first Enel
      * fetch from the Home widget can then populate the first real snapshot.
@@ -257,6 +274,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         if (p.getString(KEY_RATES, null) == null) return null;
         try {
             JSONObject state = new JSONObject();
+            state.put("unit", p.getString("display_unit", "eur"));
             state.put("months", p.getInt(KEY_CONFIG_MONTHS, p.getInt(KEY_MONTHS, 2)));
             state.put("resident", p.getBoolean(KEY_RESIDENT, false));
             return state;
@@ -299,14 +317,44 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         for (int id : ids) render(context, manager, id);
     }
 
+    @Override public void onAppWidgetOptionsChanged(Context context, AppWidgetManager manager, int id, android.os.Bundle options) {
+        render(context,manager,id);
+    }
+    @Override public void onDeleted(Context context, int[] ids) {
+        SharedPreferences.Editor e=prefs(context).edit();for(int id:ids)e.remove("page_"+id);e.apply();
+    }
+    @Override public void onDisabled(Context context) {
+        JobScheduler jobs=(JobScheduler)context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
+        if(jobs!=null)jobs.cancel(225902);
+        super.onDisabled(context);
+    }
+    private static void schedulePeriodic(Context context) {
+        JobScheduler jobs=(JobScheduler)context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
+        if(jobs!=null && jobs.getPendingJob(225902)==null) {
+            try { jobs.schedule(new JobInfo.Builder(225902,new ComponentName(context,WidgetUpdateJobService.class))
+                    .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY).setPeriodic(6*60*60*1000L).build()); }
+            catch(RuntimeException ignored) { }
+        }
+    }
     @Override public void onUpdate(Context context, AppWidgetManager manager, int[] ids) {
         super.onUpdate(context, manager, ids);
+        schedulePeriodic(context);
         for (int id : ids) render(context, manager, id);
     }
 
     @Override public void onReceive(Context context, Intent intent) {
         if (intent != null && ACTION_REFRESH.equals(intent.getAction())) {
             requestDataRefresh(context);
+            return;
+        }
+        if (intent != null && ACTION_PAGE.equals(intent.getAction())) {
+            int id = intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, -1);
+            AppWidgetManager manager = AppWidgetManager.getInstance(context);
+            android.appwidget.AppWidgetProviderInfo info = manager.getAppWidgetInfo(id);
+            if (info != null && info.provider.equals(new ComponentName(context, CostoLuceWidgetProvider.class))) {
+                prefs(context).edit().putInt("page_"+id,intent.getIntExtra("page",0)==1?1:0).apply();
+                render(context,manager,id);
+            }
             return;
         }
         super.onReceive(context, intent);
@@ -373,6 +421,10 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
     }
 
     private static void render(Context context, AppWidgetManager manager, int widgetId) {
+        manager.updateAppWidget(widgetId, createViews(context,widgetId));
+    }
+
+    static RemoteViews createViews(Context context, int widgetId) {
         RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.costoluce_widget);
         SharedPreferences p = prefs(context);
         long savedAt = p.getLong(KEY_TIMESTAMP, 0L);
@@ -448,6 +500,28 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         views.setOnClickPendingIntent(R.id.widget_refresh, refreshPending);
         views.setOnClickPendingIntent(R.id.widget_status, refreshPending);
-        manager.updateAppWidget(widgetId, views);
+        boolean chart = p.getInt("page_"+widgetId,0)==1;
+        views.setViewVisibility(R.id.widget_summary,chart?android.view.View.GONE:android.view.View.VISIBLE);
+        views.setViewVisibility(R.id.widget_chart,chart?android.view.View.VISIBLE:android.view.View.GONE);
+        views.setTextViewText(R.id.widget_dots, chart ? "○  ●" : "●  ○");
+        views.setTextViewText(R.id.widget_caption, "kwh".equals(p.getString("display_unit","eur")) ? "CONSUMO DEL PERIODO" : "COSTO VARIABILE STIMATO");
+        if ("kwh".equals(p.getString("display_unit","eur")) && savedAt>0) {
+            views.setTextViewText(R.id.widget_euro, p.getString(KEY_KWH,"—")+" kWh");
+            try { views.setTextViewText(R.id.widget_kwh,NumberFormat.getCurrencyInstance(IT).format(Double.parseDouble(p.getString(KEY_EUR,"0")))+" stimati"); }
+            catch (RuntimeException ignored) { }
+        }
+        if(chart) {
+            views.setImageViewBitmap(R.id.widget_chart, MonthlyChart.draw(context, history(context)));
+            views.setContentDescription(R.id.widget_chart,MonthlyChart.description(context,history(context)));
+        }
+        int target=chart?0:1;
+        for(int viewId : new int[]{R.id.widget_prev,R.id.widget_next,R.id.widget_dots}) {
+            Intent page = new Intent(context,CostoLuceWidgetProvider.class).setAction(ACTION_PAGE)
+                    .putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID,widgetId).putExtra("page",target)
+                    .setData(android.net.Uri.parse("costoluce://widget-page/"+widgetId+"/"+target));
+            views.setOnClickPendingIntent(viewId,PendingIntent.getBroadcast(context,widgetId,page,
+                    PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE));
+        }
+        return views;
     }
 }

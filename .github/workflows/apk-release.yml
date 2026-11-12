@@ -1,4 +1,4 @@
-name: Costo Luce - APK 5.9.0
+name: Costo Luce - APK 6.0.0
 
 on:
   push:
@@ -16,7 +16,7 @@ permissions:
 
 # Avoid competing releases after multiple rapid pushes.
 concurrency:
-  group: costoluce-apk-v5-9-0
+  group: costoluce-apk-v6-0-0
   cancel-in-progress: true
 
 jobs:
@@ -63,9 +63,44 @@ jobs:
             node "$test"
           done
 
+      # Reuse this testing certificate on subsequent builds. A previous 5.x private key,
+      # if available, can be supplied in the repository secret below for compatible updates.
+      - name: Ripristina firma APK di test
+        uses: actions/cache@v4
+        with:
+          path: ~/.android/debug.keystore
+          key: costoluce-debug-signing-v1
+      - name: Firma precedente opzionale
+        env:
+          PREVIOUS_KEYSTORE: ${{ secrets.ANDROID_DEBUG_KEYSTORE_BASE64 }}
+        run: |
+          if [ -n "$PREVIOUS_KEYSTORE" ]; then
+            mkdir -p ~/.android
+            printf '%s' "$PREVIOUS_KEYSTORE" | base64 --decode > ~/.android/debug.keystore
+          fi
       - name: Test e compilazione Android
         run: gradle --no-daemon --stacktrace :app:testDebugUnitTest :app:assembleDebug
 
+      - name: Abilita accelerazione emulatore
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Smoke test Android e layout RemoteViews
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          script: |
+            gradle --no-daemon :app:connectedDebugAndroidTest
+            mkdir -p dist
+            adb exec-out run-as com.costoluce.cloud cat files/screenshots/app-6.0.png > dist/app-6.0.png
+            adb exec-out run-as com.costoluce.cloud cat files/screenshots/widget-summary-6.0.png > dist/widget-summary-6.0.png
+            adb exec-out run-as com.costoluce.cloud cat files/screenshots/widget-history-6.0.png > dist/widget-history-6.0.png
+            test -s dist/widget-history-6.0.png
       - name: Controllo APK e widget Android
         shell: bash
         run: |
@@ -84,8 +119,8 @@ jobs:
           grep -q "android.permission.ACCESS_NETWORK_STATE" permissions-compiled.txt
           grep -q "android.permission.INTERNET" permissions-compiled.txt
           mkdir -p dist
-          cp "$APK" dist/CostoLuce_v5.9.0_BimestreCorrente_S25.apk
-          sha256sum dist/CostoLuce_v5.9.0_BimestreCorrente_S25.apk
+          cp "$APK" dist/CostoLuce_v6.0.0_NavyTeal_S25.apk
+          sha256sum dist/CostoLuce_v6.0.0_NavyTeal_S25.apk
 
       # Release directly after the build. No emulator or upload-artifact dependency.
       - name: Pubblica APK su GitHub Release
@@ -94,16 +129,16 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          TAG="v5.9.0"
-          APK="dist/CostoLuce_v5.9.0_BimestreCorrente_S25.apk"
+          TAG="v6.0.0"
+          APK="dist/CostoLuce_v6.0.0_NavyTeal_S25.apk"
           if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release upload "$TAG" "$APK" --clobber
+            gh release upload "$TAG" "$APK" dist/*.png --clobber
           else
-            gh release create "$TAG" "$APK" \
+            gh release create "$TAG" "$APK" dist/*.png \
               --target "$GITHUB_SHA" \
-              --title "Costo Luce v5.9.0 - Widget refresh fix" \
-              --notes "APK Android di test. Bimestre fatturazione corrente (ottobre-novembre) e mese parziale, con accisa basata sui kWh di ciascun mese. Widget Home auto sync. Sono necessarie credenziali Enel salvate. Login Enel non verificato con account reale. APK debug: la firma puo cambiare." \
+              --title "Costo Luce v6.0.0 - Navy e teal, storico Enel e widget a due pagine" \
+              --notes "Widget navy/teal a due pagine con frecce/dot, storico di quattro mesi richiesto a Enel, mesi mancanti espliciti, corrente parziale. Toggle persistente euro/kWh condiviso con il widget. Bimestre ottobre-novembre e accisa mensile preservati. Refresh senza apertura app, anche periodico ogni circa sei ore secondo Android. Login e disponibilita storica da verificare sul dispositivo. Nessuna credenziale nel widget. APK di test: la firma precedente 5.x non e presente nel repository; la compatibilita di aggiornamento con 5.x non e garantita. NON disinstallare la vecchia app per forzare aggiornamento: Android eliminerebbe dati e credenziali." \
               --prerelease
           fi
           echo "### APK pubblicato" >> "$GITHUB_STEP_SUMMARY"
-          echo "https://github.com/$GITHUB_REPOSITORY/releases/download/v5.9.0/CostoLuce_v5.9.0_BimestreCorrente_S25.apk" >> "$GITHUB_STEP_SUMMARY"
+          echo "https://github.com/$GITHUB_REPOSITORY/releases/download/v6.0.0/CostoLuce_v6.0.0_NavyTeal_S25.apk" >> "$GITHUB_STEP_SUMMARY"

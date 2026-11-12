@@ -35,13 +35,13 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="3dp"
-                android:text="I TUOI CONSUMI"
+                android:text="ENEL · RIEPILOGO E STORICO"
                 android:textColor="#8FA9D0"
                 android:letterSpacing="0.07"
                 android:textSize="10sp"
                 android:maxLines="1"/>
         </LinearLayout>
-        <TextView
+    <TextView
             android:id="@+id/widget_refresh"
             android:layout_width="46dp"
             android:layout_height="46dp"
@@ -56,10 +56,12 @@
             android:focusable="true" />
     </LinearLayout>
 
+        <LinearLayout android:id="@+id/widget_summary" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
+        android:id="@+id/widget_caption"
         android:text="COSTO VARIABILE STIMATO"
         android:letterSpacing="0.06"
         android:textColor="#ADC2E0"
@@ -118,6 +120,13 @@
         android:maxLines="1"
         android:ellipsize="end" />
 
+    </LinearLayout>
+    <ImageView android:id="@+id/widget_chart" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:visibility="gone" android:scaleType="fitCenter" android:contentDescription="Storico mensile Enel" />
+    <LinearLayout android:layout_width="match_parent" android:layout_height="40dp" android:orientation="horizontal" android:gravity="center">
+        <TextView android:id="@+id/widget_prev" android:layout_width="48dp" android:layout_height="match_parent" android:text="‹" android:textSize="28sp" android:textColor="#63E6CE" android:gravity="center" android:contentDescription="Cambia pagina" />
+        <TextView android:id="@+id/widget_dots" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:text="●  ○" android:textColor="#63E6CE" android:gravity="center" android:contentDescription="Cambia pagina del widget" />
+        <TextView android:id="@+id/widget_next" android:layout_width="48dp" android:layout_height="match_parent" android:text="›" android:textSize="28sp" android:textColor="#63E6CE" android:gravity="center" android:contentDescription="Cambia pagina" />
+    </LinearLayout>
     <!-- Flexible space: footer stays at the bottom when Samsung resizes the widget. -->
     <LinearLayout
         android:layout_width="match_parent"

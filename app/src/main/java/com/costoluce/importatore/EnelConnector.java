@@ -98,6 +98,7 @@ public final class EnelConnector {
 
     static final class Result {
         final double kwh;
+        java.util.List<MonthUsage> history = java.util.Collections.emptyList();
         final String period;
         final int days;
         final java.util.List<MonthUsage> monthly;
@@ -110,14 +111,14 @@ public final class EnelConnector {
         return fetch(credentials, months, null);
     }
 
-    static Result fetch(Credentials credentials, int months, Progress progress) throws IOException, JSONException {
+    static synchronized Result fetch(Credentials credentials, int months, Progress progress) throws IOException, JSONException {
         final long deadline = System.nanoTime() + MAX_SYNC_MS * 1_000_000L;
         credentials.validate();
         if (months != 1 && months != 2) throw new IOException("Periodo non supportato.");
         // Respect the customer's bimonthly billing cycle. The active month
         // is included only through today's date; no future kWh are inferred.
         BillingPeriod.Window window = BillingPeriod.today(months);
-        String from = window.from;
+        String from = HistoryMonths.from(java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("Europe/Rome")));
         String to = window.to;
 
         CookieManager jar = new CookieManager(null, CookiePolicy.ACCEPT_ORIGINAL_SERVER);
@@ -139,18 +140,35 @@ public final class EnelConnector {
             String url = AGGREGATE + "?pod=" + encode(credentials.pod) + "&userNumber=" + encode(credentials.userNumber)
                     + "&validityFrom=" + from + "&validityTo=" + to;
             report(progress, "Fase 4/4: recupero dei consumi elettrici...");
-            String response = request(url, null, deadline);
-            report(progress, "Analisi del totale kWh ricevuto da Enel...");
-            if (!response.trim().startsWith("{")) throw new IOException("Enel non ha restituito dati JSON. Controlla l'accesso e riprova.");
-            Result parsed = parseTotal(new JSONObject(response), from, to);
-            java.util.List<MonthUsage> monthly = window.withFutureMonths(parsed.monthly);
-            return new Result(parsed.kwh, from.substring(0,2)+"/"+from.substring(2,4)+"/"+from.substring(4)
-                +" – "+to.substring(0,2)+"/"+to.substring(2,4)+"/"+to.substring(4),
-                parsed.days, monthly);
+            Result parsed;
+            try {
+                parsed = parseTotal(new JSONObject(request(url,null,deadline)),from,to);
+            } catch(IOException | JSONException historyUnavailable) {
+                // Keep the working billing sync when a wider history is refused.
+                report(progress,"Storico esteso non disponibile: recupero il periodo di fatturazione.");
+                String billingUrl=AGGREGATE+"?pod="+encode(credentials.pod)+"&userNumber="+encode(credentials.userNumber)
+                        +"&validityFrom="+window.from+"&validityTo="+to;
+                parsed=parseTotal(new JSONObject(request(billingUrl,null,deadline)),window.from,to);
+            }
+            return forBillingWindow(parsed,window);
         } finally {
             jar.getCookieStore().removeAll();
             CookieHandler.setDefault(previous);
         }
+    }
+
+    static Result forBillingWindow(Result parsed, BillingPeriod.Window window) {
+            java.util.List<MonthUsage> billing = new java.util.ArrayList<>();
+            int start = window.startYear * 100 + window.startMonth;
+            for (MonthUsage m : parsed.monthly) if (m.year * 100 + m.month >= start) billing.add(m);
+            java.util.List<MonthUsage> monthly = window.withFutureMonths(billing);
+            double billingKwh = 0; int billingDays = 0;
+            for (MonthUsage m : monthly) { billingKwh += m.kwh; billingDays += m.days; }
+            Result result = new Result(billingKwh, window.from.substring(0,2)+"/"+window.from.substring(2,4)+"/"+window.from.substring(4)
+                +" – "+window.to.substring(0,2)+"/"+window.to.substring(2,4)+"/"+window.to.substring(4),
+                billingDays, monthly);
+            result.history = parsed.monthly;
+            return result;
     }
 
     /** Public unauthenticated check: no username, password, POD, token or personal data transmitted. */

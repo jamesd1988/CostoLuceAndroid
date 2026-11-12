@@ -111,3 +111,18 @@ Nota: la firma dell'APK di debug può cambiare a ogni run. Per sostituire una pr
 - Il dato annuale non viene alterato: se lo snapshot precedente appartiene a settembre–ottobre, l'app lo riconosce come ciclo passato e non lo associa a ottobre–novembre. Il vecchio valore può restare visualizzato sul widget con la sua data finché non viene effettuata una lettura nuova.
 - Per utente residente l'accisa si calcola sui kWh effettivi **separatamente per ciascun mese** quando Enel fornisce il dettaglio; per consumi manuali senza suddivisione si mantiene una stima su ripartizione uniforme. Il prezzo delle altre componenti resta quello salvato nella calcolatrice, non viene aggiornato dai servizi tariffari.
 - Codice versione 17, versione **5.9.0**, APK `CostoLuce_v5.9.0_BimestreCorrente_S25.apk`.
+
+
+## Costo Luce 6.0
+
+Interfaccia navy/teal e widget RemoteViews a due pagine: riepilogo del periodo e grafico degli ultimi quattro mesi incluso il corrente. Frecce e dot cambiano pagina tramite broadcast senza aprire l’app. Lo swipe orizzontale non viene simulato: Android lo riserva normalmente alla navigazione del launcher. Il toggle € / kWh è persistente e condiviso con il widget; i costi sono stime variabili alle tariffe impostate, escluse quote fisse.
+
+Il connettore richiede dal primo giorno di tre mesi fa a oggi (fuso Europe/Rome), raggruppa solo le misure orarie effettivamente restituite e separa lo storico dal riepilogo del bimestre. Se il range esteso fallisce, tenta il range del periodo di fatturazione nella stessa sessione. Nessun valore storico è ricavato dividendo il bimestre: i mesi senza misure sono mancanti, gli zeri con misure sono veri zeri, il corrente è sempre parziale. Al cambio mese vengono riallineate le quattro colonne senza attribuire letture precedenti al nuovo mese. Prezzi storici: non sono fatture Enel, ma stime con le tariffe attualmente impostate e accisa calcolata per ciascun mese.
+
+Il refresh manuale usa JobScheduler in background; ogni circa sei ore un job con vincolo di rete aggiorna i widget presenti. Tempi soggetti a risparmio energetico e policy Android. Il job periodico viene eliminato rimuovendo l’ultimo widget. Credenziali cifrate, alias AndroidKeyStore e applicationId rimangono invariati; nessuna credenziale o POD è incluso nel widget o nello storico.
+
+Verifica: suite JavaScript, test JVM su accisa e periodi, nuovi test storico su mesi mancanti/zero reale/cambio anno/bimestre, build Android e smoke test su emulatore API 35 con applicazione delle vere RemoteViews di entrambe le pagine. Gli screenshot CI mostrano lo stato senza dati reali, senza introdurre consumi dimostrativi nell’app. Login Enel e copertura storica dipendono dall’interfaccia non pubblica e devono essere verificati con l’account sul dispositivo. Il mockup originale non è presente negli allegati recuperabili della chat: implementazione basata sul riferimento navy/teal e sulla struttura approvata descritta.
+
+### Aggiornamento senza perdita di credenziali
+
+Il workflow precedente generava un certificato debug su un runner effimero: la chiave privata 5.9 non è nel repository. Un APK può conservare i dati installati solo se Android accetta la firma come aggiornamento. Il nuovo workflow può riusare la precedente debug.keystore tramite il secret ANDROID_DEBUG_KEYSTORE_BASE64 (password/alias standard Android debug); in assenza conserva la nuova firma di test nella cache per le build successive. La cache non sostituisce un backup durevole di firma. La compatibilità con l’APK 5.x già installato non è garantita. Non disinstallare la versione precedente per superare un errore di firma: si perderebbero credenziali e dati locali. Serve la chiave privata originale per un aggiornamento compatibile.

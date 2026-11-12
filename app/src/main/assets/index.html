@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#f4f7fc" />
-  <title>Costo Luce 5.9.0</title>
+  <title>Costo Luce 6.0</title>
   <style>
     :root { --ink:#152844; --muted:#718198; --blue:#365cda; --blue2:#5472ed; --pale:#eaf0ff; --line:#e5eaf3; --bg:#f4f7fc; --green:#108266; }
     * { box-sizing:border-box; }
@@ -78,18 +78,38 @@
     .widgetcard{border:1px solid #d9e6fb;background:#fbfdff}
     .widgetcard .step{font-size:12px;line-height:1.5}
     .widgethint{font-size:11px;color:#58718d;margin:10px 0 0;line-height:1.5}
+    :root{--ink:#e7f1f9;--muted:#9bb2c6;--blue:#63e6ce;--blue2:#3fb6b0;--pale:#153c48;--line:#264456;--bg:#0a1928;--green:#63e6ce}
+    .card,.importcard,.widgetcard{background:#112a3c;border-color:var(--line);box-shadow:0 12px 32px #0002}
+    .result{background:linear-gradient(125deg,#153d50,#0e2c3e);border:1px solid #28616c;margin-top:16px}
+    .result .total{color:#80f5dc}.logo{background:linear-gradient(140deg,#63e6ce,#1a8c93)}
+    .seg,.field-box,.month-panel,.ratefield input,.pastebox{background:#0d2233;color:var(--ink);border-color:var(--line)}
+    .seg button.active{background:#24515a;color:#9bfce8}.mainbtn{color:#082c32}.mainbtn.alt,.reset{background:#1c3d50;color:#85e8d8}
+    .month-name,.month-value,.month-period,.editbtn{color:var(--ink)}.editbtn{background:#112a3c}
+    .step,.help,.note,.widgethint,.importstatus,.month-detail,.ratefield label{color:#9bb2c6}.month-warning{color:#efc987}
+    .unit-toggle{max-width:300px;margin:0 0 16px auto}.history-chart{display:flex;gap:12px;height:240px;align-items:stretch;padding-top:8px}
+    .history-col{flex:1;min-width:0;display:flex;align-items:center;flex-direction:column;justify-content:flex-end;gap:8px;font-size:12px;color:#b6ccda}
+    .history-track{width:100%;height:150px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:8px;border-bottom:1px solid #365263}
+    .history-bar{width:55%;border-radius:9px 9px 0 0;background:linear-gradient(#348d98,#225360);min-height:2px}.history-col.current .history-bar{background:linear-gradient(#8af7dc,#36bda8)}
+    .history-col strong{font-size:14px;color:#e7f1f9}.history-col small{font-size:10px;color:#9bb2c6}
   </style>
 </head>
 <body>
   <main class="shell">
     <header class="mast">
       <div class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m14.2 2.7-9.1 10h6.4L9.8 21.3l9.1-10h-6.4l1.7-8.6Z" fill="white" stroke="white" stroke-width="1.5" stroke-linejoin="round"/></svg></div>
-      <div><h1>Costo Luce 5.3.0</h1><p class="sub">Calcolatore · Widget senza apertura app v5.6.0</p></div>
+      <div><h1>Costo Luce 6.0</h1><p class="sub">Energia sotto controllo · Enel</p></div>
     </header>
 
+    <div class="seg unit-toggle" role="group" aria-label="Unità di visualizzazione"><button id="unitEur" onclick="setDisplayUnit('eur')">€ Costi</button><button id="unitKwh" onclick="setDisplayUnit('kwh')">kWh Consumi</button></div>
+    <section class="card result" aria-live="polite">
+      <div class="eyebrow"><span id="summaryLabel">Totale variabile stimato · IVA inclusa</span></div>
+      <div class="total" id="total">—</div>
+      <div class="result-foot"><div><div class="klabel">Costo variabile / kWh</div><div id="perKwh" class="kvalue">—</div></div><div><div class="klabel">kWh soggetti ad accisa</div><div id="taxKwh" class="kvalue">—</div></div></div>
+    </section>
+    <section class="card history-card"><div class="eyebrow">Ultimi quattro mesi · Enel</div><div id="historyChart" class="history-chart" role="img" aria-label="Storico mensile Enel"></div><p class="help">Il mese corrente è parziale. I mesi senza misure sono mancanti. Costi stimati con le tariffe impostate, quote fisse escluse.</p></section>
     <section class="card" aria-labelledby="calc-title">
       <div id="calc-title" class="eyebrow">Consumo da calcolare</div>
-      <div class="field-box"><input class="biginput" id="kwh" type="number" inputmode="decimal" min="0" step="0.1" value="479" aria-label="Energia consumata in kilowattora"><span class="unit">kWh</span></div>
+      <div class="field-box"><input class="biginput" id="kwh" type="number" inputmode="decimal" min="0" step="0.1" value="" aria-label="Energia consumata in kilowattora"><span class="unit">kWh</span></div>
       <div class="controlhead">Periodo di consumo</div>
       <div class="seg" role="group" aria-label="Periodo"><button id="m1" type="button" onclick="setMonths(1)">Mese corrente</button><button id="m2" class="active" type="button" onclick="setMonths(2)">Bimestre fattura</button></div>
       <div class="switchrow"><div class="switchlabel"><b>Agevolazione accisa domestica</b><span>Residente con potenza fino a 3 kW</span></div><label class="switch"><input type="checkbox" id="resident" checked aria-label="Applica esenzione accisa per residenza"><span class="track"></span></label></div>
@@ -122,11 +142,7 @@
       </details>
     </section>
 
-    <section class="card result" aria-live="polite">
-      <div class="eyebrow">Totale variabile stimato · IVA inclusa</div>
-      <div class="total" id="total">—</div>
-      <div class="result-foot"><div><div class="klabel">Costo variabile / kWh</div><div id="perKwh" class="kvalue">—</div></div><div><div class="klabel">kWh soggetti ad accisa</div><div id="taxKwh" class="kvalue">—</div></div></div>
-    </section>
+
 
     <section class="card widgetcard" aria-labelledby="widget-title">
       <div class="eyebrow" id="widget-title">Widget Home · collegamento automatico</div>
@@ -173,6 +189,32 @@
     ['asos','ASOS (€/kWh)'], ['arim','ARIM (€/kWh)'],
     ['excise','Accisa (€/kWh)'], ['vat','IVA (%)']
   ];
+  let historyRows=[];
+  let displayUnit='eur';try{displayUnit=localStorage.getItem('costoluce_display_unit_v1')==='kwh'?'kwh':'eur'}catch(e){}
+  function setDisplayUnit(unit,notify=true){
+    displayUnit=unit==='kwh'?'kwh':'eur';
+    try{localStorage.setItem('costoluce_display_unit_v1',displayUnit)}catch(e){}
+    byId('unitEur').classList.toggle('active',displayUnit==='eur');
+    byId('unitKwh').classList.toggle('active',displayUnit==='kwh');
+    recalc();
+    if(notify)window.location.href='costoluce://display-unit?unit='+displayUnit;
+  }
+  function monthlyCost(k){const t=tariffs;return (k*(t.energy*(1+t.losses/100)+t.dispatch+t.balancing+t.transport+t.equalization+t.asos+t.arim)+(byId('resident').checked?taxableMonthly(k):k)*t.excise)*(1+t.vat/100)}
+  function renderHistory(){
+    const el=byId('historyChart');if(!el)return;el.innerHTML='';
+    const today=new Date();const rows=[];
+    for(let i=0;i<4;i++){const d=new Date(today.getFullYear(),today.getMonth()-3+i,1);rows.push(historyRows.find(r=>r.year===d.getFullYear()&&r.month===d.getMonth()+1)||{year:d.getFullYear(),month:d.getMonth()+1,available:false,partial:i===3})}
+    const values=rows.map(r=>r.available?(displayUnit==='kwh'?r.kwh:monthlyCost(r.kwh)):0);const max=Math.max(1,...values);
+    const descriptions=[];
+    rows.forEach((r,i)=>{const col=document.createElement('div');col.className='history-col'+(i===3?' current':'');
+      const track=document.createElement('div');track.className='history-track';const value=document.createElement('strong');value.textContent=r.available?(displayUnit==='kwh'?decimal(values[i],1):euro(values[i])):'—';track.appendChild(value);
+      if(r.available){const bar=document.createElement('div');bar.className='history-bar';bar.style.height=(values[i]/max*115)+'px';track.appendChild(bar)}
+      col.appendChild(track);const name=document.createElement('span');name.textContent=italianMonth(r.year,r.month).slice(0,3);col.appendChild(name);
+      const status=document.createElement('small');status.textContent=!r.available?'Mancante':i===3||r.partial?'Parziale':'Completo';col.appendChild(status);el.appendChild(col);
+      descriptions.push(italianMonth(r.year,r.month)+': '+value.textContent+' '+(displayUnit==='kwh'?'kWh':'€ stimati')+', '+status.textContent);
+    });el.setAttribute('aria-label',descriptions.join('. '));
+  }
+  window.onHistoryNative=function(rows){historyRows=Array.isArray(rows)?rows:[];renderHistory()};
   let months=2;
   try {
     const storedMonths=localStorage.getItem('costoluce_months_v1');
@@ -283,7 +325,8 @@
     ];
     const preVat=items.reduce((s,it)=>s+it[1],0); const vat=preVat*t.vat/100;items.push(['IVA',vat,decimal(t.vat,1)+'% dell’imponibile']);const total=preVat+vat;
     lastCalculatedCost=total;
-    byId('total').textContent=euro(total);byId('total2').textContent=euro(total);
+    byId('total').textContent=displayUnit==='kwh'?decimal(kwh,1)+' kWh':euro(total);
+    byId('summaryLabel').textContent=displayUnit==='kwh'?'Consumo del periodo selezionato':'Totale variabile stimato · IVA inclusa';renderHistory();byId('total2').textContent=euro(total);
     byId('perKwh').textContent=kwh?decimal(total/kwh,3)+' €/kWh':'—';
     byId('taxKwh').textContent=decimal(taxKwh,1)+' kWh';
     const dest=byId('breakdown');dest.innerHTML='';
@@ -580,6 +623,7 @@
   // last measured values. They are independent: do not reassign old kWh
   // to a newly selected 1/2-month period.
   window.onWidgetNativeState=function(config,snapshot){
+    if(config && config.unit)setDisplayUnit(config.unit,false);
     if(config && [1,2].includes(Number(config.months))){
       const saved=(()=>{try{return localStorage.getItem('costoluce_months_v1')}catch(e){return null}})();
       const wanted=saved==='1'||saved==='2'?Number(saved):Number(config.months);
@@ -635,7 +679,7 @@
     if(storedResident==='1'||storedResident==='0')
       byId('resident').checked=storedResident==='1';
   }catch(e){}
-  fillRates();setMonths(months);renderMonthPending();recalc();
+  fillRates();setMonths(months);renderMonthPending();setDisplayUnit(displayUnit,false);recalc();
 </script>
 </body>
 </html>

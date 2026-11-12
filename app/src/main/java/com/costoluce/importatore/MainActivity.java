@@ -68,6 +68,10 @@ public final class MainActivity extends Activity {
         try { uri = Uri.parse(url); } catch (Exception e) { return false; }
         if (!"costoluce".equalsIgnoreCase(uri.getScheme())) return false;
         String action = uri.getHost();
+        if ("display-unit".equals(action)) {
+            if (web != null && HOME.equals(web.getUrl())) CostoLuceWidgetProvider.saveUnit(this,uri.getQueryParameter("unit"));
+            return true;
+        }
         if ("widget-config".equals(action)) {
             // Configuration is allowed before any consumption exists. Only the
             // bundled local calculator may send tariffs to the widget.
@@ -154,6 +158,7 @@ public final class MainActivity extends Activity {
     /** Restore the latest validated widget value when the user opens the app. */
     void restoreWidgetSnapshot() {
         if (web == null || web.getUrl() == null || !web.getUrl().startsWith(HOME)) return;
+        web.evaluateJavascript("window.onHistoryNative("+CostoLuceWidgetProvider.history(this).toString()+");",null);
         JSONObject snapshot = CostoLuceWidgetProvider.getLatestSnapshot(this);
         JSONObject config = CostoLuceWidgetProvider.getWidgetConfiguration(this);
         web.evaluateJavascript("window.onWidgetNativeState("
@@ -179,7 +184,6 @@ public final class MainActivity extends Activity {
             EnelConnector.Credentials credentials = new EnelCredentialStore(this).read();
             if (credentials != null) { downloadEnel(credentials, false); return; }
         } catch (Exception e) {
-            new EnelCredentialStore(this).clear();
             enelStatus("Credenziali cifrate non più leggibili. Configura nuovamente Enel Energia.", true);
         }
         showEnelConfiguration();
@@ -228,7 +232,7 @@ public final class MainActivity extends Activity {
         remember.setChecked(false); // Explicit opt-in to durable credential storage.
         content.addView(remember);
         TextView note = new TextView(this);
-        note.setText("Periodo importato: ultimi " + preferredMonths + " mesi solari conclusi. Il riepilogo con i nomi dei mesi è mostrato nella schermata principale. Non è un'API pubblica ufficiale e potrebbe non funzionare.");
+        note.setText("Periodo importato: bimestre di fatturazione e ultimi quattro mesi, incluso quello corrente. Il riepilogo con i nomi dei mesi è mostrato nella schermata principale. Non è un'API pubblica ufficiale e potrebbe non funzionare.");
         content.addView(note);
         scroller.addView(content);
         AlertDialog dialog=new AlertDialog.Builder(this)
@@ -267,6 +271,7 @@ public final class MainActivity extends Activity {
                         if (enelRequestId == requestId && enelBusy) enelStatus(phase, false);
                     });
                 });
+                CostoLuceWidgetProvider.saveHistory(this,result);
                 if(persistIfValid) new EnelCredentialStore(this).save(credentials);
                 // Keep the Home widget and the in-app consumption summary in sync
                 // when the user already configured the widget with tariff data.
@@ -297,6 +302,7 @@ public final class MainActivity extends Activity {
                                 monthly.put(row);
                             }
                             detail.put("monthly",monthly);
+                            web.evaluateJavascript("window.onHistoryNative("+CostoLuceWidgetProvider.history(this).toString()+");",null);
                             web.evaluateJavascript("window.onEnelConsumption("+detail.toString()+");",null);
                         } catch(org.json.JSONException e) {
                             enelStatus("Errore nella visualizzazione del riepilogo mensile.",true);
