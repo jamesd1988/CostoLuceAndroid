@@ -96,12 +96,17 @@ jobs:
           profile: pixel_6
           disable-animations: true
           script: |
-            gradle --no-daemon :app:connectedDebugAndroidTest
+            gradle --no-daemon :app:assembleDebugAndroidTest
+            adb install -r app/build/outputs/apk/debug/app-debug.apk
+            adb install -r app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+            adb shell am instrument -w com.costoluce.cloud.test/com.costoluce.importatore.WidgetSmokeTestRunner | tee instrumentation.txt
+            grep -q 'PASS: WebView launch' instrumentation.txt
+            if grep -q 'FAIL:' instrumentation.txt; then exit 1; fi
             mkdir -p dist
             adb exec-out run-as com.costoluce.cloud cat files/screenshots/app-6.0.png > dist/app-6.0.png
             adb exec-out run-as com.costoluce.cloud cat files/screenshots/widget-summary-6.0.png > dist/widget-summary-6.0.png
             adb exec-out run-as com.costoluce.cloud cat files/screenshots/widget-history-6.0.png > dist/widget-history-6.0.png
-            test -s dist/widget-history-6.0.png
+            test "$(file dist/*.png | grep -c 'PNG image data')" -eq 3
       - name: Controllo APK e widget Android
         shell: bash
         run: |
@@ -134,6 +139,8 @@ jobs:
           APK="dist/CostoLuce_v6.0.0_NavyTeal_S25.apk"
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" "$APK" dist/*.png --clobber
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/$TAG" -f sha="$GITHUB_SHA" -F force=true
+            gh release edit "$TAG" --target "$GITHUB_SHA"
           else
             gh release create "$TAG" "$APK" dist/*.png \
               --target "$GITHUB_SHA" \
