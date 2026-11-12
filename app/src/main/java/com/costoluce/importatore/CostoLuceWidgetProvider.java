@@ -507,8 +507,8 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         views.setTextViewText(R.id.widget_brand,chart?"Consumi ultimi 4 mesi":"COSTO LUCE · v6.0");
         views.setViewVisibility(R.id.widget_units,chart?android.view.View.VISIBLE:android.view.View.GONE);
         views.setViewVisibility(R.id.widget_refresh,chart?android.view.View.GONE:android.view.View.VISIBLE);
-        boolean usage="kwh".equals(p.getString("display_unit","eur"));
-        views.setInt(R.id.widget_unit_kwh,"setBackgroundResource",usage?R.drawable.costoluce_widget_pill_selected:R.drawable.costoluce_widget_pill_idle);
+        boolean showKwh="kwh".equals(p.getString("display_unit","eur"));
+        views.setInt(R.id.widget_unit_kwh,"setBackgroundResource",showKwh?R.drawable.costoluce_widget_pill_selected:R.drawable.costoluce_widget_pill_idle);
         views.setInt(R.id.widget_unit_eur,"setBackgroundResource",usage?R.drawable.costoluce_widget_pill_idle:R.drawable.costoluce_widget_pill_selected);
         String[] units={"kwh","eur"};int[] buttons={R.id.widget_unit_kwh,R.id.widget_unit_eur};
         for(int i=0;i<2;i++){
