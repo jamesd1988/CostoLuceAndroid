@@ -139,3 +139,12 @@ I filtri Tutte / Variabili / Fisse agiscono sulla lista delle voci. Il pannello 
 In Tariffe, Aggiungi voce apre lo stesso pannello per nome, tipo variabile/fisso e importo. Si possono creare fino a 30 voci personalizzate. Elimina voce richiede conferma ed esclude la voce da tutti i calcoli, compresi quelli del widget; Energia €/kWh resta protetta. Le voci originali eliminate conservano internamente il valore e i metadati per consentire il ripristino. Annulla eliminazione recupera l'ultima voce rimossa, anche dopo aver riaperto l'app. Il ripristino generale richiede conferma, ripristina le dieci voci originali e rimuove le aggiunte.
 
 La migrazione conserva le tariffe precedenti: i metadati opzionali `_meta.enabled` registrano le voci predefinite escluse e `_custom` contiene soltanto le nuove voci. Credenziali, prezzi esistenti, ciclo di fatturazione e formule di accisa non vengono modificati. App e widget includono le nuove quote e omettono le voci eliminate; IVA e perdite mantengono la loro base percentuale finché presenti.
+
+
+## Costo Luce 6.3 — Widget adattivo
+
+Dimensione minima richiesta 280 × 260 dp, iniziale 340 × 300 dp. Android 12+ riceve una mappa delle dimensioni esatte fornite dal launcher; sulle versioni precedenti si usano i limiti di ritratto e paesaggio. Il livello di dettaglio dipende da entrambe le dimensioni: compatto sotto 320 dp di larghezza o 290 dp di altezza; medio da 320 × 290 dp; dettagliato da 380 × 340 dp. Le anteprime di riferimento sono 280 × 260, 340 × 300 e 400 × 350 dp. I launcher arrotondano questi limiti alla propria griglia.
+
+Il riepilogo usa tutta la larghezza. Il grafico viene disegnato nelle dimensioni disponibili, con testo da 12 sp e annotazioni da 11 sp, invece di ridurre un'immagine fissa. Compatto: quattro barre, valori, mesi e nota sul corrente parziale; medio: scala essenziale e aggiornamento; grande: scala completa, anni e stato dei mesi. I valori troppo lunghi vengono abbreviati soltanto graficamente, conservando quelli completi nella descrizione accessibile. Il budget complessivo delle immagini tiene conto del numero di varianti e delle dimensioni dello schermo.
+
+I pulsanti principali hanno aree di 48 × 48 dp. Frecce/dot e toggle continuano a funzionare tramite broadcast; nessuno swipe simulato. Le prove Android verificano contenuti entro i bordi e dimensioni dei pulsanti alle tre taglie, nei formati 280 × 500 e 500 × 260 dp e a caratteri ingranditi. Nessuna modifica a credenziali, consumi reali, prezzi o calcolo delle imposte.

@@ -438,7 +438,83 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         manager.updateAppWidget(widgetId, createViews(context,widgetId));
     }
 
-    static RemoteViews createViews(Context context, int widgetId) {
+    /** API 31+ gets exact launcher sizes; older launchers get both orientation bounds. */
+    static RemoteViews createViews(Context context,int widgetId){
+        android.os.Bundle options=AppWidgetManager.getInstance(context).getAppWidgetOptions(widgetId);
+        return createViews(context,widgetId,options==null?new android.os.Bundle():options);
+    }
+    static RemoteViews createViews(Context context,int widgetId,android.os.Bundle options){
+        if(android.os.Build.VERSION.SDK_INT>=31){
+            java.util.ArrayList<android.util.SizeF> sizes=options.getParcelableArrayList(AppWidgetManager.OPTION_APPWIDGET_SIZES);
+            if(sizes!=null&&!sizes.isEmpty()){
+                java.util.Map<android.util.SizeF,RemoteViews> variants=new java.util.LinkedHashMap<>();
+                for(android.util.SizeF size:sizes){
+                    if(size==null||!Float.isFinite(size.getWidth())||!Float.isFinite(size.getHeight())||size.getWidth()<160||size.getHeight()<180||size.getWidth()>1600||size.getHeight()>1600)continue;
+                    variants.put(size,createViewsForSize(context,widgetId,Math.round(size.getWidth()),Math.round(size.getHeight()),bitmapBudget(context)/Math.min(16,sizes.size())));
+                    if(variants.size()==16)break;
+                }
+                if(!variants.isEmpty())return new RemoteViews(variants);
+            }
+        }
+        int minW=options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH,340),minH=options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT,300);
+        if(minW<160)minW=340;if(minH<180)minH=300;
+        int maxW=Math.max(minW,options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH,minW)),maxH=Math.max(minH,options.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT,minH));
+        if(minW==maxW&&minH==maxH)return createViewsForSize(context,widgetId,minW,minH);
+        return new RemoteViews(createViewsForSize(context,widgetId,maxW,minH,bitmapBudget(context)/2),createViewsForSize(context,widgetId,minW,maxH,bitmapBudget(context)/2));
+    }
+    private static String compactPeriod(org.json.JSONArray rows){
+        JSONObject last=rows.optJSONObject(rows.length()-1);if(last==null)return "Periodo da aggiornare";
+        StringBuilder result=new StringBuilder();int lastYear=last.optInt("year");
+        for(int i=0;i<rows.length();i++){
+            JSONObject r=rows.optJSONObject(i);if(r==null)continue;if(result.length()>0)result.append(" + ");result.append(MonthlyChart.label(r));
+            if(r.optInt("year")!=lastYear)result.append(' ').append(r.optInt("year"));
+        }
+        return result.append(' ').append(lastYear).toString();
+    }
+    private static int bitmapBudget(Context context){
+        android.util.DisplayMetrics metrics=context.getResources().getDisplayMetrics();
+        return Math.max(50_000,Math.min(1_000_000,metrics.widthPixels*metrics.heightPixels));
+    }
+    private static void applySize(Context context,RemoteViews views,WidgetLayoutSpec spec,boolean chart,long savedAt,int bitmapPixels){
+        SharedPreferences p=prefs(context);boolean busy=p.getBoolean(KEY_BUSY,false);
+        String status=p.getString(KEY_STATUS,"");boolean showStatus=!spec.compact()||busy||(status!=null&&!status.isEmpty());
+        // RemoteViews padding is expressed in physical pixels.
+        float density=context.getResources().getDisplayMetrics().density;
+        int pad=Math.round(spec.padding*density);views.setViewPadding(R.id.widget_root,pad,pad,pad,pad);
+        views.setTextViewTextSize(R.id.widget_brand,android.util.TypedValue.COMPLEX_UNIT_SP,spec.compact()?13:15);
+        views.setTextViewTextSize(R.id.widget_euro,android.util.TypedValue.COMPLEX_UNIT_SP,spec.compact()?32:spec.detailed()?42:38);
+        views.setTextViewTextSize(R.id.widget_kwh,android.util.TypedValue.COMPLEX_UNIT_SP,spec.compact()?19:22);
+        views.setViewVisibility(R.id.widget_caption,spec.compact()?android.view.View.GONE:android.view.View.VISIBLE);
+        views.setViewVisibility(R.id.widget_source,spec.detailed()?android.view.View.VISIBLE:android.view.View.GONE);
+        views.setViewVisibility(R.id.widget_status,showStatus?android.view.View.VISIBLE:android.view.View.GONE);
+        views.setContentDescription(R.id.widget_status,status==null||status.isEmpty()?"Aggiorna i consumi Enel":status+". Tocca per aggiornare.");
+        String date=savedAt>0?new SimpleDateFormat(spec.compact()?"HH:mm":"dd/MM · HH:mm",IT).format(new Date(savedAt)):"";
+        if(!spec.detailed()&&savedAt>0)views.setTextViewText(R.id.widget_updated,(spec.compact()?"Agg. ":"Ultimo aggiornamento · ")+date);
+        org.json.JSONArray history=history(context);String years="";
+        if(history.length()>0){JSONObject first=history.optJSONObject(0),last=history.optJSONObject(history.length()-1);if(first!=null&&last!=null)years=first.optInt("year")==last.optInt("year")?Integer.toString(last.optInt("year")):first.optInt("year")+"–"+last.optInt("year");}
+        if(chart){
+            views.setTextViewText(R.id.widget_brand,spec.compact()?"4 mesi\n"+years:spec.detailed()?"Consumi ultimi 4 mesi":"Ultimi 4 mesi\n"+years);
+            boolean missing=false;for(int i=0;i<history.length();i++){JSONObject r=history.optJSONObject(i);if(r==null||!r.optBoolean("available"))missing=true;}
+            JSONObject last=history.optJSONObject(history.length()-1);
+            String note=last!=null&&last.optBoolean("partial")?"* "+MonthlyChart.label(last)+" parziale":"";
+            if(missing)note+=(note.isEmpty()?"":" · ")+"— dato mancante";
+            if(!spec.compact()&&savedAt>0)note+=(note.isEmpty()?"":" · ")+"Agg. "+date;
+            views.setTextViewText(R.id.widget_chart_note,note.isEmpty()?"Misure mensili Enel":note);
+            views.setViewVisibility(R.id.widget_chart_note,android.view.View.VISIBLE);
+            float fontScale=context.getResources().getConfiguration().fontScale;
+            views.setImageViewBitmap(R.id.widget_chart,MonthlyChart.draw(context,history,spec,spec.chartHeight(fontScale,showStatus),bitmapPixels));
+        }else{
+            views.setTextViewText(R.id.widget_brand,spec.compact()?"Costo Luce":"Costo Luce · v6.3");
+            views.setViewVisibility(R.id.widget_chart_note,android.view.View.GONE);
+            if("enel".equals(p.getString(KEY_SOURCE,"")))try{org.json.JSONArray rows=new org.json.JSONArray(p.getString(KEY_MONTHLY,"[]"));if(rows.length()>0)views.setTextViewText(R.id.widget_period,compactPeriod(rows));}catch(Exception ignored){}
+        }
+    }
+
+    static RemoteViews createViewsForSize(Context context,int widgetId,int width,int height) {
+        return createViewsForSize(context,widgetId,width,height,bitmapBudget(context));
+    }
+    private static RemoteViews createViewsForSize(Context context,int widgetId,int width,int height,int bitmapPixels) {
+        WidgetLayoutSpec spec=new WidgetLayoutSpec(width,height);
         RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.costoluce_widget);
         SharedPreferences p = prefs(context);
         long savedAt = p.getLong(KEY_TIMESTAMP, 0L);
@@ -516,7 +592,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         views.setOnClickPendingIntent(R.id.widget_refresh, refreshPending);
         views.setOnClickPendingIntent(R.id.widget_status, refreshPending);
         boolean chart = p.getInt("page_"+widgetId,0)==1;
-        views.setTextViewText(R.id.widget_brand,chart?"Consumi ultimi 4 mesi":"COSTO LUCE · v6.2");
+        views.setTextViewText(R.id.widget_brand,chart?"Consumi ultimi 4 mesi":"COSTO LUCE · v6.3");
         views.setViewVisibility(R.id.widget_units,chart?android.view.View.VISIBLE:android.view.View.GONE);
         views.setViewVisibility(R.id.widget_refresh,chart?android.view.View.GONE:android.view.View.VISIBLE);
         boolean showKwh="kwh".equals(p.getString("display_unit","eur"));
@@ -556,7 +632,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
             catch (RuntimeException ignored) { }
         }
         if(chart) {
-            views.setImageViewBitmap(R.id.widget_chart, MonthlyChart.draw(context, history(context)));
+
             views.setContentDescription(R.id.widget_chart,MonthlyChart.description(context,history(context)));
         }
         int target=chart?0:1;
@@ -567,6 +643,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
             views.setOnClickPendingIntent(viewId,PendingIntent.getBroadcast(context,widgetId,page,
                     PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE));
         }
+        applySize(context,views,spec,chart,savedAt,bitmapPixels);
         return views;
     }
 }

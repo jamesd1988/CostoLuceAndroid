@@ -1,13 +1,11 @@
-Costo Luce 6.2.0 — Aggiunta, eliminazione e ripristino delle voci
+Costo Luce 6.3.0 — Widget adattivo
 
-- Pulsante Aggiungi voce in Tariffe: nome, importo e selezione Variabile (€/kWh) o Fisso (€/mese), nello stesso pannello di modifica già approvato.
-- Elimina voce nel pannello di modifica, con conferma e Annulla eliminazione. Anche le voci predefinite sono eliminabili, eccetto Energia €/kWh.
-- Le nuove voci e le eliminazioni sono persistenti e aggiornano riepilogo, dettaglio, grafico in euro e widget. È possibile aggiungere fino a 30 voci personalizzate.
-- Ripristino delle voci e dei prezzi originali con conferma; l’ultima eliminazione può essere annullata anche dopo aver riaperto l’app.
-- Modifica del nome delle voci, con nome Energia €/kWh protetto.
-- Quote variabili in €/kWh o fisse in €/mese. Cambiando tipo è necessario inserire il nuovo importo. Nessuna conversione automatica.
-- IVA e perdite mantengono il calcolo percentuale; l’accisa variabile mantiene la logica mensile esistente.
-- Quote fisse incluse nel totale e nel grafico mensile in euro di app e widget; i mesi futuri del bimestre non maturano quote fisse. Nel calcolo manuale si usano i mesi selezionati.
-- Tutte le voci e gli importi esistenti restano predefiniti all’installazione: nessuna quota dimostrativa da 8 € viene aggiunta. Migrazione delle tariffe salvate, senza interventi sugli archivi delle credenziali.
+- Ridimensionamento in entrambe le direzioni: minimo richiesto 280 × 260 dp; dimensione iniziale 340 × 300 dp. La griglia del launcher determina le caselle effettivamente occupate.
+- Formato compatto: periodo, costo/consumo, aggiornamento e navigazione; grafico con quattro barre, valori, mesi e mese corrente parziale.
+- Formato medio: didascalie, scala essenziale e data di aggiornamento. Formato grande: scala completa, anni, stato dei mesi e informazioni aggiuntive.
+- Il grafico viene disegnato per le dimensioni disponibili: niente immagine panoramica rimpicciolita in un widget stretto. Testi del grafico da 11–12 sp e pulsanti principali da 48 × 48 dp.
+- Dimensioni esatte dal launcher su Android 12 e successivi; disposizione per entrambi gli orientamenti sulle versioni precedenti. I formati stretti/alti e larghi/bassi mantengono il livello di dettaglio compatto.
+- Restano disponibili frecce/dot, selezione persistente € / kWh e aggiornamento in background. Lo swipe orizzontale rimane gestito dal launcher, senza gesture simulate.
+- Dati mensili Enel reali, mesi mancanti distinti dagli zeri misurati, periodo corrente parziale. Credenziali, tariffe personalizzate, accisa e ciclo di fatturazione preservati.
 
-Test JavaScript e JVM su aggiunta, eliminazione, ripristino e calcoli; compilazione e prova su emulatore Android 15 del pannello Tariffe e delle due pagine widget, con verifica del trasferimento delle nuove voci e delle eliminazioni e confronto dei totali app/widget. Le anteprime del pannello di modifica sono prove CI con un importo dimostrativo, senza dati di consumo inventati. Login Enel da verificare sul dispositivo. APK di test.
+Verifiche: test JavaScript e JVM, compilazione e prove delle vere RemoteViews nelle tre dimensioni, in formati stretti/alti e larghi/bassi, e con testo ingrandito. Le immagini CI mostrano lo stato senza consumi disponibili, senza introdurre dati dimostrativi nell’app. APK di test.
