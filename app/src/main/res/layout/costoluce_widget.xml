@@ -1,156 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/widget_root"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:gravity="top"
-    android:background="@drawable/costoluce_widget_bg"
-    android:paddingLeft="16dp"
-    android:paddingRight="16dp"
-    android:paddingTop="14dp"
-    android:paddingBottom="14dp">
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical">
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-            <TextView
-                android:id="@+id/widget_brand"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="COSTO LUCE"
-                android:textColor="#F6FAFF"
-                android:textStyle="bold"
-                android:letterSpacing="0.10"
-                android:textSize="12sp"
-                android:maxLines="1"/>
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
-                android:text="ENEL · RIEPILOGO E STORICO"
-                android:textColor="#8FA9D0"
-                android:letterSpacing="0.07"
-                android:textSize="10sp"
-                android:maxLines="1"/>
-        </LinearLayout>
-    <TextView
-            android:id="@+id/widget_refresh"
-            android:layout_width="46dp"
-            android:layout_height="46dp"
-            android:layout_marginLeft="8dp"
-            android:background="@drawable/costoluce_widget_refresh_bg"
-            android:gravity="center"
-            android:text="↻"
-            android:textSize="26sp"
-            android:textColor="#E9FAFF"
-            android:contentDescription="Aggiorna i consumi Enel in background"
-            android:clickable="true"
-            android:focusable="true" />
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/widget_root" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@drawable/costoluce_widget_bg" android:padding="16dp">
+  <LinearLayout android:layout_width="match_parent" android:layout_height="46dp" android:orientation="horizontal" android:gravity="center_vertical">
+    <ImageView android:layout_width="30dp" android:layout_height="30dp" android:src="@drawable/costoluce_logo" android:contentDescription="Costo Luce" />
+    <TextView android:id="@+id/widget_brand" android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:layout_marginLeft="8dp" android:text="COSTO LUCE · v6.0" android:textColor="#F3F7FF" android:textSize="11sp" android:maxLines="2" />
+    <LinearLayout android:id="@+id/widget_units" android:layout_width="wrap_content" android:layout_height="38dp" android:orientation="horizontal" android:visibility="gone">
+      <TextView android:id="@+id/widget_unit_kwh" android:layout_width="48dp" android:layout_height="match_parent" android:gravity="center" android:text="kWh" android:textColor="#FFFFFF" android:textSize="13sp" android:contentDescription="Mostra consumi in kWh" />
+      <TextView android:id="@+id/widget_unit_eur" android:layout_width="38dp" android:layout_height="match_parent" android:gravity="center" android:text="€" android:textColor="#FFFFFF" android:textSize="15sp" android:contentDescription="Mostra costi stimati in euro" />
     </LinearLayout>
-
-        <LinearLayout android:id="@+id/widget_summary" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:id="@+id/widget_caption"
-        android:text="COSTO VARIABILE STIMATO"
-        android:letterSpacing="0.06"
-        android:textColor="#ADC2E0"
-        android:textStyle="bold"
-        android:textSize="10sp"
-        android:maxLines="1" />
-
-    <TextView
-        android:id="@+id/widget_euro"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="—"
-        android:textColor="#FFFFFF"
-        android:textStyle="bold"
-        android:textSize="32sp"
-        android:fontFamily="sans"
-        android:maxLines="1"
-        android:ellipsize="end" />
-
-    <TextView
-        android:id="@+id/widget_kwh"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="3dp"
-        android:background="@drawable/costoluce_widget_kwh_bg"
-        android:paddingLeft="12dp"
-        android:paddingRight="12dp"
-        android:paddingTop="5dp"
-        android:paddingBottom="5dp"
-        android:text="Nessun dato"
-        android:textColor="#8EF7D5"
-        android:textStyle="bold"
-        android:textSize="15sp"
-        android:maxLines="1"
-        android:ellipsize="end" />
-
-    <TextView
-        android:id="@+id/widget_period"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:text="In attesa di consumi reali"
-        android:textColor="#E4ECFA"
-        android:textSize="12sp"
-        android:maxLines="1"
-        android:ellipsize="end" />
-
-    <TextView
-        android:id="@+id/widget_updated"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="3dp"
-        android:text="Ultima lettura: nessuna"
-        android:textColor="#9EB5D3"
-        android:textSize="10sp"
-        android:maxLines="1"
-        android:ellipsize="end" />
-
+    <TextView android:id="@+id/widget_refresh" android:layout_width="46dp" android:layout_height="46dp" android:background="@drawable/costoluce_widget_refresh_bg" android:gravity="center" android:text="↻" android:textSize="28sp" android:textColor="#F1F7FF" android:contentDescription="Aggiorna i consumi Enel in background" android:clickable="true" android:focusable="true" />
+  </LinearLayout>
+  <LinearLayout android:id="@+id/widget_summary" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:layout_marginTop="12dp">
+    <TextView android:id="@+id/widget_caption" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="COSTO VARIABILE STIMATO" android:textColor="#B5C9E6" android:textSize="9sp" android:maxLines="1" />
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="5dp">
+      <LinearLayout android:layout_width="0dp" android:layout_weight="1.2" android:layout_height="wrap_content" android:orientation="vertical">
+        <TextView android:id="@+id/widget_euro" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="—" android:textColor="#FFFFFF" android:textStyle="bold" android:textSize="31sp" android:fontFamily="sans" android:maxLines="1" android:ellipsize="end" />
+        <TextView android:id="@+id/widget_kwh" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:text="Nessun dato" android:textColor="#64E7CF" android:textStyle="bold" android:textSize="21sp" android:maxLines="1" android:ellipsize="end" />
+      </LinearLayout>
+      <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:background="@drawable/costoluce_widget_period_bg" android:padding="9dp" android:orientation="vertical" android:gravity="center">
+        <TextView android:id="@+id/widget_period" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="In attesa di consumi reali" android:textColor="#EFF5FF" android:textSize="11sp" android:gravity="center" android:maxLines="3" android:ellipsize="end" />
+        <TextView android:id="@+id/widget_period_badge" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:paddingLeft="9dp" android:paddingRight="9dp" android:paddingTop="3dp" android:paddingBottom="3dp" android:text="In corso" android:background="@drawable/costoluce_widget_pill_selected" android:textColor="#FFFFFF" android:textSize="10sp" />
+      </LinearLayout>
     </LinearLayout>
-    <ImageView android:id="@+id/widget_chart" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:visibility="gone" android:scaleType="fitCenter" android:contentDescription="Storico mensile Enel" />
-    <LinearLayout android:layout_width="match_parent" android:layout_height="40dp" android:orientation="horizontal" android:gravity="center">
-        <TextView android:id="@+id/widget_prev" android:layout_width="48dp" android:layout_height="match_parent" android:text="‹" android:textSize="28sp" android:textColor="#63E6CE" android:gravity="center" android:contentDescription="Cambia pagina" />
-        <TextView android:id="@+id/widget_dots" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:text="●  ○" android:textColor="#63E6CE" android:gravity="center" android:contentDescription="Cambia pagina del widget" />
-        <TextView android:id="@+id/widget_next" android:layout_width="48dp" android:layout_height="match_parent" android:text="›" android:textSize="28sp" android:textColor="#63E6CE" android:gravity="center" android:contentDescription="Cambia pagina" />
-    </LinearLayout>
-    <!-- Only the summary needs a spacer; the chart itself fills available height. -->
-    <LinearLayout android:id="@+id/widget_spacer"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:orientation="vertical" />
-
-    <TextView
-        android:id="@+id/widget_status"
-        android:layout_width="match_parent"
-        android:layout_height="46dp"
-        android:layout_marginTop="9dp"
-        android:background="@drawable/costoluce_widget_status_bg"
-        android:paddingLeft="12dp"
-        android:paddingRight="10dp"
-        android:gravity="center_vertical"
-        android:clickable="true"
-        android:focusable="true"
-        android:contentDescription="Aggiorna consumi e costi senza aprire l'app"
-        android:text="↻  Aggiorna consumi e costo"
-        android:textColor="#E6F1FE"
-        android:textStyle="bold"
-        android:textSize="11sp"
-        android:maxLines="2"
-        android:ellipsize="end" />
-
+    <LinearLayout android:layout_width="match_parent" android:layout_height="1dp" android:layout_marginTop="15dp" android:background="#203E66" android:orientation="vertical" />
+    <TextView android:id="@+id/widget_source" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="10dp" android:text="Enel · ultimo aggiornamento" android:textColor="#D2E0F4" android:textSize="10sp" android:maxLines="1" />
+    <TextView android:id="@+id/widget_updated" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="Nessuna lettura disponibile" android:textColor="#F2F6FF" android:textStyle="bold" android:textSize="13sp" android:maxLines="1" android:ellipsize="end" />
+  </LinearLayout>
+  <ImageView android:id="@+id/widget_chart" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:visibility="gone" android:scaleType="fitCenter" android:contentDescription="Storico mensile Enel" />
+  <LinearLayout android:id="@+id/widget_spacer" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:orientation="vertical" />
+  <LinearLayout android:layout_width="match_parent" android:layout_height="42dp" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="6dp">
+    <TextView android:id="@+id/widget_prev" android:layout_width="42dp" android:layout_height="42dp" android:background="@drawable/costoluce_widget_nav_bg" android:text="‹" android:textSize="31sp" android:textColor="#FFFFFF" android:gravity="center" android:contentDescription="Cambia pagina" />
+    <TextView android:id="@+id/widget_dots" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:text="●  ○" android:textColor="#FFFFFF" android:textSize="14sp" android:gravity="center" android:contentDescription="Cambia pagina del widget" />
+    <TextView android:id="@+id/widget_next" android:layout_width="42dp" android:layout_height="42dp" android:background="@drawable/costoluce_widget_nav_bg" android:text="›" android:textSize="31sp" android:textColor="#FFFFFF" android:gravity="center" android:contentDescription="Cambia pagina" />
+  </LinearLayout>
+  <TextView android:id="@+id/widget_status" android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="24dp" android:layout_marginTop="5dp" android:gravity="center_vertical" android:text="Aggiorna con ↻" android:textColor="#AEC5E5" android:textSize="9sp" android:maxLines="2" android:ellipsize="end" android:clickable="true" android:contentDescription="Stato aggiornamento Enel; tocca per aggiornare" />
 </LinearLayout>

@@ -165,7 +165,7 @@ public final class MainActivity extends Activity {
     /** Restore the latest validated widget value when the user opens the app. */
     void restoreWidgetSnapshot() {
         if (web == null || web.getUrl() == null || !web.getUrl().startsWith(HOME)) return;
-        web.evaluateJavascript("window.onHistoryNative("+CostoLuceWidgetProvider.history(this).toString()+");",null);
+        web.evaluateJavascript("window.onHistoryNative("+CostoLuceWidgetProvider.history(this).toString()+","+CostoLuceWidgetProvider.prefs(this).getLong("history_at",0L)+");",null);
         JSONObject snapshot = CostoLuceWidgetProvider.getLatestSnapshot(this);
         JSONObject config = CostoLuceWidgetProvider.getWidgetConfiguration(this);
         web.evaluateJavascript("window.onWidgetNativeState("
@@ -314,7 +314,7 @@ public final class MainActivity extends Activity {
                                 monthly.put(row);
                             }
                             detail.put("monthly",monthly);
-                            web.evaluateJavascript("window.onHistoryNative("+CostoLuceWidgetProvider.history(this).toString()+");",null);
+                            web.evaluateJavascript("window.onHistoryNative("+CostoLuceWidgetProvider.history(this).toString()+","+CostoLuceWidgetProvider.prefs(this).getLong("history_at",0L)+");",null);
                             web.evaluateJavascript("window.onEnelConsumption("+detail.toString()+");",null);
                         } catch(org.json.JSONException e) {
                             enelStatus("Errore nella visualizzazione del riepilogo mensile.",true);

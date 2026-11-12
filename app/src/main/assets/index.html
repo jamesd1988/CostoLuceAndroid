@@ -91,32 +91,27 @@
     .history-track{width:100%;height:150px;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:8px;border-bottom:1px solid #365263}
     .history-bar{width:55%;border-radius:9px 9px 0 0;background:linear-gradient(#348d98,#225360);min-height:2px}.history-col.current .history-bar{background:linear-gradient(#8af7dc,#36bda8)}
     .history-col strong{font-size:14px;color:#e7f1f9}.history-col small{font-size:10px;color:#9bb2c6}
+    :root{--bg:#04152e;--line:#17395e;--blue:#0875ff;--ink:#f0f5ff;--muted:#b4c6e1}
+    body{background:radial-gradient(ellipse at 70% 40%,#0b2749,#031329 70%)}
+    [hidden]{display:none!important}.shell{max-width:520px;padding:18px 14px 100px}.mast{gap:10px;margin:0 8px 18px}.logo{width:43px;height:43px;border-radius:50%;background:linear-gradient(140deg,#1687f4,#06408b);box-shadow:inset 0 1px 2px #76b8ff55}
+    h1{font-size:21px;letter-spacing:-.4px}.sub{font-size:12px}.gear{margin-left:auto;border:0;background:none;color:#bccce4;width:38px;height:38px;padding:5px}.gear svg{width:27px;height:27px}
+    .card,.importcard,.widgetcard{border:1px solid #16365a;background:linear-gradient(130deg,#0c2749,#0b2445);border-radius:21px;box-shadow:none;padding:16px;margin-bottom:12px}
+    .unit-toggle{max-width:none;margin-bottom:12px;align-items:center;border-radius:24px;background:#0d294d;padding:5px 5px 5px 16px;border:1px solid #183a60}
+    .unit-toggle>span{flex:1;font-size:13px}.unit-toggle button{flex:0 0 29%;border-radius:22px;font-size:16px;padding:9px}.seg button.active,.mini-seg button.active{background:#0875ff;color:white;box-shadow:0 0 0 1px #3191ff55}
+    .result{margin-top:0}.result:before{display:none}.period-heading{display:flex;align-items:center;gap:10px;border-bottom:1px solid #183b61;padding-bottom:16px}.period-heading>svg{width:23px;height:23px;color:#becee5;flex-shrink:0}.period-heading>div{flex:1}.period-heading span{font-size:11px;color:#c6d5ea}.period-heading p{font-size:14px;font-weight:700;margin:5px 0 0;line-height:1.45;text-transform:capitalize}.badge{display:inline-block;white-space:nowrap;border-radius:10px;background:linear-gradient(#7ff4dc,#39d1bb);color:#042e35;font-size:10px;font-weight:750;padding:6px 8px}
+    .overview-metrics{display:grid;grid-template-columns:1fr 1fr;margin-top:15px}.overview-metrics>div{min-width:0;padding:0 12px}.overview-metrics>div:first-child{padding-left:3px;border-right:1px solid #28476c}.metric-label{font-size:13px;margin-bottom:7px;color:#dae5f6}.result .total{font-size:26px;line-height:1.2;letter-spacing:-.8px;color:white;white-space:nowrap}.result .total.secondary{color:#dceafa;font-size:24px}
+    .chart-heading{display:flex;align-items:center;gap:8px}.chart-heading>svg{width:20px;height:20px;color:#bed0eb}.chart-heading h2{flex:1;font-size:14px;margin:0;font-weight:700}.mini-seg{display:flex;background:#061c3a;border:1px solid #19426d;border-radius:22px;padding:2px}.mini-seg button{border:0;background:transparent;border-radius:18px;padding:6px 13px;color:#e2edff;font-size:12px;min-width:38px}
+    .chart-badge{text-align:right;margin:7px 0 0;height:24px}.chart-badge .badge{font-size:9px;padding:4px 7px}.plot-frame{position:relative;padding-left:30px;margin-top:1px}.history-chart{height:205px;gap:10px;padding:0}.history-track{height:150px;border-bottom:1px solid #375a85;gap:7px}.history-col{gap:6px;justify-content:flex-end;font-size:12px}.history-bar{width:80%;background:linear-gradient(#40a6ff,#075bf0);border:1px solid #56b5ff44;border-bottom:0;border-radius:9px 9px 3px 3px}.history-col.current .history-bar{background:linear-gradient(#78edd4,#20bbaa)}.history-col>span{display:flex;flex-direction:column;text-align:center;gap:2px}.history-col strong{font-size:14px;color:white}.history-col small{font-size:9px;height:12px}.history-col.current small{color:#62e6cd}.chart-axis{position:absolute;left:0;top:29px;height:115px;display:flex;flex-direction:column;justify-content:space-between;font-size:11px;color:#dbe7fa;width:27px;text-align:right}.plot-frame:before{content:'';position:absolute;pointer-events:none;left:30px;right:0;top:29px;height:115px;background:repeating-linear-gradient(to top,#7598c922 0,#7598c922 1px,transparent 1px,transparent 25%)}
+    .chart-footer{display:flex;justify-content:space-between;align-items:center;gap:12px;border-top:1px solid #214368;margin-top:10px;padding-top:13px}.chart-footer span{font-size:10px;color:#b5c9e6;display:block}.chart-footer b{font-size:12px;display:block;margin-top:5px}.refresh-app{color:white;background:linear-gradient(#245b9f,#194276);border:1px solid #3d76b7;padding:10px 12px;text-decoration:none;border-radius:15px;font-size:12px;white-space:nowrap}.chart-note{font-size:9px;line-height:1.45;color:#a7beda;margin:12px 0 0}
+    .bottom-nav{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:space-around;background:#0c2545ed;border-top:1px solid #183453;padding:6px 9px calc(9px + env(safe-area-inset-bottom));backdrop-filter:blur(12px)}.bottom-nav button{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;color:#c4d2e8;background:none;border:0;border-radius:20px;min-width:58px;padding:7px 9px;font-size:10px}.bottom-nav svg{height:24px;width:24px}.bottom-nav button.active{background:linear-gradient(#0d58b3,#0b3c7b);color:white}.more-icon{font-size:25px;line-height:24px;letter-spacing:2px}.page-title{font-size:22px;margin:18px 4px}.editbtn{margin-bottom:12px}.mainbtn{color:white}.month-name,.month-value{color:#e8f3ff}.field-box,.seg,.ratefield input{background:#061c38}.lineitem{border-color:#1a3a61}
+    @media(max-width:350px){.overview-metrics>div{padding-right:4px;padding-left:7px}.result .total,.result .total.secondary{font-size:21px}.period-heading{gap:6px}.period-heading p{font-size:12px}.chart-heading h2{font-size:12px}.mini-seg button{padding:5px 9px}}
   </style>
 </head>
 <body>
-  <main class="shell">
-    <header class="mast">
-      <div class="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="m14.2 2.7-9.1 10h6.4L9.8 21.3l9.1-10h-6.4l1.7-8.6Z" fill="white" stroke="white" stroke-width="1.5" stroke-linejoin="round"/></svg></div>
-      <div><h1>Costo Luce 6.0</h1><p class="sub">Energia sotto controllo · Enel</p></div>
-    </header>
-
-    <div class="seg unit-toggle" role="group" aria-label="Unità di visualizzazione"><button id="unitEur" onclick="setDisplayUnit('eur')">€ Costi</button><button id="unitKwh" onclick="setDisplayUnit('kwh')">kWh Consumi</button></div>
-    <section class="card result" aria-live="polite">
-      <div class="eyebrow"><span id="summaryLabel">Totale variabile stimato · IVA inclusa</span></div>
-      <div class="total" id="total">—</div>
-      <p id="summaryPeriod" class="sub" style="color:#b8d6df;line-height:1.5"></p>
-      <div class="result-foot"><div><div class="klabel">Costo variabile / kWh</div><div id="perKwh" class="kvalue">—</div></div><div><div class="klabel">kWh soggetti ad accisa</div><div id="taxKwh" class="kvalue">—</div></div></div>
-    </section>
-    <section class="card history-card"><div class="eyebrow">Ultimi quattro mesi · Enel</div><div id="historyChart" class="history-chart" role="img" aria-label="Storico mensile Enel"></div><p class="help">Il mese corrente è parziale. I mesi senza misure sono mancanti. Costi stimati con le tariffe impostate, quote fisse escluse.</p></section>
-    <section class="card" aria-labelledby="calc-title">
+<main class="shell"><header class="mast"><div class="logo" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m14 2-10 12h7l-1 8 10-13h-7z" fill="white"/></svg></div><div><h1>Costo Luce</h1><p class="sub">v6.0</p></div><button class="gear" aria-label="Impostazioni" onclick="showView('settings')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 3-1 3-3 1 1 4-2 2 2 3 3-1 2 3h3l1-3 3-1-1-4 2-2-2-3-3 1-2-3z"/><circle cx="11" cy="10" r="3"/></svg></button></header><div id="page-home"><div class="seg unit-toggle" role="group" aria-label="Unità di visualizzazione"><span>Visualizza</span><button id="unitEur" onclick="setDisplayUnit('eur')">€</button><button id="unitKwh" onclick="setDisplayUnit('kwh')">kWh</button></div><section class="card result" aria-live="polite"><div class="period-heading"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v5m10-5v5M3 11h18"/></svg><div><span>Periodo di fatturazione</span><p id="summaryPeriod"></p></div><b class="badge">In corso</b></div><div class="overview-metrics"><div><div id="summaryLabel" class="metric-label">Costo stimato</div><div id="total" class="total">—</div></div><div><div id="otherLabel" class="metric-label">Consumo</div><div id="summaryOther" class="total secondary">—</div></div></div></section><section class="card history-card"><div class="chart-heading"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V12m7 8V4m7 16V8"/></svg><h2>Consumi ultimi 4 mesi</h2><div class="mini-seg"><button id="chartKwh" onclick="setDisplayUnit('kwh')">kWh</button><button id="chartEur" onclick="setDisplayUnit('eur')">€</button></div></div><div class="chart-badge"><span class="badge">Corrente parziale</span></div><div class="plot-frame"><div id="historyAxis" class="chart-axis" aria-hidden="true"></div><div id="historyChart" class="history-chart" role="img" aria-label="Storico mensile Enel"></div></div><div class="chart-footer"><div><span>Enel · ultimo aggiornamento</span><b id="historyUpdated">Nessuna lettura disponibile</b></div><a class="refresh-app" href="costoluce://enel-sync?months=2" id="homeRefresh">↻ Aggiorna</a></div><p class="chart-note">Misure mancanti indicate con —. Costi variabili stimati, quote fisse escluse.</p></section></div><div id="page-consumption" hidden><h2 class="page-title">Consumi</h2><section class="card" aria-labelledby="calc-title">
       <div id="calc-title" class="eyebrow">Consumo da calcolare</div>
       <div class="field-box"><input class="biginput" id="kwh" type="number" inputmode="decimal" min="0" step="0.1" value="" aria-label="Energia consumata in kilowattora"><span class="unit">kWh</span></div>
-      <div class="controlhead">Periodo di consumo</div>
-      <div class="seg" role="group" aria-label="Periodo"><button id="m1" type="button" onclick="setMonths(1)">Mese corrente</button><button id="m2" class="active" type="button" onclick="setMonths(2)">Bimestre fattura</button></div>
-      <div class="switchrow"><div class="switchlabel"><b>Agevolazione accisa domestica</b><span>Residente con potenza fino a 3 kW</span></div><label class="switch"><input type="checkbox" id="resident" checked aria-label="Applica esenzione accisa per residenza"><span class="track"></span></label></div>
-    </section>
-
-    <section class="card importcard" aria-labelledby="import-title">
+</section><section class="card importcard" aria-labelledby="import-title">
       <div id="import-title" class="eyebrow">Enel Energia · collegamento diretto</div>
       <p class="step">Recupera i kWh del <b>bimestre di fatturazione</b> (es. ottobre–novembre) oppure del solo mese corrente. I consumi del mese in corso vengono conteggiati <b>solo fino alle letture già disponibili</b>. La prima volta configura Enel; puoi salvare le credenziali cifrate sul telefono per aggiornare dal widget.</p>
       <div class="buttonrow">
@@ -141,34 +136,24 @@
         <textarea class="pastebox" id="pasteSource" placeholder="Oppure incolla qui il totale o una tabella..." aria-label="Testo dei consumi"></textarea>
         <button class="smallbtn" type="button" onclick="importPasted()">Calcola dal testo incollato</button>
       </details>
-    </section>
-
-
-
-    <section class="card widgetcard" aria-labelledby="widget-title">
-      <div class="eyebrow" id="widget-title">Widget Home · collegamento automatico</div>
-      <p class="step">Tariffe, periodo e consumi reali vengono sincronizzati con il widget
-        automaticamente quando li modifichi o li importi. Non occorre premere Salva.</p>
-      <p id="widgetStatus" class="widgethint" role="status">Sul widget premi ↻ per richiedere una nuova lettura Enel in background. Servono credenziali salvate sul telefono e un accesso Enel funzionante. Le stime non includono le quote fisse.</p>
-    </section>
-
-    <section class="card" aria-labelledby="detail-title">
+    </section><section class="card" aria-labelledby="detail-title">
       <h2 class="sect-title" id="detail-title">Dettaglio del consumo</h2>
       <div id="breakdown"></div>
       <div class="sumline"><span>Totale variabile</span><span id="total2">—</span></div>
-    </section>
-
-    <button class="editbtn" onclick="toggleRates()" aria-expanded="false" id="editBtn"><span>Modifica le tariffe</span><svg id="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg></button>
-    <section class="card rates" id="rates" aria-label="Tariffe personalizzabili">
+    </section><p class="note">Costo / kWh: <b id="perKwh">—</b> · Imponibile accisa: <b id="taxKwh">—</b></p></div><div id="page-rates" hidden><h2 class="page-title">Tariffe</h2><button class="editbtn" onclick="toggleRates()" aria-expanded="false" id="editBtn"><span>Modifica le tariffe</span><svg id="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg></button><section class="card rates" id="rates" aria-label="Tariffe personalizzabili">
       <div class="eyebrow">Prezzi unitari della fattura</div>
       <div class="gridrates" id="rateFields"></div>
       <button class="reset" onclick="resetRates()">Ripristina tariffe Enel</button>
       <div class="help">I valori iniziali provengono dalla tua fattura di giugno–luglio 2026. Per le componenti con prezzi mensili diversi viene usata la media ponderata sui consumi (238 e 241 kWh). Le perdite di rete sono calcolate al 10% del consumo, senza arrotondamento ai kWh interi.</div>
-    </section>
-
-    <p class="note"><strong>Solo costi variabili:</strong> energia, perdite, dispacciamento, sbilanciamento, trasporto e perequazione a consumo, ASOS, ARIM, accisa e IVA. Sono esclusi quote fisse, potenza impegnata, canone RAI e altre eventuali voci.</p>
-    <p class="footer">La connessione diretta Enel è sperimentale: può essere impedita da modifiche all’autenticazione o ai servizi. In alternativa, inserisci i kWh manualmente o importa un CSV/TXT.<br>Stima indicativa, non una fattura ufficiale. L'accisa viene stimata ipotizzando consumi distribuiti uniformemente nei mesi. Le tariffe possono cambiare nel tempo.<br>Funziona anche senza connessione Internet.</p>
-  </main>
+    </section><p class="note"><strong>Solo costi variabili:</strong> energia, perdite, dispacciamento, sbilanciamento, trasporto e perequazione a consumo, ASOS, ARIM, accisa e IVA. Sono esclusi quote fisse, potenza impegnata, canone RAI e altre eventuali voci.</p></div><div id="page-period" hidden><h2 class="page-title">Periodo di fatturazione</h2><section class="card">      <div class="controlhead">Periodo di consumo</div>
+      <div class="seg" role="group" aria-label="Periodo"><button id="m1" type="button" onclick="setMonths(1)">Mese corrente</button><button id="m2" class="active" type="button" onclick="setMonths(2)">Bimestre fattura</button></div>
+      <div class="switchrow"><div class="switchlabel"><b>Agevolazione accisa domestica</b><span>Residente con potenza fino a 3 kW</span></div><label class="switch"><input type="checkbox" id="resident" checked aria-label="Applica esenzione accisa per residenza"><span class="track"></span></label></div>
+    <p class="help">Bimestri: ottobre–novembre, dicembre–gennaio e così via. Nessuna proiezione dei consumi futuri.</p></section></div><div id="page-settings" hidden><h2 class="page-title">Impostazioni</h2><section class="card"><h3>Account Enel</h3><p class="step">Gestisci le credenziali cifrate sul telefono.</p><a class="mainbtn" href="costoluce://enel-config">Configura account</a></section><section class="card widgetcard" aria-labelledby="widget-title">
+      <div class="eyebrow" id="widget-title">Widget Home · collegamento automatico</div>
+      <p class="step">Tariffe, periodo e consumi reali vengono sincronizzati con il widget
+        automaticamente quando li modifichi o li importi. Non occorre premere Salva.</p>
+      <p id="widgetStatus" class="widgethint" role="status">Sul widget premi ↻ per richiedere una nuova lettura Enel in background. Servono credenziali salvate sul telefono e un accesso Enel funzionante. Le stime non includono le quote fisse.</p>
+    </section><p class="footer">La connessione diretta Enel è sperimentale: può essere impedita da modifiche all’autenticazione o ai servizi. In alternativa, inserisci i kWh manualmente o importa un CSV/TXT.<br>Stima indicativa, non una fattura ufficiale. L'accisa viene stimata ipotizzando consumi distribuiti uniformemente nei mesi. Le tariffe possono cambiare nel tempo.<br>Funziona anche senza connessione Internet.</p></div></main><nav class="bottom-nav" aria-label="Navigazione principale"><button id="nav-home" onclick="showView('home')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 11 9-8 9 8M6 10v11h12V10m-8 11v-7h4v7"/></svg><span>Home</span></button><button id="nav-consumption" onclick="showView('consumption')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V12m7 8V4m7 16V8"/></svg><span>Consumi</span></button><button id="nav-rates" onclick="showView('rates')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l4 4v14H6zM10 10h5m-5 4h5m-5 4h5"/></svg><span>Tariffe</span></button><button id="nav-period" onclick="showView('period')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v5m10-5v5M3 11h18"/></svg><span>Periodo</span></button><button id="nav-settings" onclick="showView('settings')"><span class="more-icon">•••</span><span>Altro</span></button></nav>
 <script>
   'use strict';
   const initial = {
@@ -197,25 +182,33 @@
     try{localStorage.setItem('costoluce_display_unit_v1',displayUnit)}catch(e){}
     byId('unitEur').classList.toggle('active',displayUnit==='eur');
     byId('unitKwh').classList.toggle('active',displayUnit==='kwh');
+    byId('chartKwh').classList.toggle('active',displayUnit==='kwh');byId('chartEur').classList.toggle('active',displayUnit==='eur');
     recalc();
     if(notify)window.location.href='costoluce://display-unit?unit='+displayUnit;
   }
+  function showView(name){
+    for(const page of ['home','consumption','rates','period','settings']){byId('page-'+page).hidden=page!==name;byId('nav-'+page).classList.toggle('active',page===name)}
+    if(name==='rates'){byId('rates').classList.add?.('open');byId('editBtn').setAttribute('aria-expanded','true')}
+    if(typeof window.scrollTo==='function')window.scrollTo(0,0);
+  }
+  function chartScale(max){if(max<=0)return 1;const base=Math.pow(10,Math.floor(Math.log10(max/4)));const step=[1,2,5,10].find(n=>n*base>=max/4)*base;return step*4}
   function monthlyCost(k){const t=tariffs;return (k*(t.energy*(1+t.losses/100)+t.dispatch+t.balancing+t.transport+t.equalization+t.asos+t.arim)+(byId('resident').checked?taxableMonthly(k):k)*t.excise)*(1+t.vat/100)}
   function renderHistory(){
     const el=byId('historyChart');if(!el)return;el.innerHTML='';
     const today=new Date();const rows=[];
     for(let i=0;i<4;i++){const d=new Date(today.getFullYear(),today.getMonth()-3+i,1);rows.push(historyRows.find(r=>r.year===d.getFullYear()&&r.month===d.getMonth()+1)||{year:d.getFullYear(),month:d.getMonth()+1,available:false,partial:i===3})}
-    const values=rows.map(r=>r.available?(displayUnit==='kwh'?r.kwh:monthlyCost(r.kwh)):0);const max=Math.max(1,...values);
+    const values=rows.map(r=>r.available?(displayUnit==='kwh'?r.kwh:monthlyCost(r.kwh)):0);const max=chartScale(Math.max(0,...values));
+    const axis=byId("historyAxis");axis.innerHTML="";for(let tick=4;tick>=0;tick--){const label=document.createElement("span");label.textContent=rows.some(r=>r.available)?decimal(max*tick/4,max<4?1:0):tick===0?"0":"";axis.appendChild(label)}
     const descriptions=[];
     rows.forEach((r,i)=>{const col=document.createElement('div');col.className='history-col'+(i===3?' current':'');
       const track=document.createElement('div');track.className='history-track';const value=document.createElement('strong');value.textContent=r.available?(displayUnit==='kwh'?decimal(values[i],1):euro(values[i])):'—';track.appendChild(value);
       if(r.available){const bar=document.createElement('div');bar.className='history-bar';bar.style.height=(values[i]/max*115)+'px';track.appendChild(bar)}
-      col.appendChild(track);const name=document.createElement('span');name.textContent=italianMonth(r.year,r.month).slice(0,3);col.appendChild(name);
+      col.appendChild(track);const name=document.createElement('span');name.textContent=italianMonth(r.year,r.month).slice(0,3);const year=document.createElement('span');year.textContent=String(r.year);name.appendChild(year);col.appendChild(name);
       const status=document.createElement('small');status.textContent=!r.available?'Mancante':i===3||r.partial?'Parziale':'Completo';col.appendChild(status);el.appendChild(col);
       descriptions.push(italianMonth(r.year,r.month)+': '+value.textContent+' '+(displayUnit==='kwh'?'kWh':'€ stimati')+', '+status.textContent);
     });el.setAttribute('aria-label',descriptions.join('. '));
   }
-  window.onHistoryNative=function(rows){historyRows=Array.isArray(rows)?rows:[];renderHistory()};
+  window.onHistoryNative=function(rows,savedAt){historyRows=Array.isArray(rows)?rows:[];byId('historyUpdated').textContent=savedAt?new Intl.DateTimeFormat('it-IT',{dateStyle:'short',timeStyle:'short'}).format(new Date(savedAt)):'Nessuna lettura disponibile';renderHistory()};
   let months=2;
   try {
     const storedMonths=localStorage.getItem('costoluce_months_v1');
@@ -327,12 +320,13 @@
     const preVat=items.reduce((s,it)=>s+it[1],0); const vat=preVat*t.vat/100;items.push(['IVA',vat,decimal(t.vat,1)+'% dell’imponibile']);const total=preVat+vat;
     lastCalculatedCost=total;
     byId('total').textContent=String(byId('kwh').value).trim()===''?'—':displayUnit==='kwh'?decimal(kwh,1)+' kWh':euro(total);
-    byId('summaryLabel').textContent=displayUnit==='kwh'?'Consumo del periodo selezionato':'Totale variabile stimato · IVA inclusa';
-    byId('summaryPeriod').textContent=(months===2?'Bimestre · ':'Mese · ')+selectedPeriod(months).map(m=>italianMonth(m.year,m.month)).join(' + ')+' · in corso';renderHistory();byId('total2').textContent=euro(total);
+    byId('summaryLabel').textContent=displayUnit==='kwh'?'Consumo':'Costo stimato';byId('otherLabel').textContent=displayUnit==='kwh'?'Costo stimato':'Consumo';byId('summaryOther').textContent=String(byId('kwh').value).trim()===''?'—':displayUnit==='kwh'?euro(total):decimal(kwh,1)+' kWh';
+    byId('summaryPeriod').textContent=selectedPeriod(months).map(m=>italianMonth(m.year,m.month)).join(' + ');renderHistory();byId('total2').textContent=euro(total);
     byId('perKwh').textContent=kwh?decimal(total/kwh,3)+' €/kWh':'—';
     byId('taxKwh').textContent=decimal(taxKwh,1)+' kWh';
     const dest=byId('breakdown');dest.innerHTML='';
     for(const [name,value,desc] of items){const row=document.createElement('div');row.className='lineitem';const text=document.createElement('div');text.innerHTML='<div class="labeltext"></div><div class="detail"></div>';text.children[0].textContent=name;text.children[1].textContent=desc;const money=document.createElement('span');money.className='money';money.textContent=euro(value);row.appendChild(text);row.appendChild(money);dest.appendChild(row)}
+    byId('homeRefresh').href='costoluce://enel-sync?months='+months;
     scheduleWidgetSync();
     return total;
   }
@@ -681,7 +675,7 @@
     if(storedResident==='1'||storedResident==='0')
       byId('resident').checked=storedResident==='1';
   }catch(e){}
-  fillRates();setMonths(months);renderMonthPending();setDisplayUnit(displayUnit,false);recalc();
+  fillRates();setMonths(months);renderMonthPending();setDisplayUnit(displayUnit,false);showView('home');recalc();
 </script>
 </body>
 </html>

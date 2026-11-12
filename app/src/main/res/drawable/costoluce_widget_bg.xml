@@ -1,6 +1,1 @@
-<?xml version="1.0" encoding="utf-8"?>
-<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
-    <gradient android:angle="135" android:startColor="#0B1B2B" android:centerColor="#112E40" android:endColor="#173E4D"/>
-    <corners android:radius="24dp"/>
-    <stroke android:width="1dp" android:color="#2B5362"/>
-</shape>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android"><item><shape><gradient android:angle="135" android:startColor="#03152F" android:centerColor="#0B2852" android:endColor="#103264"/><corners android:radius="26dp"/><stroke android:width="1dp" android:color="#173B65"/></shape></item><item><vector android:width="400dp" android:height="320dp" android:viewportWidth="400" android:viewportHeight="320"><path android:fillColor="#0A75BB" android:fillAlpha="0.14" android:pathData="M80,290 C180,300 200,240 280,242 C330,240 345,185 400,180 L400,290 C300,250 290,310 200,306 Z"/><path android:fillColor="#1498C8" android:fillAlpha="0.12" android:pathData="M190,290 C260,270 270,210 340,220 C365,225 380,242 400,230 L400,290 Z"/></vector></item></layer-list>

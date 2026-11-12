@@ -42,3 +42,7 @@ assert.match(getId('total').textContent,/119,71/);
 assert.match(getId('historyChart').children[2].children[0].children[0].textContent,/59,42/);
 assert.strictEqual(saved.get('costoluce_display_unit_v1'),'eur');
 console.log('PASS: four real-data slots, missing versus measured zero, partial current month, persistent euro/kWh toggle and monthly excise');
+
+ctx.showView('period');assert.strictEqual(getId('page-period').hidden,false);assert.strictEqual(getId('page-home').hidden,true);
+ctx.showView('home');assert.strictEqual(getId('page-period').hidden,true);assert.strictEqual(getId('page-home').hidden,false);
+console.log('PASS: functional Home and Period navigation');

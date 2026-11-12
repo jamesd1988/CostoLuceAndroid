@@ -26,6 +26,7 @@ import java.util.Locale;
  */
 public final class CostoLuceWidgetProvider extends AppWidgetProvider {
     static final String PREFS = "costoluce_widget_snapshot_v1";
+    static final String ACTION_UNIT = "com.costoluce.cloud.action.WIDGET_UNIT";
     static final String ACTION_PAGE = "com.costoluce.cloud.action.WIDGET_PAGE";
     static final String ACTION_REFRESH = "com.costoluce.cloud.action.WIDGET_REFRESH";
     private static final int REFRESH_JOB_ID = 225901;
@@ -343,6 +344,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
     }
 
     @Override public void onReceive(Context context, Intent intent) {
+        if (intent != null && ACTION_UNIT.equals(intent.getAction())) { saveUnit(context,intent.getStringExtra("unit"));return; }
         if (intent != null && ACTION_REFRESH.equals(intent.getAction())) {
             requestDataRefresh(context);
             return;
@@ -430,7 +432,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         long savedAt = p.getLong(KEY_TIMESTAMP, 0L);
         if (savedAt <= 0L) {
             views.setTextViewText(R.id.widget_euro, "—");
-            views.setTextViewText(R.id.widget_kwh, "Nessun consumo disponibile");
+            views.setTextViewText(R.id.widget_kwh, "— kWh");
             if (readConfiguration(context) == null) {
                 views.setTextViewText(R.id.widget_period, "Configura le tariffe nell'app");
                 views.setTextViewText(R.id.widget_updated, "Prima configurazione necessaria");
@@ -463,7 +465,8 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
                 views.setTextViewText(R.id.widget_kwh, consumption.format(kwh) + " kWh");
                 views.setTextViewText(R.id.widget_period, period);
                 SimpleDateFormat date = new SimpleDateFormat("dd/MM 'alle' HH:mm", IT);
-                views.setTextViewText(R.id.widget_updated, sourceText + " · dati del " + date.format(new Date(savedAt)));
+                views.setTextViewText(R.id.widget_source,sourceText + " · ultimo aggiornamento");
+                views.setTextViewText(R.id.widget_updated,new SimpleDateFormat("dd/MM/yyyy, HH:mm",IT).format(new Date(savedAt)));
             } catch (RuntimeException ignored) {
                 views.setTextViewText(R.id.widget_euro, "—");
                 views.setTextViewText(R.id.widget_kwh, "Dato non valido");
@@ -501,6 +504,29 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         views.setOnClickPendingIntent(R.id.widget_refresh, refreshPending);
         views.setOnClickPendingIntent(R.id.widget_status, refreshPending);
         boolean chart = p.getInt("page_"+widgetId,0)==1;
+        views.setTextViewText(R.id.widget_brand,chart?"Consumi ultimi 4 mesi":"COSTO LUCE · v6.0");
+        views.setViewVisibility(R.id.widget_units,chart?android.view.View.VISIBLE:android.view.View.GONE);
+        views.setViewVisibility(R.id.widget_refresh,chart?android.view.View.GONE:android.view.View.VISIBLE);
+        boolean usage="kwh".equals(p.getString("display_unit","eur"));
+        views.setInt(R.id.widget_unit_kwh,"setBackgroundResource",usage?R.drawable.costoluce_widget_pill_selected:R.drawable.costoluce_widget_pill_idle);
+        views.setInt(R.id.widget_unit_eur,"setBackgroundResource",usage?R.drawable.costoluce_widget_pill_idle:R.drawable.costoluce_widget_pill_selected);
+        String[] units={"kwh","eur"};int[] buttons={R.id.widget_unit_kwh,R.id.widget_unit_eur};
+        for(int i=0;i<2;i++){
+            Intent unit=new Intent(context,CostoLuceWidgetProvider.class).setAction(ACTION_UNIT).putExtra("unit",units[i])
+                    .setData(android.net.Uri.parse("costoluce://widget-unit/"+units[i]));
+            views.setOnClickPendingIntent(buttons[i],PendingIntent.getBroadcast(context,2100+i,unit,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE));
+        }
+        try {
+            if("enel".equals(p.getString(KEY_SOURCE,""))){
+                org.json.JSONArray list=new org.json.JSONArray(p.getString(KEY_MONTHLY,"[]"));StringBuilder shortPeriod=new StringBuilder();boolean ongoing=false;
+                String[] names=new java.text.DateFormatSymbols(IT).getShortMonths();
+                java.util.Calendar now=java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("Europe/Rome"));
+                for(int i=0;i<list.length();i++){JSONObject row=list.getJSONObject(i);if(i>0)shortPeriod.append(" + ");shortPeriod.append(names[row.getInt("month")-1]).append(' ').append(row.getInt("year"));if(row.getInt("year")==now.get(java.util.Calendar.YEAR)&&row.getInt("month")==now.get(java.util.Calendar.MONTH)+1)ongoing=true;}
+                if(shortPeriod.length()>0)views.setTextViewText(R.id.widget_period,shortPeriod.toString());
+                views.setTextViewText(R.id.widget_period_badge,ongoing?"In corso":"Archiviato");
+            }else views.setTextViewText(R.id.widget_period_badge,savedAt>0?"Stima":"Da collegare");
+        }catch(Exception ignored){}
+
         views.setViewVisibility(R.id.widget_spacer,chart?android.view.View.GONE:android.view.View.VISIBLE);
         views.setViewVisibility(R.id.widget_summary,chart?android.view.View.GONE:android.view.View.VISIBLE);
         views.setViewVisibility(R.id.widget_chart,chart?android.view.View.VISIBLE:android.view.View.GONE);
