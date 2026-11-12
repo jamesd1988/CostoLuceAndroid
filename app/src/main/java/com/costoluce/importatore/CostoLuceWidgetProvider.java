@@ -509,7 +509,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         views.setViewVisibility(R.id.widget_refresh,chart?android.view.View.GONE:android.view.View.VISIBLE);
         boolean showKwh="kwh".equals(p.getString("display_unit","eur"));
         views.setInt(R.id.widget_unit_kwh,"setBackgroundResource",showKwh?R.drawable.costoluce_widget_pill_selected:R.drawable.costoluce_widget_pill_idle);
-        views.setInt(R.id.widget_unit_eur,"setBackgroundResource",usage?R.drawable.costoluce_widget_pill_idle:R.drawable.costoluce_widget_pill_selected);
+        views.setInt(R.id.widget_unit_eur,"setBackgroundResource",showKwh?R.drawable.costoluce_widget_pill_idle:R.drawable.costoluce_widget_pill_selected);
         String[] units={"kwh","eur"};int[] buttons={R.id.widget_unit_kwh,R.id.widget_unit_eur};
         for(int i=0;i<2;i++){
             Intent unit=new Intent(context,CostoLuceWidgetProvider.class).setAction(ACTION_UNIT).putExtra("unit",units[i])
