@@ -527,7 +527,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
             float candidateWidth=spec.width-20-52;if(spec.wideStats())candidateWidth/=2;
             float usableHeight=spec.height-8,density=context.getResources().getDisplayMetrics().density;
             refreshShown=fitSmallValue(context,energy,candidateWidth,spec.wideStats()?usableHeight:usableHeight*.56f,22,true)>=12*density
-                    &&fitSmallValue(context,cost,candidateWidth,spec.wideStats()?usableHeight:usableHeight*.44f,18,false)>=11*density;
+                    &&fitSmallValue(context,cost,candidateWidth,spec.wideStats()?usableHeight:usableHeight*.44f,18,false)>=12*density;
         }
         String period=p.getString(KEY_PERIOD,"");if(period==null||period.trim().isEmpty())period="Periodo corrente";
         if("enel".equals(p.getString(KEY_SOURCE,"")))try{org.json.JSONArray rows=new org.json.JSONArray(p.getString(KEY_MONTHLY,"[]"));if(rows.length()>0)period=compactPeriod(rows);}catch(Exception ignored){}
