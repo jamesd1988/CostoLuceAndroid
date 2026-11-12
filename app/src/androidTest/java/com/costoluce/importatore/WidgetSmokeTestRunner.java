@@ -61,17 +61,25 @@ public class WidgetSmokeTestRunner extends Instrumentation {
         try {
             Context c=getTargetContext();
             Activity activity=startActivitySync(new Intent(c,MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-            Thread.sleep(2500);previewWeb=findWeb(activity.findViewById(android.R.id.content));capture("app-6.1");
+            Thread.sleep(2500);previewWeb=findWeb(activity.findViewById(android.R.id.content));capture("app-6.2");
             android.webkit.WebView web=findWeb(activity.findViewById(android.R.id.content));
             if(web==null)throw new AssertionError("Missing WebView");
             assertScript(web,"showView('rates');if(document.querySelectorAll('.rate-card').length!==10)throw Error('Default rows');openRateEditor('energy');if(!document.getElementById('rateName').disabled)throw Error('Energy lock');closeRateEditor()");
-            capture("tariffe-6.1");
+            capture("tariffe-6.2");
             assertScript(web,"openRateEditor('transport','fixed');if(document.getElementById('rateAmount').value!=='')throw Error('Automatic conversion');document.getElementById('rateName').value='Quota fissa mensile';document.getElementById('rateAmount').value='8,00'");
-            capture("tariffe-editor-6.1");
+            capture("tariffe-editor-6.2");
             assertScript(web,"if(!saveRateEditor())throw Error('Save');setRateFilter('fixed');if(document.querySelectorAll('.rate-card').length!==1)throw Error('Filter');if(JSON.parse(localStorage.getItem('costoluce_rates_v1'))._meta.transport.name!=='Quota fissa mensile')throw Error('Persistence')");
             Thread.sleep(1200);waitForIdleSync();
             CostoLuceWidgetProvider.WidgetConfiguration saved=CostoLuceWidgetProvider.readConfiguration(c);
             if(saved==null||!WidgetPricing.parse(saved.ratesJson,saved.resident).hasFixedCosts())throw new AssertionError("Widget did not receive fixed tariff");
+            assertScript(web,"setRateFilter('all');openNewRate();document.getElementById('rateName').value='Servizio aggiuntivo';document.getElementById('rateAmount').value='0,02';if(!saveRateEditor())throw Error('Create row');if(JSON.parse(localStorage.getItem('costoluce_rates_v1'))._custom.length!==1)throw Error('Custom persistence');openRateEditor('dispatch');requestDeleteRate();if(document.getElementById('rateDeleteConfirm').hidden)throw Error('Delete confirmation');if(!confirmDeleteRate())throw Error('Delete default');if(rateMeta.dispatch.enabled)throw Error('Default still active')");
+            Thread.sleep(1200);waitForIdleSync();
+            saved=CostoLuceWidgetProvider.readConfiguration(c);
+            org.json.JSONObject customConfig=new org.json.JSONObject(saved.ratesJson);
+            if(customConfig.getJSONArray("_custom").length()!=1||customConfig.getJSONObject("_meta").getJSONObject("dispatch").getBoolean("enabled"))throw new AssertionError("Widget did not receive added/deleted rows");
+            WidgetPricing pricing=WidgetPricing.parse(saved.ratesJson,saved.resident);
+            double nativeCost=pricing.estimatedCost(479,2,218,2);
+            assertScript(web,"if(Math.abs(calculateCosts(479,2,218,2).total-"+nativeCost+")>0.000001)throw Error('App/widget pricing mismatch');if(!undoRateDeletion()||!rateMeta.dispatch.enabled)throw Error('Restore default');openRateEditor(customKeys[0]);requestDeleteRate();if(!confirmDeleteRate()||customKeys.length!==0)throw Error('Delete custom');if(!undoRateDeletion()||customKeys.length!==1)throw Error('Restore custom');openRateEditor('energy');if(!document.getElementById('rateDeleteButton').hidden||requestDeleteRate())throw Error('Protected Energy');closeRateEditor()");
             assertScript(web,"resetRates();setRateFilter('all');showView('home')");Thread.sleep(1000);
             for(int page=0;page<2;page++) {
                 final int selected=page;
@@ -87,7 +95,7 @@ public class WidgetSmokeTestRunner extends Instrumentation {
                     android.widget.FrameLayout.LayoutParams lp=new android.widget.FrameLayout.LayoutParams((int)(340*c.getResources().getDisplayMetrics().density),(int)(320*c.getResources().getDisplayMetrics().density));
                     lp.gravity=Gravity.CENTER;root.addView(view,lp);activity.setContentView(root);
                 });
-                capture(page==0?"widget-summary-6.1":"widget-history-6.1");
+                capture(page==0?"widget-summary-6.2":"widget-history-6.2");
             }
             result.putString("stream","PASS: WebView launch and both RemoteViews pages inflated without crash.");
             sendStatus(0,test);finish(Activity.RESULT_OK,result);

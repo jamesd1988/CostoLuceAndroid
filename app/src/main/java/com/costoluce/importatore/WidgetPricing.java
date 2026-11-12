@@ -8,15 +8,19 @@ final class WidgetPricing {
     private static final String[] KEYS = {"energy","losses","dispatch","balancing","transport","equalization","asos","arim","excise","vat"};
     private final double[] values;
     private final boolean[] fixed;
+    private final boolean[] enabled;
+    private final java.util.List<ExtraRate> custom;
+    private static final class ExtraRate {final double value;final boolean fixed;ExtraRate(double value,boolean fixed){this.value=value;this.fixed=fixed;}}
+    private static boolean validName(String name){return !name.trim().isEmpty()&&name.length()<=60&&name.chars().noneMatch(c->c<32||c==127);}
     private final boolean resident;
-    private WidgetPricing(double[] values, boolean[] fixed, boolean resident) {
-        this.values=values;this.fixed=fixed;this.resident=resident;
+    private WidgetPricing(double[] values, boolean[] fixed, boolean[] enabled, java.util.List<ExtraRate> custom, boolean resident) {
+        this.values=values;this.fixed=fixed;this.enabled=enabled;this.custom=custom;this.resident=resident;
     }
     static WidgetPricing parse(String serialized, boolean resident) throws JSONException {
-        if(serialized==null||serialized.length()>8000)throw new JSONException("Tariffe non valide.");
+        if(serialized==null||serialized.length()>16000)throw new JSONException("Tariffe non valide.");
         JSONObject rates=new JSONObject(serialized);
         if(rates.has("_meta")&&!(rates.opt("_meta") instanceof JSONObject))throw new JSONException("Metadati non validi.");
-        JSONObject meta=rates.optJSONObject("_meta");double[] values=new double[KEYS.length];boolean[] fixed=new boolean[KEYS.length];
+        JSONObject meta=rates.optJSONObject("_meta");double[] values=new double[KEYS.length];boolean[] fixed=new boolean[KEYS.length];boolean[] enabled=new boolean[KEYS.length];java.util.Arrays.fill(enabled,true);
         for(int i=0;i<KEYS.length;i++){
             String key=KEYS[i];boolean percent=i==1||i==9;
             if(!(rates.opt(key) instanceof Number))throw new JSONException("Corrispettivo non disponibile: "+key);
@@ -34,14 +38,30 @@ final class WidgetPricing {
                 String type=entry.optString("type",percent?"percent":"variable");
                 if(percent?!"percent".equals(type):!"variable".equals(type)&&!"fixed".equals(type))throw new JSONException("Tipo di costo non valido.");
                 fixed[i]="fixed".equals(type);
+                if(entry.has("enabled")){
+                    if(!(entry.opt("enabled") instanceof Boolean))throw new JSONException("Stato voce non valido.");
+                    enabled[i]=entry.getBoolean("enabled");
+                    if(i==0&&!enabled[i])throw new JSONException("La voce Energia è protetta.");
+                }
             }
         }
-        return new WidgetPricing(values,fixed,resident);
+        java.util.List<ExtraRate> custom=new java.util.ArrayList<>();
+        if(rates.has("_custom")){
+            org.json.JSONArray rows=rates.optJSONArray("_custom");if(rows==null||rows.length()>30)throw new JSONException("Numero di voci non valido.");
+            java.util.Set<String> ids=new java.util.HashSet<>();
+            for(int i=0;i<rows.length();i++){
+                JSONObject row=rows.optJSONObject(i);if(row==null||!(row.opt("id") instanceof String)||!(row.opt("name") instanceof String)||!(row.opt("type") instanceof String)||!(row.opt("value") instanceof Number))throw new JSONException("Voce personalizzata non valida.");
+                String id=row.getString("id"),name=row.getString("name"),type=row.getString("type");double value=row.getDouble("value");
+                if(!id.matches("custom_[a-z0-9_]{1,56}")||!ids.add(id)||!validName(name)||!("fixed".equals(type)||"variable".equals(type))||!Double.isFinite(value)||value<0||value>1000)throw new JSONException("Voce personalizzata non valida.");
+                custom.add(new ExtraRate(value,"fixed".equals(type)));
+            }
+        }
+        return new WidgetPricing(values,fixed,enabled,custom,resident);
     }
     static double taxableMonthly(double kwh) {
         if(kwh<=150)return 0;if(kwh<=220)return kwh-150;if(kwh<=370)return 2*kwh-370;return kwh;
     }
-    boolean hasFixedCosts(){for(int i=0;i<fixed.length;i++)if(fixed[i]&&values[i]>0)return true;return false;}
+    boolean hasFixedCosts(){for(int i=0;i<fixed.length;i++)if(enabled[i]&&fixed[i]&&values[i]>0)return true;for(ExtraRate row:custom)if(row.fixed&&row.value>0)return true;return false;}
     double estimatedCost(double kwh,int months){return estimatedCost(kwh,months,months*taxableMonthly(kwh/months),months);}
     double estimatedCost(double kwh,int months,double residentTaxableKwh){return estimatedCost(kwh,months,residentTaxableKwh,months);}
     double estimatedCost(double kwh,int months,double residentTaxableKwh,int activeMonths){
@@ -49,10 +69,11 @@ final class WidgetPricing {
                 ||!Double.isFinite(residentTaxableKwh)||residentTaxableKwh<0||residentTaxableKwh>kwh+0.0001)
             throw new IllegalArgumentException("Consumo o imponibile non valido.");
         double energy=values[0]*(fixed[0]?activeMonths:kwh);
-        double preVat=energy*(1+values[1]/100);
-        for(int i=2;i<=7;i++)preVat+=values[i]*(fixed[i]?activeMonths:kwh);
-        preVat+=values[8]*(fixed[8]?activeMonths:resident?residentTaxableKwh:kwh);
-        double total=preVat*(1+values[9]/100);
+        double preVat=energy*(1+(enabled[1]?values[1]:0)/100);
+        for(int i=2;i<=7;i++)if(enabled[i])preVat+=values[i]*(fixed[i]?activeMonths:kwh);
+        if(enabled[8])preVat+=values[8]*(fixed[8]?activeMonths:resident?residentTaxableKwh:kwh);
+        for(ExtraRate row:custom)preVat+=row.value*(row.fixed?activeMonths:kwh);
+        double total=preVat*(1+(enabled[9]?values[9]:0)/100);
         if(!Double.isFinite(total)||total>10_000_000)throw new IllegalArgumentException("Costo fuori intervallo.");
         return total;
     }

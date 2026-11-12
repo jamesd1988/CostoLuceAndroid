@@ -134,7 +134,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
      * This does not change the date or value of any previous measured usage.
      */
     static boolean saveConfiguration(Context context, int months, String ratesJson, boolean resident) {
-        if (months != 1 && months != 2 || ratesJson == null || ratesJson.length() > 8000)
+        if (months != 1 && months != 2 || ratesJson == null || ratesJson.length() > 16000)
             return false;
         final WidgetPricing pricing;
         try { pricing = WidgetPricing.parse(ratesJson, resident); }
@@ -516,7 +516,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         views.setOnClickPendingIntent(R.id.widget_refresh, refreshPending);
         views.setOnClickPendingIntent(R.id.widget_status, refreshPending);
         boolean chart = p.getInt("page_"+widgetId,0)==1;
-        views.setTextViewText(R.id.widget_brand,chart?"Consumi ultimi 4 mesi":"COSTO LUCE · v6.1");
+        views.setTextViewText(R.id.widget_brand,chart?"Consumi ultimi 4 mesi":"COSTO LUCE · v6.2");
         views.setViewVisibility(R.id.widget_units,chart?android.view.View.VISIBLE:android.view.View.GONE);
         views.setViewVisibility(R.id.widget_refresh,chart?android.view.View.GONE:android.view.View.VISIBLE);
         boolean showKwh="kwh".equals(p.getString("display_unit","eur"));
