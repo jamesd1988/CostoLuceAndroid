@@ -116,11 +116,7 @@ jobs:
             adb exec-out run-as com.costoluce.cloud cat files/screenshots/app-6.3.png > dist/app-6.3.png
             adb exec-out run-as com.costoluce.cloud cat files/screenshots/tariffe-6.3.png > dist/tariffe-6.3.png
             adb exec-out run-as com.costoluce.cloud cat files/screenshots/tariffe-editor-6.3.png > dist/tariffe-editor-6.3.png
-            for size in compact medium large; do
-              for page in summary history; do
-                adb exec-out run-as com.costoluce.cloud cat "files/screenshots/widget-$page-$size-6.3.png" > "dist/widget-$page-$size-6.3.png"
-              done
-            done
+            for size in compact medium large; do for page in summary history; do adb exec-out run-as com.costoluce.cloud cat "files/screenshots/widget-$page-$size-6.3.png" > "dist/widget-$page-$size-6.3.png"; done; done
             test "$(file dist/*.png | grep -c 'PNG image data')" -eq 9
       - name: Controllo APK e widget Android
         shell: bash
