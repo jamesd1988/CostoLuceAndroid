@@ -30,6 +30,7 @@ public final class MainActivity extends Activity {
     private static final String HOME = "file:///android_asset/index.html";
     private static final String PORTAL = "https://www.consumienergia.it/portaleConsumi/";
     private static final int PICK_CSV = 411;
+    private static final int PICK_INVOICE = 412;
     private static final int MAX_FILE_BYTES = 1_500_000;
     private WebView web;
     private int preferredMonths = 2;
@@ -87,6 +88,12 @@ public final class MainActivity extends Activity {
         try { uri = Uri.parse(url); } catch (Exception e) { return false; }
         if (!"costoluce".equalsIgnoreCase(uri.getScheme())) return false;
         String action = uri.getHost();
+        if ("invoice-import".equals(action)) {
+            if(web!=null&&HOME.equals(web.getUrl())){
+                Intent pick=new Intent(Intent.ACTION_OPEN_DOCUMENT);pick.addCategory(Intent.CATEGORY_OPENABLE);pick.setType("application/pdf");
+                try{startActivityForResult(pick,PICK_INVOICE);}catch(ActivityNotFoundException missing){deliverInvoices("Selettore PDF non disponibile.");}
+            }return true;
+        }
         if ("arera-check".equals(action)) {
             if (web != null && HOME.equals(web.getUrl())) checkArera(true);
             return true;
@@ -194,6 +201,7 @@ public final class MainActivity extends Activity {
     /** Restore the latest validated widget value when the user opens the app. */
     void restoreWidgetSnapshot() {
         if (web == null || web.getUrl() == null || !web.getUrl().startsWith(HOME)) return;
+        deliverInvoices("");
         deliverArera(AreraRepository.state(this,""));
         checkArera(false);
         web.evaluateJavascript("window.onHistoryNative("+CostoLuceWidgetProvider.archive(this).toString()+","+CostoLuceWidgetProvider.prefs(this).getLong("history_at",0L)+");",null);
@@ -202,6 +210,39 @@ public final class MainActivity extends Activity {
         web.evaluateJavascript("window.onWidgetNativeState("
                 + (config == null ? "null" : config.toString()) + ","
                 + (snapshot == null ? "null" : snapshot.toString()) + ");", null);
+    }
+
+    private void deliverInvoices(String message){
+        if(web!=null&&HOME.equals(web.getUrl()))web.evaluateJavascript("window.onInvoicesNative&&window.onInvoicesNative("+InvoiceStore.read(this).toString()+","+JSONObject.quote(message)+");",null);
+    }
+    private void importInvoice(Uri uri){
+        deliverInvoices("Lettura del PDF Enel sul dispositivo…");
+        background.execute(()->{
+            try{
+                ByteArrayOutputStream bytes=new ByteArrayOutputStream();
+                try(InputStream input=getContentResolver().openInputStream(uri)){
+                    if(input==null)throw new IOException("Documento non leggibile.");byte[] buffer=new byte[8192];int read;
+                    while((read=input.read(buffer))!=-1){if(bytes.size()+read>6_000_000)throw new IOException("PDF troppo grande (massimo 6 MB).");bytes.write(buffer,0,read);}
+                }
+                com.tom_roush.pdfbox.android.PDFBoxResourceLoader.init(getApplicationContext());
+                IssuedInvoice invoice;
+                try(com.tom_roush.pdfbox.pdmodel.PDDocument pdf=com.tom_roush.pdfbox.pdmodel.PDDocument.load(bytes.toByteArray())){
+                    if(pdf.getNumberOfPages()>30||pdf.isEncrypted())throw new IOException("PDF cifrato o troppo esteso: nessun dato importato.");
+                    com.tom_roush.pdfbox.text.PDFTextStripper stripper=new com.tom_roush.pdfbox.text.PDFTextStripper();stripper.setSortByPosition(false);
+                    invoice=IssuedInvoice.parse(stripper.getText(pdf));
+                }
+                if(!isFinishing())runOnUiThread(()->{
+                    if(web==null||!HOME.equals(web.getUrl()))return;
+                    new AlertDialog.Builder(this).setTitle("Fattura Enel riconosciuta")
+                        .setMessage("Periodo: "+invoice.from+" – "+invoice.to+"\nElettricità: "+String.format(java.util.Locale.ITALY,"%.2f €",invoice.electricityCents/100.0)+"\nFuori totale elettricità (canone TV/altre voci): "+String.format(java.util.Locale.ITALY,"%.2f €",(invoice.payableCents-invoice.electricityCents)/100.0)+"\n\nControlla i dati con il documento. Il PDF non viene conservato o inviato a servizi esterni.")
+                        .setNegativeButton("Annulla",(dialog,which)->deliverInvoices("Importazione annullata."))
+                        .setPositiveButton("Importa fattura",(dialog,which)->{
+                            try{InvoiceStore.save(this,invoice);deliverInvoices("Fattura archiviata. Gli importi emessi non cambiano con le tariffe; il periodo corrente resta una stima.");}
+                            catch(Exception invalid){deliverInvoices(invalid.getMessage());}
+                        }).show();
+                });
+            }catch(Exception failure){if(!isFinishing())runOnUiThread(()->deliverInvoices(failure instanceof IllegalArgumentException?failure.getMessage():"PDF non importato: formato non supportato o documento non leggibile. Nessun importo inventato."));}
+        });
     }
 
     private void deliverArera(JSONObject data) {
@@ -419,6 +460,7 @@ public final class MainActivity extends Activity {
 
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode==PICK_INVOICE){if(resultCode==RESULT_OK&&data!=null&&data.getData()!=null)importInvoice(data.getData());return;}
         if (requestCode != PICK_CSV || resultCode != RESULT_OK || data == null || data.getData() == null) return;
         try (InputStream input = getContentResolver().openInputStream(data.getData())) {
             if (input == null) throw new IOException("Impossibile aprire il documento.");

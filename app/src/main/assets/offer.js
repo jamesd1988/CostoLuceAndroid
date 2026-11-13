@@ -39,7 +39,7 @@ function renderBillPricingNotice(){
   const el=byId('billPricingNotice');el.hidden=chartMode!=='bill';if(el.hidden)return;
   try{
     const missing=missingOfferRows(billFixedRows);el.hidden=!missing.length;
-    byId('historyCostScope').textContent=missing.length?'Stima incompleta: mancano quote fisse di riferimento. Gli importi includono solo le voci già configurate. Canone TV escluso.':'Totale elettricità stimato: costi fissi + variabili + accisa e IVA configurate. Canone TV separato.';
+    byId('historyCostScope').textContent=missing.length?'Stima corrente incompleta: verifica le quote fisse. Le fatture emesse restano agli importi originali. Canone TV escluso.':'Storico fatturato: totale elettricità originale. Periodo corrente: stima con costi fissi, variabili, accisa e IVA configurate. Canone TV separato.';
     byId('billPricingText').textContent=missing.length?'Quote non riconosciute: '+missing.map(r=>r.name+' '+decimal(r.value,6)+' €/mese').join('; ')+'. Riferimento E-Light agosto–settembre 2026, residente 3 kW. Il pulsante aggiunge solo le quote mancanti: controlla prima eventuali voci equivalenti rinominate e la potenza del tuo contratto.':'';
     byId('billFixedPreview').textContent=missing.length?'Aggiunta al bimestre di riferimento: '+euro(missing.reduce((sum,r)=>sum+r.value,0)*2*(1+(rateEnabled('vat')?tariffs.vat:0)/100))+' di quote fisse, IVA configurata inclusa.':'';
   }
@@ -57,9 +57,9 @@ function completeBillOffer(){
 }
 function renderBillBreakdown(rows){
   const dest=byId('billBreakdown');dest.innerHTML='';dest.hidden=chartMode!=='bill';if(dest.hidden)return;
-  const title=document.createElement('summary');title.textContent='Dettaglio bollette: variabile + fisso'+(rateEnabled('vat')?' (IVA inclusa)':' (IVA esclusa)');dest.appendChild(title);
+  const title=document.createElement('summary');title.textContent='Dettaglio fatture e stima corrente'+(rateEnabled('vat')?' (IVA inclusa)':' (IVA esclusa)');dest.appendChild(title);
   for(const row of rows.filter(r=>r.available)){
-    const p=document.createElement('p');p.textContent=row.label+' '+row.years+': '+euro(row.variable)+' variabile + '+euro(row.fixed)+' fisso = '+euro(row.value)+(row.partial?' · parziale':'');dest.appendChild(p);
+    const p=document.createElement('p');p.textContent=row.status==='issued'?row.label+' '+row.years+': '+euro(row.value)+' elettricità fatturata · '+euro(row.other)+' fuori totale elettricità (canone TV/altre voci)':row.label+' '+row.years+': '+euro(row.variable)+' variabile + '+euro(row.fixed)+' fisso = '+euro(row.value)+' · stima corrente';dest.appendChild(p);
   }
 }
 

@@ -46,7 +46,7 @@ assert.equal(vm.runInContext('customKeys.length',ctx),5);
 assert.equal(JSON.parse(saved.get('costoluce_rates_v1'))._custom.filter(r=>r.type==='fixed').length,5,'All fixed charges saved for the native widget');
 // The screenshot reported only variable charges: all missing fixed charges must enter each month.
 vm.runInContext("tariffs.dispatch=.025043;tariffs.balancing=.001042598;tariffs.asos=.031515;historyRows=[{year:2026,month:8,kwh:177.9,available:true},{year:2026,month:9,kwh:160.2,available:true}]",ctx);
-const bill=ctx.billingHistory(new Date(2026,10,13)).find(r=>r.month===8&&r.year===2026);
+const bill=ctx.billingHistory(new Date(2026,8,13)).find(r=>r.month===8&&r.year===2026);
 assert.equal(bill.value,127.56);assert(Math.abs(bill.fixed-43.87229)<1e-7);assert(Math.abs(bill.variable+bill.fixed-127.56194328218)<1e-7);
 ctx.renderBillBreakdown([bill]);assert.match(byId('billBreakdown').children[1].textContent,/variabile.*fisso/);
 // Existing ARERA prices and renamed stable IDs must survive a completion.

@@ -13,7 +13,8 @@ final class MonthlyChart {
     private static boolean kwh(Context c){return "kwh".equals(CostoLuceWidgetProvider.chartMode(c));}
     private static String years(JSONObject r,boolean compact){int first=r.optInt("year"),last=r.optInt("endYear",first);return compact?(first==last?String.format(Locale.ROOT,"%02d",first%100):String.format(Locale.ROOT,"%02d/%02d",first%100,last%100)):(first==last?Integer.toString(first):first+"–"+last);}
     static double value(Context context, JSONObject r) {
-        if(bills(context))return r.optDouble("billEuro",Double.NaN);
+        if(bills(context)||"issued".equals(r.optString("status")))return r.optDouble("billEuro",Double.NaN);
+        if("missing".equals(r.optString("status")))return Double.NaN;
         double kwh=r.optDouble("kwh",0);
         if(kwh(context))return kwh;
         try {
@@ -22,14 +23,14 @@ final class MonthlyChart {
         } catch(Exception e) { return Double.NaN; }
     }
     static String description(Context c, JSONArray rows) {
-        StringBuilder b=new StringBuilder(bills(c)?"Bollette elettricità stimate. Costi fissi, variabili e imposte configurate; canone TV separato. ":"Storico mensile Enel. ");
+        StringBuilder b=new StringBuilder(bills(c)?"Bollette elettricità fatturate e stima corrente. Costi fissi, variabili e imposte configurate solo per la stima; canone TV separato. ":"Storico mensile Enel. ");
         if(bills(c)&&!CostoLuceWidgetProvider.offerCostsRecognized(c))b.append("Quote fisse di vendita non riconosciute: verifica le Tariffe nell'app. ");
         for(int i=0;i<rows.length();i++) {
             JSONObject r=rows.optJSONObject(i);if(r==null)continue;
             b.append(label(r)).append(' ').append(years(r,false)).append(": ");
             if(!r.optBoolean("available"))b.append("mancante");
             else b.append(String.format(Locale.ITALY,kwh(c)?"%.1f":"%.2f",value(c,r)))
-                    .append(kwh(c)?" kWh":" euro stimati")
+                    .append(kwh(c)?" kWh":"issued".equals(r.optString("status"))?" euro fatturati":" euro stimati")
                     .append(r.optBoolean("partial")?", parziale":"");
             b.append(". ");
         }
@@ -94,7 +95,7 @@ final class MonthlyChart {
             }
             if(spec.detailed()){
                 p.setColor(i==3?Color.rgb(99,230,206):Color.rgb(174,198,228));
-                canvas.drawText(!available[i]?"Mancante":row.optBoolean("partial")?"Parziale":"",x,height-2,p);
+                canvas.drawText(!available[i]?"Assente":"issued".equals(row.optString("status"))?"Fatturata":row.optBoolean("partial")?"Stima*":"",x,height-2,p);
             }
         }
         return bitmap;

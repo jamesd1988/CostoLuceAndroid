@@ -20,8 +20,8 @@ public class BillHistoryTest {
     private JSONObject usage(int year,int month,double kwh,boolean partial)throws Exception{return new JSONObject().put("year",year).put("month",month).put("available",true).put("partial",partial).put("kwh",kwh);}
     @Test public void billIncludesAllFixedVariableExciseAndVatNotJustEnergy()throws Exception{
         WidgetPricing pricing=WidgetPricing.parse(rates().toString(),true);JSONArray data=new JSONArray().put(usage(2026,8,177.9,false)).put(usage(2026,9,160.2,false));
-        JSONObject bill=BillHistory.rows(data,day(2026,11),2,8,pricing).getJSONObject(2);
-        assertTrue(bill.getBoolean("available"));assertFalse(bill.getBoolean("partial"));assertEquals("Ago–Set",bill.getString("label"));
+        JSONObject bill=BillHistory.rows(data,day(2026,9),2,8,pricing).getJSONObject(3);
+        assertTrue(bill.getBoolean("available"));assertTrue(bill.getBoolean("partial"));assertEquals("Ago–Set",bill.getString("label"));
         assertEquals(127.56,bill.getDouble("billEuro"),.000001);
         assertTrue(bill.getDouble("billEuro")>177.9*.135+160.2*.135+70); // Includes fees and taxes beyond energy alone.
         assertEquals(Math.round((pricing.estimatedCost(177.9,1)+pricing.estimatedCost(160.2,1))*100)/100.0,bill.getDouble("billEuro"),.000001);
@@ -51,6 +51,24 @@ public class BillHistoryTest {
     @Test public void networkChargesAreRequiredForCompleteFixedCostRecognition()throws Exception{
         JSONObject r=rates();r.getJSONArray("_custom").remove(0);assertFalse(BillHistory.offerCostsRecognized(r.toString()));
         JSONObject renamed=rates();renamed.getJSONArray("_custom").getJSONObject(1).put("name","La mia potenza");assertTrue(BillHistory.offerCostsRecognized(renamed.toString()));
+    }
+
+    @Test public void historicConsumptionNeverBecomesAnIssuedInvoice()throws Exception{
+        JSONArray usage=new JSONArray().put(usage(2026,8,177.9,false)).put(usage(2026,9,160.2,false));
+        JSONObject missing=BillHistory.rows(usage,day(2026,11),2,8,WidgetPricing.parse(rates().toString(),true)).getJSONObject(2);
+        assertFalse(missing.getBoolean("available"));assertEquals("missing",missing.getString("status"));assertFalse(missing.has("billEuro"));
+        JSONObject invoice=new JSONObject().put("id","EXAMPLE").put("from","2026-08-01").put("to","2026-09-30").put("electricityCents",12756).put("payableCents",14556);
+        JSONObject real=BillHistory.rows(usage,day(2026,11),2,8,null,new JSONArray().put(invoice)).getJSONObject(2);
+        assertTrue(real.getBoolean("available"));assertEquals("issued",real.getString("status"));assertEquals(127.56,real.getDouble("billEuro"),0);
+        rates().put("energy",.99); // Real values also remain available without any pricing configuration.
+        assertFalse(real.getBoolean("partial"));
+    }
+
+    @Test public void monthlyChartNeverSplitsAnIssuedBimonthlyTotal()throws Exception{
+        JSONArray history=new JSONArray().put(usage(2026,8,178,false)).put(usage(2026,10,218,false));
+        JSONArray invoices=new JSONArray().put(new JSONObject().put("from","2026-08-01").put("to","2026-09-30").put("electricityCents",12756));
+        JSONArray rows=BillHistory.monthlyRows(history,day(2026,11),2,8,invoices);
+        assertFalse(rows.getJSONObject(0).getBoolean("available"));assertEquals("forecast",rows.getJSONObject(1).getString("status"));
     }
 
 }

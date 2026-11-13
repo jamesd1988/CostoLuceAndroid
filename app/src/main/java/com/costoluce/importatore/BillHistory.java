@@ -6,7 +6,7 @@ import org.json.*;
 /** Complete configured electricity estimate: each month contributes fixed + variable + taxes. */
 final class BillHistory {
     private static final String[] MONTHS={"Gen","Feb","Mar","Apr","Mag","Giu","Lug","Ago","Set","Ott","Nov","Dic"};
-    static JSONArray rows(JSONArray archive,Calendar reference,int months,int anchor,WidgetPricing pricing)throws JSONException{
+    private static JSONArray estimates(JSONArray archive,Calendar reference,int months,int anchor,WidgetPricing pricing)throws JSONException{
         BillingPeriod.Window window=BillingPeriod.select(reference,months,anchor);
         int first=window.startYear*12+window.startMonth-1,current=window.currentYear*12+window.currentMonth-1;
         JSONArray result=new JSONArray();
@@ -18,7 +18,7 @@ final class BillHistory {
                 for(int i=0;i<archive.length();i++){JSONObject r=archive.optJSONObject(i);if(r!=null&&r.optInt("year")==index/12&&r.optInt("month")==index%12+1){measured=r;break;}}
                 if(measured==null||!measured.optBoolean("available")||!Double.isFinite(measured.optDouble("kwh"))||measured.optDouble("kwh")<0){available=false;continue;}
                 double usage=measured.optDouble("kwh");kwh+=usage;
-                if(pricing!=null)total+=pricing.estimatedCost(usage,1); // Monthly excise, one fixed fee per begun month.
+                if(pricing!=null&&group==0)total+=pricing.estimatedCost(usage,1); // Monthly excise, one fixed fee per begun month.
                 partial|=measured.optBoolean("partial")||index==current;
             }
             JSONObject row=new JSONObject();row.put("year",start/12);row.put("month",start%12+1);row.put("endYear",end/12);row.put("endMonth",end%12+1);
@@ -29,6 +29,42 @@ final class BillHistory {
             result.put(row);
         }
         return result;
+    }
+    static JSONArray rows(JSONArray archive,Calendar reference,int months,int anchor,WidgetPricing pricing)throws JSONException{
+        return rows(archive,reference,months,anchor,pricing,new JSONArray());
+    }
+    static JSONArray rows(JSONArray archive,Calendar reference,int months,int anchor,WidgetPricing pricing,JSONArray invoices)throws JSONException{
+        JSONArray estimates=estimates(archive,reference,months,anchor,pricing);JSONObject current=estimates.getJSONObject(3);
+        java.time.LocalDate boundary=java.time.LocalDate.of(current.getInt("year"),current.getInt("month"),1);
+        java.util.List<JSONObject> confirmed=new java.util.ArrayList<>(),all=new java.util.ArrayList<>();
+        for(int i=0;i<invoices.length();i++){
+            JSONObject invoice=invoices.getJSONObject(i);java.time.LocalDate from=java.time.LocalDate.parse(invoice.getString("from")),to=java.time.LocalDate.parse(invoice.getString("to"));
+            if(!to.isBefore(boundary))continue; // An overlapping/current invoice is never mixed into a forecast.
+            JSONObject row=new JSONObject();row.put("year",from.getYear()).put("month",from.getMonthValue()).put("endYear",to.getYear()).put("endMonth",to.getMonthValue());
+            row.put("label",MONTHS[from.getMonthValue()-1]+(from.getMonthValue()!=to.getMonthValue()||from.getYear()!=to.getYear()?"–"+MONTHS[to.getMonthValue()-1]:""));
+            row.put("years",from.getYear()==to.getYear()?""+from.getYear():from.getYear()+"–"+to.getYear());
+            row.put("from",from.toString()).put("to",to.toString()).put("available",true).put("partial",false).put("status","issued").put("billEuro",invoice.getLong("electricityCents")/100.0);
+            confirmed.add(row);
+        }
+        for(int i=0;i<3;i++){
+            JSONObject row=estimates.getJSONObject(i);java.time.LocalDate from=java.time.LocalDate.of(row.getInt("year"),row.getInt("month"),1),to=java.time.LocalDate.of(row.getInt("endYear"),row.getInt("endMonth"),1);to=to.withDayOfMonth(to.lengthOfMonth());
+            boolean overlaps=false;for(JSONObject invoice:confirmed)if(!java.time.LocalDate.parse(invoice.getString("from")).isAfter(to)&&!java.time.LocalDate.parse(invoice.getString("to")).isBefore(from))overlaps=true;
+            if(!overlaps){row.put("available",false).put("status","missing");row.remove("billEuro");all.add(row);}
+        }
+        all.addAll(confirmed);all.sort(java.util.Comparator.comparingInt(r->r.optInt("endYear")*12+r.optInt("endMonth")));
+        current.put("status","forecast");all.add(current);JSONArray result=new JSONArray();for(int i=Math.max(0,all.size()-4);i<all.size();i++)result.put(all.get(i));return result;
+    }
+    static JSONArray monthlyRows(JSONArray history,Calendar today,int months,int anchor,JSONArray invoices)throws JSONException{
+        BillingPeriod.Window window=BillingPeriod.select(today,months,anchor);int boundary=window.startYear*12+window.startMonth;
+        JSONArray result=new JSONArray();for(int i=0;i<history.length();i++){
+            JSONObject row=new JSONObject(history.getJSONObject(i).toString());int year=row.getInt("year"),month=row.getInt("month");
+            if(year*12+month>=boundary)row.put("status","forecast");
+            else{
+                java.time.LocalDate first=java.time.LocalDate.of(year,month,1),last=first.withDayOfMonth(first.lengthOfMonth());JSONObject match=null;
+                for(int j=0;j<invoices.length();j++){JSONObject invoice=invoices.getJSONObject(j);if(first.toString().equals(invoice.optString("from"))&&last.toString().equals(invoice.optString("to")))match=invoice;}
+                row.put("available",match!=null).put("status",match==null?"missing":"issued");if(match!=null)row.put("billEuro",match.getLong("electricityCents")/100.0).put("partial",false);
+            }result.put(row);
+        }return result;
     }
     private static String normalize(String name){return java.text.Normalizer.normalize(name.toLowerCase(Locale.ROOT),java.text.Normalizer.Form.NFD).replaceAll("[\\p{M}]","").replaceAll("[^a-z0-9]+"," ").trim();}
     private static int kind(String id,String name){
