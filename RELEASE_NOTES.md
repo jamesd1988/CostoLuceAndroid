@@ -1,13 +1,10 @@
-Costo Luce 6.8.0 - Bolletta elettricità nel widget
+Costo Luce 6.8.1 - Completa tutte le quote fisse della bolletta
 
-- Nella pagina grafico del widget: tre pulsanti Bolletta / kWh / euro. Bolletta mostra gli ultimi quattro periodi mensili, bimestrali o trimestrali, secondo lo schema configurato in Tariffe.
-- Il valore di ogni periodo somma i costi mensili, includendo tutte le voci fisse e variabili configurate, perdite, accisa mensile e IVA attive. Non è la sola componente energia. Il canone TV resta separato, non viene aggiunto automaticamente.
-- Mesi futuri esclusi da consumi e quote fisse; periodi con misure mancanti indicati con un trattino, parziali con asterisco. Tutti gli importi restano stime con le tariffe salvate, non fatture ufficiali.
-- Il widget avvisa quando le quote fisse di vendita non vengono riconosciute. Nell'app è possibile aggiungere le quote mancanti del riferimento E-Light direttamente dall'avviso nel grafico, senza duplicare quelle già riconosciute o sovrascrivere personalizzazioni.
-- Nuova descrizione esplicita del totale elettricità nell'app e nelle etichette accessibili del widget. Valori di riferimento: le tariffe effettive del periodo devono essere configurate; nessuna ricostruzione automatica dei prezzi storici.
-- Selezione del modo persistente e tramite broadcast, senza aprire l'app. Cambiare l'unità del riepilogo nell'app non azzera il modo Bolletta del widget.
-- Quando serve, la selezione Bolletta richiede lo storico in background con credenziali già salvate; il refresh manuale del widget in questo modo consente di ritentare lo storico annuale. Nessuna credenziale nel widget.
-- I formati 2x1 e intermedi restano riepiloghi compatti; i grafici e i tre selettori sono nei widget con due pagine. Nei formati compatti del grafico gli anni sono abbreviati se necessario.
-- RemoteViews non offre uno swipe orizzontale affidabile: nel widget rimangono frecce/dot per le due pagine; lo scorrimento dello storico esteso è nell'app.
+- Corretto il completamento: aggiunge ora anche rete quota fissa, quota potenza e qualità, oltre a commercializzazione e DISPbt. Prima il pulsante della versione 6.8.0 completava solo le due quote di vendita.
+- Un unico pulsante nell’app, sopra il grafico e in Tariffe, inserisce solo le cinque quote di riferimento mancanti. Non sostituisce importi già presenti, riconosce gli ID anche rinominati e nomi equivalenti; blocca doppioni, conflitti fisso/variabile e inserimenti parziali.
+- Valori proposti dalla fattura E-Light agosto-settembre 2026, residente 3 kW: rete 1,92 + 5,88 + 0,0497 €/mese, commercializzazione 12 €/mese, DISPbt 0,092250 €/mese. Per utenze/potenze diverse usare il profilo ARERA e i prezzi del proprio contratto. Nessuna importazione automatica di prezzi storici su altri periodi.
+- Nell’aggiornamento occorre premere «Aggiungi tutte le quote fisse mancanti» per completare le tariffe esistenti: nessuna modifica silenziosa delle personalizzazioni o delle voci eliminate. I nuovi costi sono salvati e sincronizzati con il widget.
+- L’avviso di stima incompleta è ora sopra il grafico; anche il widget rileva l’assenza delle tre quote rete. Nel dettaglio espandibile di ogni bolletta: costi variabili + fissi, con IVA configurata inclusa.
+- Periodicità e calcolo mensile dell’accisa invariati. Canone TV escluso. Le stime usano le tariffe salvate, non una ricostruzione delle fatture storiche.
 
-Verifiche: test del totale elettricità completo (127,56 euro con le tariffe e i consumi decimali del riferimento agosto-settembre), quote fisse con consumo misurato zero, trimestri con mesi futuri, dati mancanti e riconoscimento quote; test JS della scorciatoia senza doppioni; compilazione e test Android dei tre selettori, persistenza e dimensioni con testo ingrandito. APK di test.
+Verifiche: regressione sulla configurazione solo variabile, tutte e cinque le quote e persistenza, importi personalizzati, duplicati, riconoscimento quote rete, totale agosto-settembre 127,56 euro con consumi e prezzi del periodo; test JS, unitari JVM, compilazione APK e smoke test Android/RemoteViews. APK di test con firma compatibile.

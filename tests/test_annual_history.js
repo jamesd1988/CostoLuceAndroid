@@ -43,7 +43,7 @@ vm.runInContext(fs.readFileSync(__dirname+'/../app/src/main/assets/offer.js','ut
 assert(vm.runInContext('monthlyHistory().length>=13',ctx));
 const events=[];Object.defineProperty(mockWindow.location,'href',{set(value){events.push(value)},get(){return events[events.length-1]||''},configurable:true});
 ctx.setChartMode('bill');ctx.setChartMode('bill');flush();assert.equal(events.filter(x=>x==='costoluce://enel-history').length,1,'Entering bills requests annual data once per grouping/session');
-assert.equal(byId('billPricingNotice').hidden,false,'Warn when fixed offer charges are not recognized');assert(ctx.completeOfferFixed());assert.equal(byId('billPricingNotice').hidden,true,'Adding fixed costs clears warning');
+assert.equal(byId('billPricingNotice').hidden,false,'Warn when fixed offer charges are not recognized');assert(ctx.completeBillOffer());assert.equal(byId('billPricingNotice').hidden,true,'Adding fixed costs clears warning');
 ctx.setChartMode('eur');ctx.setChartMode('bill');flush();assert.equal(events.filter(x=>x==='costoluce://enel-history').length,1);
 ctx.setMonths(3,8);ctx.showView('home');flush();assert.equal(events.filter(x=>x==='costoluce://enel-history').length,2,'A new grouping may require a different historical boundary');
 ctx.window.onHistoryNative([{year:2024,month:1,kwh:10,available:true,partial:false}]);assert.equal(vm.runInContext('monthlyHistory().length',ctx),24,'Archive is bounded at two years');

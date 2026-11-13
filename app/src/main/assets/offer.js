@@ -4,11 +4,16 @@ const offerFixedRows=[
   {id:'custom_offer_commercialization',name:'Commercializzazione vendita',value:12,aliases:['commercializzazione','commercializzazione vendita','commercializzazione e vendita','ccv','ccv luce']},
   {id:'custom_offer_dispbt',name:'DISPbt · parte fissa',value:.092250,aliases:['dispbt','dispbt parte fissa','componente di dispacciamento dispbt parte fissa','dispacciamento parte fissa','dispacciamento fisso']}
 ];
+const billFixedRows=[...offerFixedRows,
+  {id:'custom_arera_rete_fissa',name:'Rete · quota fissa',value:1.92,aliases:['rete quota fissa','rete fissa','quota fissa rete']},
+  {id:'custom_arera_rete_potenza',name:'Rete · quota potenza',value:5.88,aliases:['rete quota potenza','rete potenza','quota potenza rete']},
+  {id:'custom_arera_qualita_potenza',name:'Rete · qualità quota potenza',value:.0497,aliases:['rete qualita quota potenza','rete qualita potenza','qualita quota potenza']}
+];
 function normalizedOfferName(name){return String(name).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,' ').trim()}
-function missingOfferRows(){
+function missingOfferRows(reference=offerFixedRows){
   const keys=[...Object.keys(initial),...customKeys].filter(k=>rateEnabled(k));
   const missing=[];
-  for(const row of offerFixedRows){
+  for(const row of reference){
     const matches=keys.filter(k=>k===row.id||row.aliases.includes(normalizedOfferName(rateMeta[k].name)));
     if(matches.length>1)throw Error('Sono già presenti più voci per “'+row.name+'”. Controllale con la matita per evitare doppioni.');
     if(matches.length===1){
@@ -32,13 +37,30 @@ function completeOfferFixed(){
 }
 function renderBillPricingNotice(){
   const el=byId('billPricingNotice');el.hidden=chartMode!=='bill';if(el.hidden)return;
-  try{const missing=missingOfferRows();el.hidden=!missing.length;byId('billPricingText').textContent=missing.length?'Stima incompleta se queste quote non sono già presenti con altri nomi. Riferimento E-Light agosto–settembre 2026: '+missing.map(r=>r.name+' '+decimal(r.value,6)+' €/mese').join('; ')+'. Puoi aggiungere le quote di riferimento o verificare le tue Tariffe.':''}
-  catch(e){el.hidden=false;byId('billPricingText').textContent='Verifica le quote fisse in Tariffe: '+e.message}
+  try{
+    const missing=missingOfferRows(billFixedRows);el.hidden=!missing.length;
+    byId('historyCostScope').textContent=missing.length?'Stima incompleta: mancano quote fisse di riferimento. Gli importi includono solo le voci già configurate. Canone TV escluso.':'Totale elettricità stimato: costi fissi + variabili + accisa e IVA configurate. Canone TV separato.';
+    byId('billPricingText').textContent=missing.length?'Quote non riconosciute: '+missing.map(r=>r.name+' '+decimal(r.value,6)+' €/mese').join('; ')+'. Riferimento E-Light agosto–settembre 2026, residente 3 kW. Il pulsante aggiunge solo le quote mancanti: controlla prima eventuali voci equivalenti rinominate e la potenza del tuo contratto.':'';
+    byId('billFixedPreview').textContent=missing.length?'Aggiunta al bimestre di riferimento: '+euro(missing.reduce((sum,r)=>sum+r.value,0)*2*(1+(rateEnabled('vat')?tariffs.vat:0)/100))+' di quote fisse, IVA configurata inclusa.':'';
+  }
+  catch(e){el.hidden=false;byId('historyCostScope').textContent='Verifica quote fisse: totale da controllare. Canone TV escluso.';byId('billPricingText').textContent='Verifica le quote fisse in Tariffe: '+e.message;byId('billFixedPreview').textContent=''}
 }
 function completeBillOffer(){
-  const ok=completeOfferFixed();
-  if(ok){byId('billTariffStatus').hidden=false;byId('billTariffStatus').textContent='Quote fisse riconosciute e importi ricalcolati. Restano le tariffe salvate: verifica i prezzi validi per il periodo della tua bolletta.'}
-  else{byId('billPricingNotice').hidden=false;byId('billPricingText').textContent=byId('offerMessage').textContent}
-  return ok;
+  try{
+    const rows=missingOfferRows(billFixedRows); // Validate all five before making any change.
+    for(const row of rows){customKeys.push(row.id);tariffs[row.id]=row.value;rateMeta[row.id]={name:row.name,type:'fixed',enabled:true}}
+    save();fillRates();recalc();
+    byId('billTariffStatus').hidden=false;byId('billTariffStatus').textContent=rows.length+' quote fisse mancanti aggiunte. Rete, potenza, qualità, commercializzazione e DISPbt ora sono riconosciute. Importi già presenti conservati; verifica i prezzi validi per il periodo.';
+    byId('offerMessage').textContent=byId('billTariffStatus').textContent;
+    return true;
+  }catch(e){byId('offerMessage').textContent=e.message;byId('billPricingNotice').hidden=false;byId('billPricingText').textContent=e.message;return false}
 }
+function renderBillBreakdown(rows){
+  const dest=byId('billBreakdown');dest.innerHTML='';dest.hidden=chartMode!=='bill';if(dest.hidden)return;
+  const title=document.createElement('summary');title.textContent='Dettaglio bollette: variabile + fisso'+(rateEnabled('vat')?' (IVA inclusa)':' (IVA esclusa)');dest.appendChild(title);
+  for(const row of rows.filter(r=>r.available)){
+    const p=document.createElement('p');p.textContent=row.label+' '+row.years+': '+euro(row.variable)+' variabile + '+euro(row.fixed)+' fisso = '+euro(row.value)+(row.partial?' · parziale':'');dest.appendChild(p);
+  }
+}
+
 renderBillPricingNotice();

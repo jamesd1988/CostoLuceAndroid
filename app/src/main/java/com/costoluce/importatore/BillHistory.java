@@ -34,13 +34,16 @@ final class BillHistory {
     private static int kind(String id,String name){
         if("custom_offer_commercialization".equals(id)||Arrays.asList("commercializzazione","commercializzazione vendita","commercializzazione e vendita","ccv","ccv luce").contains(normalize(name)))return 0;
         if("custom_offer_dispbt".equals(id)||Arrays.asList("dispbt","dispbt parte fissa","componente di dispacciamento dispbt parte fissa","dispacciamento parte fissa","dispacciamento fisso").contains(normalize(name)))return 1;
+        if("custom_arera_rete_fissa".equals(id)||Arrays.asList("rete quota fissa","rete fissa","quota fissa rete").contains(normalize(name)))return 2;
+        if("custom_arera_rete_potenza".equals(id)||Arrays.asList("rete quota potenza","rete potenza","quota potenza rete").contains(normalize(name)))return 3;
+        if("custom_arera_qualita_potenza".equals(id)||Arrays.asList("rete qualita quota potenza","rete qualita potenza","qualita quota potenza").contains(normalize(name)))return 4;
         return -1;
     }
     /** Mirrors the app's recognition warning; this is not a certification of arbitrary contracts. */
     static boolean offerCostsRecognized(String serialized)throws JSONException{
-        JSONObject rates=new JSONObject(serialized),meta=rates.optJSONObject("_meta");int[] counts={0,0};boolean conflict=false;
+        JSONObject rates=new JSONObject(serialized),meta=rates.optJSONObject("_meta");int[] counts={0,0,0,0,0};boolean conflict=false;
         if(meta!=null){Iterator<String> keys=meta.keys();while(keys.hasNext()){String key=keys.next();JSONObject row=meta.optJSONObject(key);if(row==null||!row.optBoolean("enabled",true))continue;int k=kind(key,row.optString("name",key));if(k>=0){counts[k]++;if(!"fixed".equals(row.optString("type")))conflict=true;}}}
         JSONArray custom=rates.optJSONArray("_custom");if(custom!=null)for(int i=0;i<custom.length();i++){JSONObject row=custom.getJSONObject(i);int k=kind(row.optString("id"),row.optString("name"));if(k>=0){counts[k]++;if(!"fixed".equals(row.optString("type")))conflict=true;}}
-        return !conflict&&counts[0]==1&&counts[1]==1;
+        if(conflict)return false;for(int count:counts)if(count!=1)return false;return true;
     }
 }

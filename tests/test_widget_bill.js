@@ -40,8 +40,23 @@ vm.createContext(ctx);vm.runInContext(code,ctx);
 
 
 vm.runInContext(fs.readFileSync(__dirname+'/../app/src/main/assets/offer.js','utf8'),ctx);ctx.setChartMode('bill');const before=ctx.recalc();
-assert.equal(byId('historyCostScope').hidden,false);assert.equal(byId('billPricingNotice').hidden,false);assert(ctx.completeBillOffer());assert.equal(byId('billPricingNotice').hidden,true);assert(Math.abs(ctx.recalc()-before-26.60295)<1e-7,'Both fixed offer charges and VAT contribute to the total');
-assert(ctx.completeBillOffer());assert.equal(vm.runInContext('customKeys.length',ctx),2,'Completing a bill cannot duplicate fixed costs');
+assert.equal(byId('historyCostScope').hidden,false);assert.equal(byId('billPricingNotice').hidden,false);assert(ctx.completeBillOffer());assert.equal(byId('billPricingNotice').hidden,true);assert(Math.abs(ctx.recalc()-before-43.87229)<1e-7,'Both fixed offer charges and VAT contribute to the total');
+assert(ctx.completeBillOffer());assert.equal(vm.runInContext('customKeys.length',ctx),5,'Completing a bill cannot duplicate fixed costs');
+assert.equal(vm.runInContext('customKeys.length',ctx),5);
+assert.equal(JSON.parse(saved.get('costoluce_rates_v1'))._custom.filter(r=>r.type==='fixed').length,5,'All fixed charges saved for the native widget');
+// The screenshot reported only variable charges: all missing fixed charges must enter each month.
+vm.runInContext("tariffs.dispatch=.025043;tariffs.balancing=.001042598;tariffs.asos=.031515;historyRows=[{year:2026,month:8,kwh:177.9,available:true},{year:2026,month:9,kwh:160.2,available:true}]",ctx);
+const bill=ctx.billingHistory(new Date(2026,10,13)).find(r=>r.month===8&&r.year===2026);
+assert.equal(bill.value,127.56);assert(Math.abs(bill.fixed-43.87229)<1e-7);assert(Math.abs(bill.variable+bill.fixed-127.56194328218)<1e-7);
+ctx.renderBillBreakdown([bill]);assert.match(byId('billBreakdown').children[1].textContent,/variabile.*fisso/);
+// Existing ARERA prices and renamed stable IDs must survive a completion.
+vm.runInContext("tariffs.custom_arera_rete_potenza=8;rateMeta.custom_arera_rete_potenza.name='Potenza personale'",ctx);
+assert(ctx.completeBillOffer());assert.equal(vm.runInContext('tariffs.custom_arera_rete_potenza',ctx),8);assert.equal(vm.runInContext('customKeys.length',ctx),5);
+ctx.removeRate('custom_arera_rete_fissa');assert.equal(byId('billPricingNotice').hidden,false,'Missing network fees are flagged too');assert(ctx.completeBillOffer());
+assert.equal(vm.runInContext('customKeys.length',ctx),5);
+// A conflict must block all insertions, including the three network rows.
+ctx.resetRates();ctx.openNewRate();byId('rateName').value='Rete quota potenza';byId('rateAmount').value='0.02';assert(ctx.saveRateEditor());
+const conflictState=vm.runInContext('JSON.stringify(serializedRates())',ctx);assert.equal(ctx.completeBillOffer(),false);assert.equal(vm.runInContext('JSON.stringify(serializedRates())',ctx),conflictState);
 const provider=fs.readFileSync(__dirname+'/../app/src/main/java/com/costoluce/importatore/CostoLuceWidgetProvider.java','utf8');
 assert(provider.includes('R.id.widget_unit_bill'));assert(provider.includes('saveChartMode(context,mode)'));assert(provider.includes('BillHistory.rows(archive(context)'));assert(provider.includes('PendingIntent.getBroadcast(context,2100+i,unit'));
 const xml=fs.readFileSync(__dirname+'/../app/src/main/res/layout/costoluce_widget.xml','utf8');assert(xml.includes('widget_unit_bill'));assert(xml.includes('canone TV escluso'));

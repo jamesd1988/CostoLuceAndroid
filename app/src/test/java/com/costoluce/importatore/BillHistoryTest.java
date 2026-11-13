@@ -48,4 +48,9 @@ public class BillHistoryTest {
         add(r.getJSONArray("_custom"),"custom_other_fee","Commercializzazione",15);assertFalse(BillHistory.offerCostsRecognized(r.toString()));
         JSONObject missing=rates();missing.getJSONArray("_custom").remove(4);assertFalse(BillHistory.offerCostsRecognized(missing.toString()));
     }
+    @Test public void networkChargesAreRequiredForCompleteFixedCostRecognition()throws Exception{
+        JSONObject r=rates();r.getJSONArray("_custom").remove(0);assertFalse(BillHistory.offerCostsRecognized(r.toString()));
+        JSONObject renamed=rates();renamed.getJSONArray("_custom").getJSONObject(1).put("name","La mia potenza");assertTrue(BillHistory.offerCostsRecognized(renamed.toString()));
+    }
+
 }
