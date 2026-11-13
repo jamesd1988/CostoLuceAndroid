@@ -23,6 +23,10 @@ public class EnelInvoicesTest {
         assertTrue(outcome.checked);assertEquals(1,outcome.invoices.size());assertEquals(12756,outcome.invoices.get(0).electricityCents);assertEquals(3,requests.size());
         requests.clear();outcome=EnelInvoices.fetch(credentials(),transport,pdf->{throw new AssertionError("Known document downloaded twice");},new JSONArray().put(invoice().json()),System.nanoTime()+30_000_000_000L,null);
         assertEquals(0,outcome.invoices.size());assertEquals(2,requests.size());assertTrue(outcome.status.contains("1 già archiviate"));
+        requests.clear();JSONObject legacy=invoice().json();legacy.remove("allocationVersion");
+        outcome=EnelInvoices.fetch(credentials(),transport,pdf->{IssuedInvoice enriched=invoice();enriched.fixedGrossCents=4387L;return enriched;},new JSONArray().put(legacy),System.nanoTime()+30_000_000_000L,null);
+        assertEquals(3,requests.size());assertEquals(Long.valueOf(4387),outcome.invoices.get(0).fixedGrossCents);
+
     }
     @Test public void legacyFallbackRemainsReadOnly()throws Exception{
         EnelInvoices.Transport transport=(url,form,max)->{try{if(url.startsWith(EnelInvoices.CARDS))return cards().toString().getBytes(StandardCharsets.UTF_8);if(url.equals(EnelInvoices.ARCHIVE))return archive().toString().getBytes(StandardCharsets.UTF_8);if(url.contains("downloadFARO"))throw new java.io.IOException("not supported");assertTrue(url.contains("action=download-fattura"));assertNull(form);return "%PDF-test".getBytes(StandardCharsets.UTF_8);}catch(JSONException e){throw new java.io.IOException("fixture");}catch(Exception e){if(e instanceof java.io.IOException)throw (java.io.IOException)e;throw new java.io.IOException("fixture");}};

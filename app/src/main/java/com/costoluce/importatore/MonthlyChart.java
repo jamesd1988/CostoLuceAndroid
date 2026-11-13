@@ -13,7 +13,7 @@ final class MonthlyChart {
     private static boolean kwh(Context c){return "kwh".equals(CostoLuceWidgetProvider.chartMode(c));}
     private static String years(JSONObject r,boolean compact){int first=r.optInt("year"),last=r.optInt("endYear",first);return compact?(first==last?String.format(Locale.ROOT,"%02d",first%100):String.format(Locale.ROOT,"%02d/%02d",first%100,last%100)):(first==last?Integer.toString(first):first+"–"+last);}
     static double value(Context context, JSONObject r) {
-        if(bills(context)||"issued".equals(r.optString("status")))return r.optDouble("billEuro",Double.NaN);
+        if(bills(context)||"issued".equals(r.optString("status"))||"allocated".equals(r.optString("status")))return r.optDouble("billEuro",Double.NaN);
         if("missing".equals(r.optString("status")))return Double.NaN;
         double kwh=r.optDouble("kwh",0);
         if(kwh(context))return kwh;
@@ -30,7 +30,7 @@ final class MonthlyChart {
             b.append(label(r)).append(' ').append(years(r,false)).append(": ");
             if(!r.optBoolean("available"))b.append("mancante");
             else b.append(String.format(Locale.ITALY,kwh(c)?"%.1f":"%.2f",value(c,r)))
-                    .append(kwh(c)?" kWh":"issued".equals(r.optString("status"))?" euro fatturati":" euro stimati")
+                    .append(kwh(c)?" kWh":"issued".equals(r.optString("status"))?" euro fatturati":"allocated".equals(r.optString("status"))?" euro ripartiti da fattura":" euro stimati")
                     .append(r.optBoolean("partial")?", parziale":"");
             b.append(". ");
         }
@@ -76,8 +76,9 @@ final class MonthlyChart {
         for(int i=0;i<4;i++){
             JSONObject row=rows.optJSONObject(i);if(row==null)continue;
             float x=left+step*(i+.5f),barHeight=available[i]?(float)(values[i]/ceiling*(bottom-top)):0;
+            boolean current=kwh(context)?i==3:"forecast".equals(row.optString("status"));
             if(available[i]&&barHeight>0){
-                int start=i==3?Color.rgb(115,240,212):Color.rgb(65,166,255),end=i==3?Color.rgb(28,188,170):Color.rgb(7,91,239);
+                int start=current?Color.rgb(115,240,212):Color.rgb(65,166,255),end=current?Color.rgb(28,188,170):Color.rgb(7,91,239);
                 p.setShader(new LinearGradient(0,bottom-barHeight,0,bottom,start,end,Shader.TileMode.CLAMP));
                 float radius=Math.min(7,barHeight/2);canvas.drawRoundRect(x-step*.34f,bottom-barHeight,x+step*.34f,bottom,radius,radius,p);p.setShader(null);
             }
@@ -94,8 +95,8 @@ final class MonthlyChart {
                 p.setTextSize(secondary);p.setColor(Color.rgb(174,198,228));String year=years(row,spec.compact());if(p.measureText(year)>step-4)year=years(row,true);canvas.drawText(year,x,bottom+text+secondary+9,p);
             }
             if(spec.detailed()){
-                p.setColor(i==3?Color.rgb(99,230,206):Color.rgb(174,198,228));
-                canvas.drawText(!available[i]?"Assente":"issued".equals(row.optString("status"))?"Fatturata":row.optBoolean("partial")?"Stima*":"",x,height-2,p);
+                p.setColor(current?Color.rgb(99,230,206):Color.rgb(174,198,228));
+                canvas.drawText(!available[i]?"Assente":"issued".equals(row.optString("status"))?"Fatturata":"allocated".equals(row.optString("status"))?"Ripartito":"forecast".equals(row.optString("status"))?(row.optBoolean("partial")?"Stima*":"Stima"):row.optBoolean("partial")?"Parziale":"",x,height-2,p);
             }
         }
         return bitmap;

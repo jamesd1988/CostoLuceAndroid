@@ -55,15 +55,21 @@ final class BillHistory {
         current.put("status","forecast");all.add(current);JSONArray result=new JSONArray();for(int i=Math.max(0,all.size()-4);i<all.size();i++)result.put(all.get(i));return result;
     }
     static JSONArray monthlyRows(JSONArray history,Calendar today,int months,int anchor,JSONArray invoices)throws JSONException{
+        return monthlyRows(history,today,months,anchor,invoices,history);
+    }
+    static JSONArray monthlyRows(JSONArray history,Calendar today,int months,int anchor,JSONArray invoices,JSONArray archive)throws JSONException{
         BillingPeriod.Window window=BillingPeriod.select(today,months,anchor);int boundary=window.startYear*12+window.startMonth;
+        Map<Integer,JSONObject> attributed=new HashMap<>();Set<Integer> conflicts=new HashSet<>();
+        for(int i=0;i<invoices.length();i++){
+            JSONObject invoice=invoices.getJSONObject(i);java.time.LocalDate end=java.time.LocalDate.parse(invoice.getString("to"));
+            if(end.getYear()*12+end.getMonthValue()>=boundary)continue;
+            JSONArray parts=InvoiceAllocation.split(invoice,archive);for(int j=0;j<parts.length();j++){JSONObject row=parts.getJSONObject(j);int key=row.getInt("year")*12+row.getInt("month");if(attributed.put(key,row)!=null)conflicts.add(key);}
+        }
         JSONArray result=new JSONArray();for(int i=0;i<history.length();i++){
-            JSONObject row=new JSONObject(history.getJSONObject(i).toString());int year=row.getInt("year"),month=row.getInt("month");
-            if(year*12+month>=boundary)row.put("status","forecast");
-            else{
-                java.time.LocalDate first=java.time.LocalDate.of(year,month,1),last=first.withDayOfMonth(first.lengthOfMonth());JSONObject match=null;
-                for(int j=0;j<invoices.length();j++){JSONObject invoice=invoices.getJSONObject(j);if(first.toString().equals(invoice.optString("from"))&&last.toString().equals(invoice.optString("to")))match=invoice;}
-                row.put("available",match!=null).put("status",match==null?"missing":"issued");if(match!=null)row.put("billEuro",match.getLong("electricityCents")/100.0).put("partial",false);
-            }result.put(row);
+            JSONObject row=new JSONObject(history.getJSONObject(i).toString());int key=row.getInt("year")*12+row.getInt("month");
+            if(key>=boundary)row.put("status","forecast");
+            else{JSONObject match=conflicts.contains(key)?null:attributed.get(key);if(match!=null){Iterator<String> keys=match.keys();while(keys.hasNext()){String name=keys.next();row.put(name,match.get(name));}}else row.put("available",false).put("status","missing");}
+            result.put(row);
         }return result;
     }
     private static String normalize(String name){return java.text.Normalizer.normalize(name.toLowerCase(Locale.ROOT),java.text.Normalizer.Form.NFD).replaceAll("[\\p{M}]","").replaceAll("[^a-z0-9]+"," ").trim();}

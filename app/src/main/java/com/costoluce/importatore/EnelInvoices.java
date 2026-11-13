@@ -83,7 +83,7 @@ final class EnelInvoices {
                 if(doc.optString("Statopagabilita").equalsIgnoreCase("ANNULLATA"))continue;
                 long payable=amount(doc.get("Importofattura"));if(payable<0){failed++;continue;}
                 JSONObject previous=existing.get(canonical(doc.getString("Numerodocumento")));
-                if(previous!=null&&previous.optLong("payableCents",-1)==payable){known++;continue;}
+                if(previous!=null&&previous.optLong("payableCents",-1)==payable&&previous.optInt("allocationVersion",0)>=IssuedInvoice.ALLOCATION_VERSION){known++;continue;}
                 if(deadline-System.nanoTime()<8_000_000_000L||out.invoices.size()>=24){remaining++;continue;}
                 if(progress!=null)progress.step("Fatture Enel: lettura documento "+(out.invoices.size()+failed+1)+"...");
                 try{

@@ -31,7 +31,7 @@ ctx.setChartMode('bill');let groups=JSON.parse(vm.runInContext('JSON.stringify(b
 assert.equal(groups.length,7);groups=groups.slice(-4);assert.equal(groups[2].label,'ago–set');assert.equal(groups[2].available,false);assert.equal(groups[0].available,false);
 ctx.window.onInvoicesNative([{id:'example',from:'2026-08-01',to:'2026-09-30',electricityCents:12756,payableCents:14556}]);
 groups=ctx.billingHistory().slice(-4);assert.equal(groups[2].status,'issued');assert.equal(groups[2].value,127.56);
-assert.equal(ctx.monthlyEuroHistory(new Date(2026,10,13)).find(r=>r.year===2026&&r.month===8).available,false,'A bimonthly invoice must not be divided into invented monthly costs');vm.runInContext('tariffs.energy=.25',ctx);assert.equal(ctx.billingHistory().slice(-4)[2].value,127.56,'Issued invoices never change when tariffs change');
+assert.equal(ctx.monthlyEuroHistory(new Date(2026,10,13)).find(r=>r.year===2026&&r.month===8).status,'allocated','A monthly attribution must be explicitly distinguished from an issued bill');vm.runInContext('tariffs.energy=.25',ctx);assert.equal(ctx.billingHistory().slice(-4)[2].value,127.56,'Issued invoices never change when tariffs change');
 const expected=vm.runInContext('calculateCosts(300,2,taxableMonthly(200)+taxableMonthly(100),2).total',ctx);assert(Math.abs(ctx.billingHistory().slice(-1)[0].value-Math.round(expected*100)/100)<1e-8,'Only current bill is calculated');
 assert.match(getId('historyTotal').textContent,/esclusi.*mancanti/);assert.match(getId('historyTotal').textContent,/parziale/);
 ctx.setChartMode('kwh');assert.equal(getId('historyChart').children.slice(-4)[0].children[0].children[0].textContent,'178,0');ctx.setChartMode('eur');assert.equal(saved.get('costoluce_chart_mode_v1'),'eur');

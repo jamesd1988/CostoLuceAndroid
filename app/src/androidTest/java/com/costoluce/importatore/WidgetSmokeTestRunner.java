@@ -97,7 +97,7 @@ public class WidgetSmokeTestRunner extends Instrumentation {
             for(int id:targets){View target=view.findViewById(id);if(target.getWidth()<48*density-1||target.getHeight()<48*density-1)throw new AssertionError("Small touch target");}
             if(page==1){android.widget.ImageView chart=view.findViewById(R.id.widget_chart);if(chart.getHeight()<40*density)throw new AssertionError("Chart collapsed");android.widget.TextView bill=view.findViewById(R.id.widget_unit_bill);if(!bill.hasOnClickListeners()||bill.getLayout()==null||bill.getLayout().getLineWidth(0)>bill.getWidth()-bill.getCompoundPaddingLeft()-bill.getCompoundPaddingRight()+1)throw new AssertionError("Bill button clipped or inactive");}
         });
-        if(fontScale==1&&width<=400&&height<=350)capture("widget-"+(page==0?"summary":"bill".equals(CostoLuceWidgetProvider.chartMode(c))?"bill":"history")+"-"+(width==280?"compact":width==340?"medium":"large")+"-6.9.1");
+        if(fontScale==1&&width<=400&&height<=350)capture("widget-"+(page==0?"summary":"bill".equals(CostoLuceWidgetProvider.chartMode(c))?"bill":"history")+"-"+(width==280?"compact":width==340?"medium":"large")+"-6.10.0");
         // Measurement fixtures stay in detached views: never saved or published as Enel data.
         checkedOnMainSync(()->{
             if(page==0){
@@ -183,10 +183,10 @@ public class WidgetSmokeTestRunner extends Instrumentation {
         });
         if(prefs.getInt("page_4242",-1)!=savedPage||!"eur".equals(prefs.getString("display_unit","")))throw new AssertionError("Collapsing widget lost the saved page or unit");
         if(fontScale==1&&savedPage==0){
-            if(width==130&&height==64)capture("widget-2x1-6.9.1");
-            if(width==300&&height==64)capture("widget-wide-row-6.9.1");
-            if(width==180&&height==180)capture("widget-intermediate-6.9.1");
-            if(width==150&&height==80)capture("widget-compact-refresh-6.9.1");
+            if(width==130&&height==64)capture("widget-2x1-6.10.0");
+            if(width==300&&height==64)capture("widget-wide-row-6.10.0");
+            if(width==180&&height==180)capture("widget-intermediate-6.10.0");
+            if(width==150&&height==80)capture("widget-compact-refresh-6.10.0");
         }
         // Isolated measurement fixtures, never stored in the real widget preferences or exported screenshots.
         checkedOnMainSync(()->{
@@ -227,13 +227,13 @@ public class WidgetSmokeTestRunner extends Instrumentation {
             }
             if(Math.abs(areraFixture.getJSONObject("2026-08").getJSONObject("resident").getDouble("asos")-.031515)>1e-10)throw new AssertionError("ARERA parser on Android");
             Activity activity=startActivitySync(new Intent(c,MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-            Thread.sleep(2500);previewWeb=findWeb(activity.findViewById(android.R.id.content));capture("app-6.9.1");
+            Thread.sleep(2500);previewWeb=findWeb(activity.findViewById(android.R.id.content));capture("app-6.10.0");
             android.webkit.WebView web=findWeb(activity.findViewById(android.R.id.content));
             if(web==null)throw new AssertionError("Missing WebView");
             assertScript(web,"showView('rates');if(document.querySelectorAll('.rate-card').length!==10)throw Error('Default rows');openRateEditor('energy');if(!document.getElementById('rateName').disabled)throw Error('Energy lock');closeRateEditor()");
-            capture("tariffe-6.9.1");
+            capture("tariffe-6.10.0");
             assertScript(web,"openRateEditor('transport','fixed');if(document.getElementById('rateAmount').value!=='')throw Error('Automatic conversion');document.getElementById('rateName').value='Quota fissa mensile';document.getElementById('rateAmount').value='8,00'");
-            capture("tariffe-editor-6.9.1");
+            capture("tariffe-editor-6.10.0");
             assertScript(web,"if(!saveRateEditor())throw Error('Save');setRateFilter('fixed');if(document.querySelectorAll('.rate-card').length!==1)throw Error('Filter');if(JSON.parse(localStorage.getItem('costoluce_rates_v1'))._meta.transport.name!=='Quota fissa mensile')throw Error('Persistence')");
             Thread.sleep(1200);waitForIdleSync();
             CostoLuceWidgetProvider.WidgetConfiguration saved=CostoLuceWidgetProvider.readConfiguration(c);
@@ -253,18 +253,18 @@ public class WidgetSmokeTestRunner extends Instrumentation {
             if(saved==null||new org.json.JSONObject(saved.ratesJson).getJSONArray("_custom").length()!=3)throw new AssertionError("ARERA fixed network rows did not reach widget");
             double areraNativeCost=WidgetPricing.parse(saved.ratesJson,saved.resident).estimatedCost(338,2,38,2);
             assertScript(web,"if(Math.abs(calculateCosts(338,2,38,2).total-"+areraNativeCost+")>0.000001)throw Error('ARERA app/widget mismatch');if(!completeBillOffer()||customKeys.length!==5)throw Error('Offer fixed costs');if(!completeBillOffer()||customKeys.length!==5)throw Error('Offer duplicate');showView('rates');byId('offerTitle').scrollIntoView({block:'start'})");
-            capture("tariffe-offerta-6.9.1");Thread.sleep(1200);waitForIdleSync();saved=CostoLuceWidgetProvider.readConfiguration(c);
+            capture("tariffe-offerta-6.10.0");Thread.sleep(1200);waitForIdleSync();saved=CostoLuceWidgetProvider.readConfiguration(c);
             if(saved==null||new org.json.JSONObject(saved.ratesJson).getJSONArray("_custom").length()!=5)throw new AssertionError("Offer fixed costs did not reach widget");
             double offerNativeCost=WidgetPricing.parse(saved.ratesJson,saved.resident).estimatedCost(338,2,38,2);
             assertScript(web,"if(Math.abs(calculateCosts(338,2,38,2).total-"+offerNativeCost+")>0.000001)throw Error('Offer app/widget mismatch');resetRates();setRateFilter('all');showView('home')");Thread.sleep(1000);
             assertScript(web,"showView('rates');byId('billingFrequency').value='3';billingDraftChanged(true);if(saveBillingSetup())throw Error('Missing grouping example accepted');byId('billingAnchor').value='8';billingDraftChanged();if(!saveBillingSetup())throw Error('Quarter grouping rejected');byId('billingTitle').scrollIntoView({block:'start'})");
-            capture("tariffe-periodo-6.9.1");Thread.sleep(1200);waitForIdleSync();saved=CostoLuceWidgetProvider.readConfiguration(c);
+            capture("tariffe-periodo-6.10.0");Thread.sleep(1200);waitForIdleSync();saved=CostoLuceWidgetProvider.readConfiguration(c);
             if(saved==null||saved.months!=3||saved.anchor!=8)throw new AssertionError("Quarter and example did not reach widget");
             CostoLuceWidgetProvider.createViewsForSize(c,4242,280,260);
             assertScript(web,"showView('home');window.onHistoryNative([]);setChartMode('bill');if(document.querySelectorAll('#historyChart .history-col').length<5||!byId('historyTotal').textContent.includes('non disponibile'))throw Error('Missing bill data fabricated')");
             assertScript(web,"const v=byId('historyViewport');if(v.scrollWidth<=v.clientWidth)throw Error('Annual chart does not scroll');v.scrollLeft=0;rememberHistoryScroll();recalc()");Thread.sleep(250);
             assertScript(web,"const v=byId('historyViewport');if(v.scrollLeft>1)throw Error('Recalculation lost historical position');v.scrollLeft=v.scrollWidth-v.clientWidth;rememberHistoryScroll();if(byId('billPricingNotice').hidden)throw Error('Missing fixed costs warning absent')");
-            capture("bollette-6.9.1");
+            capture("bollette-6.10.0");
             assertScript(web,"setMonths(2,10);setChartMode('eur');showView('home')");Thread.sleep(1000);
             com.tom_roush.pdfbox.android.PDFBoxResourceLoader.init(c);
             byte[] pdfFixture;
@@ -272,13 +272,13 @@ public class WidgetSmokeTestRunner extends Instrumentation {
                 com.tom_roush.pdfbox.pdmodel.PDPage fixturePage=new com.tom_roush.pdfbox.pdmodel.PDPage();pdf.addPage(fixturePage);
                 try(com.tom_roush.pdfbox.pdmodel.PDPageContentStream stream=new com.tom_roush.pdfbox.pdmodel.PDPageContentStream(pdf,fixturePage)){
                     stream.beginText();stream.setFont(com.tom_roush.pdfbox.pdmodel.font.PDType1Font.HELVETICA,12);stream.newLineAtOffset(40,740);
-                    for(String line:new String[]{"Enel Energia POD IT001E00000000","Fattura elettronica n. 123456789","Periodo AGO. 2026 - SET. 2026","Totale Bolletta 127,56","Totale da pagare 145,56"}){stream.showText(line);stream.newLineAtOffset(0,-20);}stream.endText();
+                    for(String line:new String[]{"Enel Energia POD IT001E00000000","Fattura elettronica n. 123456789","Periodo AGO. 2026 - SET. 2026","Totale Bolletta 127,56","Totale da pagare 145,56","QUOTA FISSA E QUOTA POTENZA 39,88","IVA 10% su imponibile di euro 115,96 11,60"}){stream.showText(line);stream.newLineAtOffset(0,-20);}stream.endText();
                 }
                 java.io.ByteArrayOutputStream pdfBytes=new java.io.ByteArrayOutputStream();pdf.save(pdfBytes);pdfFixture=pdfBytes.toByteArray();
             }
             try(com.tom_roush.pdfbox.pdmodel.PDDocument pdf=com.tom_roush.pdfbox.pdmodel.PDDocument.load(pdfFixture)){
                 IssuedInvoice invoice=IssuedInvoice.parse(new com.tom_roush.pdfbox.text.PDFTextStripper().getText(pdf));
-                if(invoice.electricityCents!=12756||invoice.payableCents!=14556)throw new AssertionError("PDF invoice electricity extraction");
+                if(invoice.electricityCents!=12756||invoice.payableCents!=14556||!Long.valueOf(4387).equals(invoice.fixedGrossCents))throw new AssertionError("PDF invoice electricity extraction");
             }
             assertScript(web,"if(billingHistory().slice(0,-1).some(r=>r.available))throw Error('Historical consumption shown as issued invoices')");
             checkIntrinsicResize(c);
@@ -294,6 +294,17 @@ public class WidgetSmokeTestRunner extends Instrumentation {
             String billDescription=MonthlyChart.description(c,CostoLuceWidgetProvider.chartRows(c));if(!billDescription.contains("Costi fissi, variabili e imposte")||!billDescription.contains("canone TV separato"))throw new AssertionError("Bill total scope missing");
             new CostoLuceWidgetProvider().onReceive(c,new Intent(c,CostoLuceWidgetProvider.class).setAction(CostoLuceWidgetProvider.ACTION_UNIT).putExtra("unit","eur"));
             if(!"eur".equals(CostoLuceWidgetProvider.chartMode(c)))throw new AssertionError("Monthly euro mode not restored");
+            // Detached bitmap fixture: verify actual painted colors without saving synthetic readings.
+            org.json.JSONArray allocationColors=new org.json.JSONArray();
+            for(int month=8;month<=11;month++)allocationColors.put(new org.json.JSONObject().put("year",2026).put("month",month).put("available",true).put("status",month<10?"allocated":"forecast").put("billEuro",60).put("kwh",200).put("partial",month==11));
+            WidgetLayoutSpec allocationSpec=new WidgetLayoutSpec(400,350);Bitmap allocationBitmap=MonthlyChart.draw(c,allocationColors,allocationSpec,180,600000);
+            float allocationScale=(float)allocationBitmap.getWidth()/allocationSpec.contentWidth(),font=c.getResources().getConfiguration().fontScale;
+            float allocationBottom=180-(11*font*2+12*font+11),allocationStep=(allocationSpec.contentWidth()-2-28)/4f;
+            int historicalPixel=allocationBitmap.getPixel(Math.round((28+allocationStep*.5f)*allocationScale),Math.round((allocationBottom-4)*allocationScale));
+            if(android.graphics.Color.blue(historicalPixel)<=android.graphics.Color.green(historicalPixel))throw new AssertionError("Allocated history not blue");
+            for(int index:new int[]{2,3}){int pixel=allocationBitmap.getPixel(Math.round((28+allocationStep*(index+.5f))*allocationScale),Math.round((allocationBottom-4)*allocationScale));if(android.graphics.Color.green(pixel)<=android.graphics.Color.blue(pixel))throw new AssertionError("Both forecast months must be teal");}
+            allocationBitmap.recycle();
+
             android.os.Bundle options=new android.os.Bundle();
             options.putInt(android.appwidget.AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH,280);options.putInt(android.appwidget.AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT,260);
             options.putInt(android.appwidget.AppWidgetManager.OPTION_APPWIDGET_MAX_WIDTH,500);options.putInt(android.appwidget.AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT,500);

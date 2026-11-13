@@ -148,7 +148,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
     }
     static org.json.JSONArray chartRows(Context context){
         if("kwh".equals(chartMode(context)))return history(context);
-        if("eur".equals(chartMode(context))){try{WidgetConfiguration c=readConfiguration(context);return BillHistory.monthlyRows(history(context),java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("Europe/Rome")),c==null?2:c.months,c==null?10:c.anchor,InvoiceStore.read(context));}catch(Exception invalid){return new org.json.JSONArray();}}
+        if("eur".equals(chartMode(context))){try{WidgetConfiguration c=readConfiguration(context);return BillHistory.monthlyRows(history(context),java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("Europe/Rome")),c==null?2:c.months,c==null?10:c.anchor,InvoiceStore.read(context),archive(context));}catch(Exception invalid){return new org.json.JSONArray();}}
         WidgetConfiguration c=readConfiguration(context);WidgetPricing pricing=null;
         try{if(c!=null)pricing=WidgetPricing.parse(c.ratesJson,c.resident);}catch(Exception invalid){}
         try{return BillHistory.rows(archive(context),java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("Europe/Rome")),c==null?2:c.months,c==null?10:c.anchor,pricing,InvoiceStore.read(context));}
@@ -553,7 +553,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
             float fontScale=context.getResources().getConfiguration().fontScale;
             views.setImageViewBitmap(R.id.widget_chart,MonthlyChart.draw(context,history,spec,spec.chartHeight(fontScale,showStatus),bitmapPixels));
         }else{
-            views.setTextViewText(R.id.widget_brand,spec.compact()?"Costo Luce":"Costo Luce · v6.9.1");
+            views.setTextViewText(R.id.widget_brand,spec.compact()?"Costo Luce":"Costo Luce · v6.10.0");
             views.setViewVisibility(R.id.widget_chart_note,android.view.View.GONE);
             if("enel".equals(p.getString(KEY_SOURCE,"")))try{org.json.JSONArray rows=new org.json.JSONArray(p.getString(KEY_MONTHLY,"[]"));if(rows.length()>0)views.setTextViewText(R.id.widget_period,compactPeriod(rows));}catch(Exception ignored){}
         }
@@ -710,7 +710,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         views.setOnClickPendingIntent(R.id.widget_refresh, refreshPending);
         views.setOnClickPendingIntent(R.id.widget_status, refreshPending);
         boolean chart = p.getInt("page_"+widgetId,0)==1;
-        views.setTextViewText(R.id.widget_brand,chart?"Consumi ultimi 4 mesi":"COSTO LUCE · v6.9.1");
+        views.setTextViewText(R.id.widget_brand,chart?"Consumi ultimi 4 mesi":"COSTO LUCE · v6.10.0");
         views.setViewVisibility(R.id.widget_units,chart?android.view.View.VISIBLE:android.view.View.GONE);
         views.setViewVisibility(R.id.widget_refresh,chart?android.view.View.GONE:android.view.View.VISIBLE);
         String selectedMode=chartMode(context);

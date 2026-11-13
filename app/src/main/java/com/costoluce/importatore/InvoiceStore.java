@@ -24,7 +24,12 @@ final class InvoiceStore {
         EnelConnector.Credentials credentials=new EnelCredentialStore(c).read();
         if(credentials!=null&&!credentials.pod.equals(invoice.pod))throw new IllegalArgumentException("La fattura appartiene a un POD diverso da quello collegato. Nessun importo salvato.");
         String key=account(invoice.pod);JSONArray old=new JSONArray(prefs(c).getString(key,"[]")),next=new JSONArray();
-        for(int i=0;i<old.length();i++){JSONObject r=old.getJSONObject(i);if(EnelInvoices.canonical(r.getString("id")).equals(EnelInvoices.canonical(invoice.id))){if(!r.toString().equals(invoice.json().toString()))throw new IllegalArgumentException("Numero fattura già presente con dati diversi: verifica il documento.");return;}if(r.getString("from").compareTo(invoice.to)<=0&&r.getString("to").compareTo(invoice.from)>=0)throw new IllegalArgumentException("Periodo sovrapposto a una fattura importata: possibile conguaglio, da verificare.");next.put(r);}
+        for(int i=0;i<old.length();i++){JSONObject r=old.getJSONObject(i);if(EnelInvoices.canonical(r.getString("id")).equals(EnelInvoices.canonical(invoice.id))){
+                JSONObject enriched=invoice.enrichStored(r);
+                if(r.optInt("allocationVersion",0)<IssuedInvoice.ALLOCATION_VERSION){
+                    old.put(i,enriched);if(!prefs(c).edit().putString(key,old.toString()).commit())throw new IllegalStateException("Impossibile aggiornare il dettaglio fattura.");CostoLuceWidgetProvider.refresh(c);
+                }return;
+            }if(r.getString("from").compareTo(invoice.to)<=0&&r.getString("to").compareTo(invoice.from)>=0)throw new IllegalArgumentException("Periodo sovrapposto a una fattura importata: possibile conguaglio, da verificare.");next.put(r);}
         if(next.length()>=120)throw new IllegalArgumentException("Archivio pieno (120 fatture).");next.put(invoice.json());if(!prefs(c).edit().putString(key,next.toString()).putString("active",key).commit())throw new IllegalStateException("Impossibile salvare l'archivio fatture.");
         CostoLuceWidgetProvider.refresh(c);
     }

@@ -64,7 +64,7 @@ public class BillHistoryTest {
         assertFalse(real.getBoolean("partial"));
     }
 
-    @Test public void monthlyChartNeverSplitsAnIssuedBimonthlyTotal()throws Exception{
+    @Test public void monthlyChartRequiresAllMonthsForAttribution()throws Exception{
         JSONArray history=new JSONArray().put(usage(2026,8,178,false)).put(usage(2026,10,218,false));
         JSONArray invoices=new JSONArray().put(new JSONObject().put("from","2026-08-01").put("to","2026-09-30").put("electricityCents",12756));
         JSONArray rows=BillHistory.monthlyRows(history,day(2026,11),2,8,invoices);

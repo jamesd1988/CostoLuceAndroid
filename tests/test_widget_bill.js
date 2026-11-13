@@ -67,3 +67,11 @@ const job=fs.readFileSync(__dirname+'/../app/src/main/java/com/costoluce/importa
 for(const source of [activity,job]){assert(source.includes('InvoiceDocuments.read(this,pdf)'));assert(source.includes('InvoiceStore.accept(this,result.invoiceOutcome)'));assert(source.includes('InvoiceStore.forPod(this,credentials.pod)'));}
 assert(!html.includes('Download automatico delle fatture non ancora disponibile'));
 assert(!html.includes('href="costoluce://invoice-import"'),'No manual PDF upload in the user flow');
+
+const allocationCases=JSON.parse(fs.readFileSync(__dirname+'/../app/src/test/resources/invoice-allocation.json','utf8'));
+for(const test of allocationCases){
+ const invoice={from:test.from,to:test.to,electricityCents:test.total};if(test.fixed!==undefined)invoice.fixedGrossCents=test.fixed;
+ const first=new Date(test.from+'T12:00:00'),archive=test.usage.map((kwh,i)=>{const d=new Date(first.getFullYear(),first.getMonth()+i,1);return {year:d.getFullYear(),month:d.getMonth()+1,kwh,available:kwh!==null,partial:Boolean(test.partial&&i===1)}});
+ const rows=ctx.splitInvoiceMonths(invoice,archive);assert.deepEqual(Array.from(rows,r=>r.allocatedCents),test.expected,test.name);if(rows.length)assert.equal(rows.reduce((s,r)=>s+r.allocatedCents,0),test.total);
+}
+console.log('PASS: monthly invoice attribution, fixed shares, exact cents, missing/partial/zero data, quarters and year boundaries');

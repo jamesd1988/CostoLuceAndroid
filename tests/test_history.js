@@ -20,7 +20,7 @@ const ctx={window:{location:{}},location:{hash:''},document:{getElementById:getI
 vm.createContext(ctx);vm.runInContext(code,ctx);
 
 assert.strictEqual(getId('historyChart').children.length,13);
-assert.ok(getId('historyChart').children.every(c=>/assente/.test(c.children[2].textContent)));
+assert.ok(getId('historyChart').children.every(c=>/assente|Non disponibile/.test(c.children[2].textContent)));
 ctx.window.onHistoryNative([
  {year:2026,month:8,kwh:0,available:false},
  {year:2026,month:9,kwh:0,available:true,partial:false},
