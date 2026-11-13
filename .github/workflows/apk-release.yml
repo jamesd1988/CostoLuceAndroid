@@ -1,4 +1,4 @@
-name: Costo Luce - APK 6.4.2
+name: Costo Luce - APK 6.5.0
 
 on:
   push:
@@ -16,7 +16,7 @@ permissions:
 
 # Avoid competing releases after multiple rapid pushes.
 concurrency:
-  group: costoluce-apk-v6-4-2
+  group: costoluce-apk-v6-5-0
   cancel-in-progress: true
 
 jobs:
@@ -62,6 +62,7 @@ jobs:
             tests/test_history.js \
             tests/test_tariffs.js \
             tests/test_rate_rows.js \
+            tests/test_arera.js \
             tests/test_widget.js \
             tests/test_widget_wiring.js; do
             echo "TEST: $test"
@@ -114,12 +115,12 @@ jobs:
             grep -q 'PASS: WebView launch' instrumentation.txt
             if grep -q 'FAIL:' instrumentation.txt; then exit 1; fi
             mkdir -p dist
-            adb exec-out run-as com.costoluce.cloud cat files/screenshots/app-6.4.2.png > dist/app-6.4.2.png
-            adb exec-out run-as com.costoluce.cloud cat files/screenshots/tariffe-6.4.2.png > dist/tariffe-6.4.2.png
-            adb exec-out run-as com.costoluce.cloud cat files/screenshots/tariffe-editor-6.4.2.png > dist/tariffe-editor-6.4.2.png
-            for size in compact medium large; do for page in summary history; do adb exec-out run-as com.costoluce.cloud cat "files/screenshots/widget-$page-$size-6.4.2.png" > "dist/widget-$page-$size-6.4.2.png"; done; done
-            for variant in 2x1 wide-row intermediate; do adb exec-out run-as com.costoluce.cloud cat "files/screenshots/widget-$variant-6.4.2.png" > "dist/widget-$variant-6.4.2.png"; done
-            adb exec-out run-as com.costoluce.cloud cat files/screenshots/widget-compact-refresh-6.4.2.png > dist/widget-compact-refresh-6.4.2.png
+            adb exec-out run-as com.costoluce.cloud cat files/screenshots/app-6.5.0.png > dist/app-6.5.0.png
+            adb exec-out run-as com.costoluce.cloud cat files/screenshots/tariffe-6.5.0.png > dist/tariffe-6.5.0.png
+            adb exec-out run-as com.costoluce.cloud cat files/screenshots/tariffe-editor-6.5.0.png > dist/tariffe-editor-6.5.0.png
+            for size in compact medium large; do for page in summary history; do adb exec-out run-as com.costoluce.cloud cat "files/screenshots/widget-$page-$size-6.5.0.png" > "dist/widget-$page-$size-6.5.0.png"; done; done
+            for variant in 2x1 wide-row intermediate; do adb exec-out run-as com.costoluce.cloud cat "files/screenshots/widget-$variant-6.5.0.png" > "dist/widget-$variant-6.5.0.png"; done
+            adb exec-out run-as com.costoluce.cloud cat files/screenshots/widget-compact-refresh-6.5.0.png > dist/widget-compact-refresh-6.5.0.png
             test "$(file dist/*.png | grep -c 'PNG image data')" -eq 13
       - name: Controllo APK e widget Android
         shell: bash
@@ -139,8 +140,8 @@ jobs:
           grep -q "android.permission.ACCESS_NETWORK_STATE" permissions-compiled.txt
           grep -q "android.permission.INTERNET" permissions-compiled.txt
           mkdir -p dist
-          cp "$APK" dist/CostoLuce_v6.4.2_RefreshDesign.apk
-          sha256sum dist/CostoLuce_v6.4.2_RefreshDesign.apk
+          cp "$APK" dist/CostoLuce_v6.5.0_ARERA.apk
+          sha256sum dist/CostoLuce_v6.5.0_ARERA.apk
 
       # Publish only after JVM, build and emulator checks have passed.
       - name: Pubblica APK su GitHub Release
@@ -149,8 +150,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          TAG="v6.4.2"
-          APK="dist/CostoLuce_v6.4.2_RefreshDesign.apk"
+          TAG="v6.5.0"
+          APK="dist/CostoLuce_v6.5.0_ARERA.apk"
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" "$APK" dist/*.png --clobber
             gh api --method PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/$TAG" -f sha="$GITHUB_SHA" -F force=true
@@ -158,9 +159,9 @@ jobs:
           else
             gh release create "$TAG" "$APK" dist/*.png \
               --target "$GITHUB_SHA" \
-              --title "Costo Luce v6.4.2 - Nuovo design del tasto aggiorna" \
+              --title "Costo Luce v6.5.0 - Importazione tariffe ARERA" \
               --notes-file RELEASE_NOTES.md \
               --prerelease
           fi
           echo "### APK pubblicato" >> "$GITHUB_STEP_SUMMARY"
-          echo "https://github.com/$GITHUB_REPOSITORY/releases/download/v6.4.2/CostoLuce_v6.4.2_RefreshDesign.apk" >> "$GITHUB_STEP_SUMMARY"
+          echo "https://github.com/$GITHUB_REPOSITORY/releases/download/v6.5.0/CostoLuce_v6.5.0_ARERA.apk" >> "$GITHUB_STEP_SUMMARY"

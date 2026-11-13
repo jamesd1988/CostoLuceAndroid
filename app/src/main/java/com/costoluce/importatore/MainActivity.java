@@ -35,6 +35,7 @@ public final class MainActivity extends Activity {
     private int preferredMonths = 2;
     private final ExecutorService background = Executors.newSingleThreadExecutor();
     private boolean enelBusy = false;
+    private boolean areraBusy = false;
     private final Handler uiHandler = new Handler(Looper.getMainLooper());
     private int enelRequestId = 0;
 
@@ -85,6 +86,10 @@ public final class MainActivity extends Activity {
         try { uri = Uri.parse(url); } catch (Exception e) { return false; }
         if (!"costoluce".equalsIgnoreCase(uri.getScheme())) return false;
         String action = uri.getHost();
+        if ("arera-check".equals(action)) {
+            if (web != null && HOME.equals(web.getUrl())) checkArera(true);
+            return true;
+        }
         if ("display-unit".equals(action)) {
             if (web != null && HOME.equals(web.getUrl())) CostoLuceWidgetProvider.saveUnit(this,uri.getQueryParameter("unit"));
             return true;
@@ -175,12 +180,27 @@ public final class MainActivity extends Activity {
     /** Restore the latest validated widget value when the user opens the app. */
     void restoreWidgetSnapshot() {
         if (web == null || web.getUrl() == null || !web.getUrl().startsWith(HOME)) return;
+        deliverArera(AreraRepository.state(this,""));
+        checkArera(false);
         web.evaluateJavascript("window.onHistoryNative("+CostoLuceWidgetProvider.history(this).toString()+","+CostoLuceWidgetProvider.prefs(this).getLong("history_at",0L)+");",null);
         JSONObject snapshot = CostoLuceWidgetProvider.getLatestSnapshot(this);
         JSONObject config = CostoLuceWidgetProvider.getWidgetConfiguration(this);
         web.evaluateJavascript("window.onWidgetNativeState("
                 + (config == null ? "null" : config.toString()) + ","
                 + (snapshot == null ? "null" : snapshot.toString()) + ");", null);
+    }
+
+    private void deliverArera(JSONObject data) {
+        if(web!=null&&HOME.equals(web.getUrl()))web.evaluateJavascript("window.onAreraCatalog&&window.onAreraCatalog("+data.toString()+");",null);
+    }
+
+    private void checkArera(boolean force) {
+        if(areraBusy||(!force&&!AreraRepository.due(this)))return;
+        areraBusy=true;
+        background.execute(()->{
+            JSONObject result=AreraRepository.refresh(this);
+            uiHandler.post(()->{areraBusy=false;deliverArera(result);});
+        });
     }
 
     @Override protected void onResume() {
