@@ -61,3 +61,9 @@ const provider=fs.readFileSync(__dirname+'/../app/src/main/java/com/costoluce/im
 assert(provider.includes('R.id.widget_unit_bill'));assert(provider.includes('saveChartMode(context,mode)'));assert(provider.includes('BillHistory.rows(archive(context)'));assert(provider.includes('PendingIntent.getBroadcast(context,2100+i,unit'));
 const xml=fs.readFileSync(__dirname+'/../app/src/main/res/layout/costoluce_widget.xml','utf8');assert(xml.includes('widget_unit_bill'));assert(xml.includes('canone TV escluso'));
 console.log('PASS: complete electricity scope, fixed fees including VAT, duplicate-safe shortcut and native bill broadcast wiring');
+
+const activity=fs.readFileSync(__dirname+'/../app/src/main/java/com/costoluce/importatore/MainActivity.java','utf8');
+const job=fs.readFileSync(__dirname+'/../app/src/main/java/com/costoluce/importatore/WidgetUpdateJobService.java','utf8');
+for(const source of [activity,job]){assert(source.includes('InvoiceDocuments.read(this,pdf)'));assert(source.includes('InvoiceStore.accept(this,result.invoiceOutcome)'));assert(source.includes('InvoiceStore.forPod(this,credentials.pod)'));}
+assert(!html.includes('Download automatico delle fatture non ancora disponibile'));
+assert(!html.includes('href="costoluce://invoice-import"'),'No manual PDF upload in the user flow');

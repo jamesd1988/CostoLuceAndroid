@@ -88,6 +88,7 @@ public final class MainActivity extends Activity {
         try { uri = Uri.parse(url); } catch (Exception e) { return false; }
         if (!"costoluce".equalsIgnoreCase(uri.getScheme())) return false;
         String action = uri.getHost();
+        if("enel-invoice-profile".equals(action)){if(web!=null&&HOME.equals(web.getUrl()))showInvoiceProfile();return true;}
         if ("invoice-import".equals(action)) {
             if(web!=null&&HOME.equals(web.getUrl())){
                 Intent pick=new Intent(Intent.ACTION_OPEN_DOCUMENT);pick.addCategory(Intent.CATEGORY_OPENABLE);pick.setType("application/pdf");
@@ -201,7 +202,7 @@ public final class MainActivity extends Activity {
     /** Restore the latest validated widget value when the user opens the app. */
     void restoreWidgetSnapshot() {
         if (web == null || web.getUrl() == null || !web.getUrl().startsWith(HOME)) return;
-        deliverInvoices("");
+        deliverInvoices(InvoiceStore.status(this));
         deliverArera(AreraRepository.state(this,""));
         checkArera(false);
         web.evaluateJavascript("window.onHistoryNative("+CostoLuceWidgetProvider.archive(this).toString()+","+CostoLuceWidgetProvider.prefs(this).getLong("history_at",0L)+");",null);
@@ -212,6 +213,17 @@ public final class MainActivity extends Activity {
                 + (snapshot == null ? "null" : snapshot.toString()) + ");", null);
     }
 
+    private void showInvoiceProfile(){
+        try{
+            EnelConnector.Credentials old=new EnelCredentialStore(this).read();if(old==null){showEnelConfiguration();return;}
+            EditText field=new EditText(this);field.setHint("Codice fiscale intestatario Enel");field.setSingleLine(true);field.setInputType(InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS);field.setText(old.fiscalCode);
+            AlertDialog dialog=new AlertDialog.Builder(this).setTitle("Dati archivio Enel")
+                .setMessage("Se l'archivio richiede il codice fiscale, inserisci quello dell'intestatario. Rimane cifrato con le credenziali già salvate; è trasmesso solo a Enel.").setView(field).setNegativeButton("Annulla",null).setPositiveButton("Salva e aggiorna",null).create();
+            dialog.setOnShowListener(unused->dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v->{
+                try{EnelConnector.Credentials next=new EnelConnector.Credentials(old.username,old.password,old.pod,old.userNumber,field.getText().toString());next.validate();new EnelCredentialStore(this).save(next);dialog.dismiss();downloadEnel(next,false);}catch(Exception invalid){field.setError("Codice fiscale non valido o impossibile salvare.");}
+            }));dialog.show();
+        }catch(Exception unavailable){deliverInvoices("Credenziali salvate non disponibili: configura Enel.");}
+    }
     private void deliverInvoices(String message){
         if(web!=null&&HOME.equals(web.getUrl()))web.evaluateJavascript("window.onInvoicesNative&&window.onInvoicesNative("+InvoiceStore.read(this).toString()+","+JSONObject.quote(message)+");",null);
     }
@@ -324,6 +336,7 @@ public final class MainActivity extends Activity {
         EditText pwd=formField(content,"Password Enel Energia",InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_PASSWORD);
         EditText pod=formField(content,"POD (IT..., dalla bolletta)",InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS);
         EditText number=formField(content,"Numero utente Enel (Area Clienti)",InputType.TYPE_CLASS_TEXT);
+        EditText fiscal=formField(content,"Codice fiscale intestatario (opzionale, per archivio bollette)",InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS);
         CheckBox remember = new CheckBox(this);
         remember.setText("Salva cifrato sul telefono per sincronizzare con un solo tocco");
         remember.setChecked(false); // Explicit opt-in to durable credential storage.
@@ -340,7 +353,7 @@ public final class MainActivity extends Activity {
                 .create();
         dialog.setOnShowListener(ignored -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
             EnelConnector.Credentials credentials=new EnelConnector.Credentials(
-                    user.getText().toString(),pwd.getText().toString(),pod.getText().toString(),number.getText().toString());
+                    user.getText().toString(),pwd.getText().toString(),pod.getText().toString(),number.getText().toString(),fiscal.getText().toString());
             try { credentials.validate(); }
             catch(Exception e) { number.setError(e.getMessage()); return; }
             dialog.dismiss();
@@ -365,13 +378,17 @@ public final class MainActivity extends Activity {
         }, 100000);
         background.execute(() -> {
             try {
-                EnelConnector.Result result=EnelConnector.fetch(credentials,selectedMonths,selectedAnchor, phase -> {
+                EnelConnector.Result result=EnelConnector.fetch(credentials,selectedMonths,selectedAnchor,true, phase -> {
                     if (!isFinishing()) runOnUiThread(() -> {
                         if (enelRequestId == requestId && enelBusy) enelStatus(phase, false);
                     });
-                });
+                }, pdf->InvoiceDocuments.read(this,pdf),InvoiceStore.forPod(this,credentials.pod));
+                if(persistIfValid&&(result.consumptionAvailable||(result.invoiceOutcome!=null&&result.invoiceOutcome.checked)))new EnelCredentialStore(this).save(credentials);
+                String invoiceMessage=InvoiceStore.accept(this,result.invoiceOutcome);
+                if(!result.consumptionAvailable){
+                    if(!isFinishing())runOnUiThread(()->{if(enelRequestId!=requestId)return;enelBusy=false;deliverInvoices(invoiceMessage);enelStatus(invoiceMessage+" Consumi correnti non disponibili: letture precedenti conservate.",false);});return;
+                }
                 CostoLuceWidgetProvider.saveHistory(this,result);
-                if(persistIfValid) new EnelCredentialStore(this).save(credentials);
                 // Keep the Home widget and the in-app consumption summary in sync
                 // when the user already configured the widget with tariff data.
                 if (CostoLuceWidgetProvider.readConfiguration(this) != null) {
@@ -404,6 +421,7 @@ public final class MainActivity extends Activity {
                             detail.put("monthly",monthly);
                             web.evaluateJavascript("window.onHistoryNative("+CostoLuceWidgetProvider.archive(this).toString()+","+CostoLuceWidgetProvider.prefs(this).getLong("history_at",0L)+");",null);
                             web.evaluateJavascript("window.onEnelConsumption("+detail.toString()+");",null);
+                            deliverInvoices(invoiceMessage);
                         } catch(org.json.JSONException e) {
                             enelStatus("Errore nella visualizzazione del riepilogo mensile.",true);
                         }

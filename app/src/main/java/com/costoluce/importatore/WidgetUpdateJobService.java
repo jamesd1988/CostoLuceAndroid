@@ -35,9 +35,12 @@ public final class WidgetUpdateJobService extends JobService {
                     else if (phase.startsWith("Fase 2/4")) label = "Enel 2/4 · verifica accesso";
                     else if (phase.startsWith("Fase 3/4")) label = "Enel 3/4 · sessione";
                     else if (phase.startsWith("Fase 4/4")) label = "Enel 4/4 · lettura kWh";
+                    else if(phase.startsWith("Fatture Enel"))label="Enel · recupero fatture";
                     else label = "Enel · controllo dei dati";
                     CostoLuceWidgetProvider.setRefreshStatus(this, label, true);
-                });
+                },pdf->InvoiceDocuments.read(this,pdf),InvoiceStore.forPod(this,credentials.pod));
+                String invoiceMessage=InvoiceStore.accept(this,result.invoiceOutcome);
+                if(!result.consumptionAvailable){if(!stopped.get())CostoLuceWidgetProvider.setRefreshStatus(this,invoiceMessage+" Consumi invariati.",false);return;}
                 // History includes measured zeros even when billing has no positive total.
                 CostoLuceWidgetProvider.saveHistory(this,result);
                 if (result.kwh <= 0)
@@ -45,6 +48,7 @@ public final class WidgetUpdateJobService extends JobService {
                 if (!stopped.get() && !Thread.currentThread().isInterrupted()) {
                     if (!CostoLuceWidgetProvider.saveResultFromEnel(this, result, config.months))
                         throw new IllegalStateException("Dati mensili Enel non validi.");
+                    CostoLuceWidgetProvider.setRefreshStatus(this,invoiceMessage,false);
                 }
             } catch (Exception error) {
                 if (!stopped.get()) {

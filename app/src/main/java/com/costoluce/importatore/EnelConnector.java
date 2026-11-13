@@ -42,6 +42,7 @@ public final class EnelConnector {
     interface Progress { void step(String phase); }
     private static void report(Progress p, String phase) { if (p != null) p.step(phase); }
     private static long remaining(long deadline) throws IOException {
+        if(Thread.currentThread().isInterrupted())throw new IOException("Aggiornamento interrotto.");
         long ms = (deadline - System.nanoTime()) / 1_000_000L;
         if (ms <= 0) throw new IOException("Tempo massimo di collegamento Enel superato (90 secondi). Verifica rete o autenticazione.");
         return ms;
@@ -49,16 +50,19 @@ public final class EnelConnector {
     private EnelConnector() { }
 
     static final class Credentials {
-        final String username, password, pod, userNumber;
-        Credentials(String username, String password, String pod, String userNumber) {
+        final String username, password, pod, userNumber, fiscalCode;
+        Credentials(String username, String password, String pod, String userNumber) {this(username,password,pod,userNumber,"");}
+        Credentials(String username, String password, String pod, String userNumber,String fiscalCode) {
             this.username = username.trim();
             this.password = password;
             this.pod = pod.trim().toUpperCase(Locale.ROOT);
             this.userNumber = userNumber.trim();
+            this.fiscalCode = fiscalCode.trim().toUpperCase(Locale.ROOT);
         }
         void validate() throws IOException {
             if (!username.contains("@") || username.length() > 200 || password.isEmpty() || password.length() > 1000)
                 throw new IOException("Inserisci email e password dell'account Enel Energia.");
+            if(!fiscalCode.isEmpty()&&!fiscalCode.matches("[A-Z0-9]{16}|[0-9]{11}"))throw new IOException("Codice fiscale non valido.");
             if (!pod.matches("IT[A-Z0-9]{10,18}")) throw new IOException("POD non valido: verifica il codice sulla bolletta.");
             if (!userNumber.matches("[A-Za-z0-9_-]{3,30}")) throw new IOException("Numero utente Enel non valido.");
         }
@@ -98,6 +102,8 @@ public final class EnelConnector {
 
     static final class Result {
         final double kwh;
+        EnelInvoices.Outcome invoiceOutcome;
+        boolean consumptionAvailable=true;
         java.util.List<MonthUsage> history = java.util.Collections.emptyList();
         final String period;
         final int days;
@@ -118,7 +124,10 @@ public final class EnelConnector {
     static Result fetch(Credentials credentials,int months,int anchor,Progress progress) throws IOException,JSONException {
         return fetch(credentials,months,anchor,true,progress);
     }
-    static synchronized Result fetch(Credentials credentials,int months,int anchor,boolean extended,Progress progress) throws IOException,JSONException {
+    static Result fetch(Credentials credentials,int months,int anchor,boolean extended,Progress progress) throws IOException,JSONException {
+        return fetch(credentials,months,anchor,extended,progress,null,new JSONArray());
+    }
+    static synchronized Result fetch(Credentials credentials,int months,int anchor,boolean extended,Progress progress,EnelInvoices.DocumentReader documents,JSONArray cachedInvoices) throws IOException,JSONException {
         final long deadline = System.nanoTime() + MAX_SYNC_MS * 1_000_000L;
         credentials.validate();
         if (months < 1 || months > 3) throw new IOException("Periodo non supportato.");
@@ -145,10 +154,15 @@ public final class EnelConnector {
             report(progress, "Fase 3/4: conferma sessione Enel...");
             request(SAML, "SAMLResponse="+encode(saml), deadline);
             report(progress, "Fase 4/4: recupero del periodo corrente...");
-            Result billing=readRange(credentials,window.from,to,deadline);
+            Result billing;
+            try{billing=readRange(credentials,window.from,to,deadline);}
+            catch(IOException|JSONException unavailable){if(documents==null)throw unavailable;billing=new Result(0,"",0,java.util.Collections.emptyList());billing.consumptionAvailable=false;}
+
+            EnelInvoices.Outcome invoiceOutcome=documents==null?null:EnelInvoices.fetch(credentials,
+                (address,form,limit)->requestBytes(address,form,deadline,limit),documents,cachedInvoices,deadline,progress);
             java.util.TreeMap<Integer,MonthUsage> archive=new java.util.TreeMap<>();
             for(MonthUsage month:billing.monthly)archive.put(month.year*100+month.month,month);
-            if(extended){
+            if(extended&&billing.consumptionAvailable){
                 final TimeZone zone=TimeZone.getTimeZone("Europe/Rome");
                 SimpleDateFormat format=new SimpleDateFormat("ddMMyyyy",Locale.ITALY);format.setTimeZone(zone);
                 Calendar earliest=Calendar.getInstance(zone),end=Calendar.getInstance(zone);
@@ -182,6 +196,8 @@ public final class EnelConnector {
                 }
             }
             Result parsed=new Result(billing.kwh,billing.period,billing.days,new java.util.ArrayList<>(archive.values()));
+            parsed.invoiceOutcome=invoiceOutcome;
+            parsed.consumptionAvailable=billing.consumptionAvailable;
             return forBillingWindow(parsed,window);
         } finally {
             jar.getCookieStore().removeAll();
@@ -205,6 +221,8 @@ public final class EnelConnector {
                 +" – "+window.to.substring(0,2)+"/"+window.to.substring(2,4)+"/"+window.to.substring(4),
                 billingDays, monthly);
             result.history = parsed.monthly;
+            result.invoiceOutcome = parsed.invoiceOutcome;
+            result.consumptionAvailable=parsed.consumptionAvailable;
             return result;
     }
 
@@ -351,7 +369,8 @@ public final class EnelConnector {
         return "https".equalsIgnoreCase(url.getProtocol()) && (
             host.equals("www.enel.it") || host.equals("accounts.enel.com"));
     }
-    private static String request(String url, String data, long deadline) throws IOException {
+    private static String request(String url, String data, long deadline) throws IOException {return new String(requestBytes(url,data,deadline,MAX_RESPONSE),StandardCharsets.UTF_8);}
+    private static byte[] requestBytes(String url, String data, long deadline,int maxResponse) throws IOException {
         URL target = new URL(url);
         for(int redirects=0; redirects<6; redirects++) {
             long wait = remaining(deadline);
@@ -387,10 +406,10 @@ public final class EnelConnector {
                     byte[] chunk=new byte[8192];int n;
                     while((n=in.read(chunk))!=-1){
                         remaining(deadline);
-                        if(buf.size()+n>MAX_RESPONSE)throw new IOException("Risposta Enel troppo grande.");
+                        if(buf.size()+n>maxResponse)throw new IOException("Risposta Enel troppo grande.");
                         buf.write(chunk,0,n);
                     }
-                    return buf.toString("UTF-8");
+                    return buf.toByteArray();
                 }
             } finally { con.disconnect(); }
         }

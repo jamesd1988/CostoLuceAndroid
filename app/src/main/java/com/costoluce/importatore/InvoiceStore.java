@@ -12,11 +12,19 @@ final class InvoiceStore {
     static JSONArray read(Context c){
         try{EnelConnector.Credentials credentials=new EnelCredentialStore(c).read();String key=credentials==null?prefs(c).getString("active",""):account(credentials.pod);return new JSONArray(prefs(c).getString(key,"[]"));}catch(Exception invalid){return new JSONArray();}
     }
+    static JSONArray forPod(Context c,String pod){try{return new JSONArray(prefs(c).getString(account(pod),"[]"));}catch(Exception invalid){return new JSONArray();}}
+    static String status(Context c){return prefs(c).getString("status","Premi Aggiorna per scaricare le fatture da Enel.");}
+    static String accept(Context c,EnelInvoices.Outcome outcome){
+        if(outcome==null)return status(c);int failed=0;
+        for(IssuedInvoice invoice:outcome.invoices)try{save(c,invoice);}catch(Exception unusable){failed++;}
+        String message=outcome.status+(failed>0?" "+failed+" documenti non archiviati: sovrapposizioni o dati in conflitto, da verificare.":"");
+        prefs(c).edit().putString("status",message).putBoolean("needs_cf",outcome.needsFiscalCode).apply();return message;
+    }
     static void save(Context c,IssuedInvoice invoice)throws Exception{
         EnelConnector.Credentials credentials=new EnelCredentialStore(c).read();
         if(credentials!=null&&!credentials.pod.equals(invoice.pod))throw new IllegalArgumentException("La fattura appartiene a un POD diverso da quello collegato. Nessun importo salvato.");
         String key=account(invoice.pod);JSONArray old=new JSONArray(prefs(c).getString(key,"[]")),next=new JSONArray();
-        for(int i=0;i<old.length();i++){JSONObject r=old.getJSONObject(i);if(r.getString("id").equals(invoice.id)){if(!r.toString().equals(invoice.json().toString()))throw new IllegalArgumentException("Numero fattura già presente con dati diversi: verifica il documento.");return;}if(r.getString("from").compareTo(invoice.to)<=0&&r.getString("to").compareTo(invoice.from)>=0)throw new IllegalArgumentException("Periodo sovrapposto a una fattura importata: possibile conguaglio, da verificare.");next.put(r);}
+        for(int i=0;i<old.length();i++){JSONObject r=old.getJSONObject(i);if(EnelInvoices.canonical(r.getString("id")).equals(EnelInvoices.canonical(invoice.id))){if(!r.toString().equals(invoice.json().toString()))throw new IllegalArgumentException("Numero fattura già presente con dati diversi: verifica il documento.");return;}if(r.getString("from").compareTo(invoice.to)<=0&&r.getString("to").compareTo(invoice.from)>=0)throw new IllegalArgumentException("Periodo sovrapposto a una fattura importata: possibile conguaglio, da verificare.");next.put(r);}
         if(next.length()>=120)throw new IllegalArgumentException("Archivio pieno (120 fatture).");next.put(invoice.json());if(!prefs(c).edit().putString(key,next.toString()).putString("active",key).commit())throw new IllegalStateException("Impossibile salvare l'archivio fatture.");
         CostoLuceWidgetProvider.refresh(c);
     }

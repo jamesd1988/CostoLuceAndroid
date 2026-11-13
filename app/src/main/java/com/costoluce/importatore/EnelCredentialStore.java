@@ -35,7 +35,7 @@ final class EnelCredentialStore {
     }
     void save(EnelConnector.Credentials c) throws Exception {
         JSONObject json=new JSONObject();json.put("email",c.username);json.put("password",c.password);
-        json.put("pod",c.pod);json.put("number",c.userNumber);
+        json.put("pod",c.pod);json.put("number",c.userNumber);json.put("cf",c.fiscalCode);
         Cipher cipher=Cipher.getInstance("AES/GCM/NoPadding");cipher.init(Cipher.ENCRYPT_MODE,key());
         String sealed=Base64.encodeToString(cipher.doFinal(json.toString().getBytes(StandardCharsets.UTF_8)),Base64.NO_WRAP);
         String nonce=Base64.encodeToString(cipher.getIV(),Base64.NO_WRAP);
@@ -47,6 +47,6 @@ final class EnelCredentialStore {
         cipher.init(Cipher.DECRYPT_MODE,key(),new GCMParameterSpec(128,Base64.decode(prefs.getString("nonce",""),Base64.NO_WRAP)));
         byte[] data=cipher.doFinal(Base64.decode(prefs.getString("sealed",""),Base64.NO_WRAP));
         JSONObject j=new JSONObject(new String(data,StandardCharsets.UTF_8));
-        return new EnelConnector.Credentials(j.getString("email"),j.getString("password"),j.getString("pod"),j.getString("number"));
+        return new EnelConnector.Credentials(j.getString("email"),j.getString("password"),j.getString("pod"),j.getString("number"),j.optString("cf",""));
     }
 }
