@@ -1,12 +1,11 @@
-Costo Luce 6.5.0 - Importazione tariffe ARERA
+Costo Luce 6.5.1 - Completamento quote fisse dell'offerta
 
-- In Tariffe: controllo del file ufficiale ARERA, selezione mese, residente/non residente e potenza impegnata, riepilogo e importazione esplicita.
-- Importa rete, perequazione/qualità, ASOS e ARIM; converte le quote annuali in mensili e moltiplica le quote potenza per i kW indicati. Le quote fisse mancanti vengono aggiunte senza duplicare precedenti importazioni.
-- Voci sempre modificabili con la matita e nomi personalizzati conservati. Prima di importare, verificare eventuali quote rete aggiunte con altri nomi per evitare duplicazioni.
-- Controllo automatico del catalogo all'apertura, al massimo ogni 24 ore; tasto manuale per controllare subito. I controlli non sovrascrivono tariffe salvate. Nessun nuovo processo periodico in background.
-- Ultimo controllo riuscito, mese/profilo/potenza importati e segnalazione delle successive modifiche manuali. Errori di rete o formato conservano i dati precedenti.
-- Esclusi energia, commercializzazione, dispacciamento, sbilanciamento, perdite e imposte. Il dispacciamento E-Light richiede verifica contrattuale.
-- Le tariffe del mese scelto diventano quelle correnti per tutti i calcoli, incluso il grafico storico: non è ancora una ricostruzione con tariffe diverse per ogni mese. Quote fisse con il conteggio mensile già presente.
-- Credenziali salvate, consumi Enel, periodo bimestrale e calcolo accisa conservati. Il profilo residente ARERA è distinto dall'agevolazione accisa in Periodo.
+- Nuova sezione in Tariffe: Completa quote fisse, con commercializzazione vendita a 12,00 euro/mese e DISPbt parte fissa a 0,092250 euro/mese, riferiti alla fattura E-Light agosto-settembre 2026.
+- Il comando Aggiungi solo le voci mancanti aggiunge le due quote con tipo Fisso, applica l'IVA configurata e sincronizza il widget.
+- Le voci già riconosciute per identificativo o nome sono conservate, anche con importi personalizzati. Richieste ripetute non creano duplicati. Eventuali nomi completamente diversi richiedono controllo dell'utente.
+- Matita, cambio tipo, eliminazione e ripristino continuano a funzionare sulle righe aggiunte. Nessuna migrazione automatica che possa raddoppiare costi già configurati.
+- Una voce omonima variabile, doppioni riconosciuti o spazio insufficiente interrompono l'aggiunta prima di modificare qualsiasi tariffa.
+- Nella sezione sono riportati separatamente i valori utili a verificare agosto-settembre: dispacciamento 0,025043 euro/kWh e sbilanciamento medio ponderato 0,001042598 euro/kWh. Non vengono applicati automaticamente alle tariffe correnti o future.
+- Importazione ARERA, controllo del catalogo ogni 24 ore all'apertura, credenziali, consumi e calcolo accisa conservati.
 
-Verifiche: parser con dati ufficiali agosto/settembre 2026, confronto rete/oneri con importi fatturati, rifiuto di intestazioni/unità alterate e XML non consentito; test importazione, potenza, profili, modifiche manuali e mesi mancanti, oltre ai controlli Android esistenti. APK di test.
+Test JavaScript su quote, IVA, duplicati, modifiche con matita, persistenza, conflitti e limite righe; controlli Android di sincronizzazione e parità app/widget, oltre ai test esistenti. APK di test.

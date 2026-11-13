@@ -39,7 +39,7 @@ final class AreraRepository {
     private static byte[] download(String address)throws Exception{
         HttpsURLConnection connection=(HttpsURLConnection)new URL(address).openConnection();
         connection.setInstanceFollowRedirects(false);connection.setConnectTimeout(15000);connection.setReadTimeout(15000);
-        connection.setRequestProperty("User-Agent","Mozilla/5.0 (Linux; Android) CostoLuce/6.5.0");
+        connection.setRequestProperty("User-Agent","Mozilla/5.0 (Linux; Android) CostoLuce/6.5.1");
         connection.setRequestProperty("Accept","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/octet-stream;q=0.9");
         try{
             int status=connection.getResponseCode();
