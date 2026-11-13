@@ -23,7 +23,7 @@ assert.doesNotMatch(provider,/setOnClickPendingIntent\(R\.id\.widget_root/,
  'Parent root must not steal the refresh-button click');
 
 assert.match(provider,/Tasto premuto alle/,'Every tap must show an immediate visible acknowledgement');
-assert.match(jobService,/EnelConnector\.fetch\(credentials,\s*config\.months,\s*phase\s*->/,
+assert.match(jobService,/EnelConnector\.fetch\(credentials,\s*config\.months,\s*config\.anchor,\s*phase\s*->/,
  'Background sync must report its stage');
 assert.match(widgetLayout,/android:id="@\+id\/widget_refresh"/);
 assert.match(widgetLayout,/android:layout_width="48dp"/);
@@ -31,7 +31,7 @@ assert.match(widgetLayout,/android:layout_width="48dp"/);
 // First launch: tariffs can be saved without a made-up initial consumption.
 const mainActivity=app('java/com/costoluce/importatore/MainActivity.java');
 assert.match(mainActivity,/if \("widget-config"\.equals\(action\)\)/);
-assert.match(mainActivity,/CostoLuceWidgetProvider\.saveConfiguration\(this, months, rates, resident\)/);
+assert.match(mainActivity,/CostoLuceWidgetProvider\.saveConfiguration\(this, months, rates, resident,requestAnchor\(uri\)\)/);
 assert.match(provider,/static boolean saveConfiguration\(Context context, int months, String ratesJson, boolean resident\)/);
 assert.match(provider,/WidgetPricing\.parse\(ratesJson, resident\)/);
 assert.match(provider,/Pronto: premi ↻/);
@@ -54,8 +54,8 @@ console.log('PASS: refresh via foreground broadcast (no Activity), background Jo
 // Billing-cycle logic: two months anchored to even start month, query through today.
 const connector=app('java/com/costoluce/importatore/EnelConnector.java');
 const billing=app('java/com/costoluce/importatore/BillingPeriod.java');
-assert.match(connector,/BillingPeriod\.today\(months\)/);
-assert.match(billing,/start\.add\(Calendar\.MONTH, -1\)/);
+assert.match(connector,/BillingPeriod\.today\(months,anchor\)/);
+assert.match(billing,/Math\.floorMod/);
 assert.match(billing,/formatter\.format\(now\.getTime\(\)\)/);
 assert.match(connector,/lastMeasuredDay/);
 assert.match(provider,/taxableFromMonthly/);

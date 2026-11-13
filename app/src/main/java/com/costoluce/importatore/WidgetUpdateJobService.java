@@ -25,7 +25,7 @@ public final class WidgetUpdateJobService extends JobService {
                 if (config == null)
                     throw new IllegalStateException("Apri Costo Luce e premi Aggiorna widget Home per configurare le tariffe.");
                 CostoLuceWidgetProvider.setRefreshStatus(this, "Enel: collegamento in corso...", true);
-                EnelConnector.Result result = EnelConnector.fetch(credentials, config.months, phase -> {
+                EnelConnector.Result result = EnelConnector.fetch(credentials, config.months, config.anchor, phase -> {
                     if (stopped.get()) return;
                     String label;
                     if (phase.startsWith("Fase 1/4")) label = "Enel 1/4 · apertura login";

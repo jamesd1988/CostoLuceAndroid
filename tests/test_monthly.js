@@ -27,7 +27,7 @@ assert.strictEqual(el('monthlyRows').children[0].children[1].textContent,'—');
 ctx.setMonths(1);
 assert.match(el('requestedPeriod').textContent,/novembre 2026/);
 assert.doesNotMatch(el('requestedPeriod').textContent,/ottobre/);
-assert.strictEqual(el('enelSync').href,'costoluce://enel-sync?months=1');
+assert.strictEqual(el('enelSync').href,'costoluce://enel-sync?months=1&anchor=10');
 ctx.setMonths(2);
 ctx.window.onEnelConsumption({months:2,kwh:125.75,monthly:[
  {year:2026,month:10,kwh:50.25,days:30,expectedDays:31,hourSamples:720},

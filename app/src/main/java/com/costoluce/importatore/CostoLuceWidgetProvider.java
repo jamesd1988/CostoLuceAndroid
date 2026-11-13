@@ -49,7 +49,9 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         final String ratesJson;
         final boolean resident;
         final int months;
-        WidgetConfiguration(String ratesJson, boolean resident, int months) {
+        final int anchor;
+        WidgetConfiguration(String ratesJson, boolean resident, int months,int anchor) {
+            this.anchor=anchor;
             this.ratesJson = ratesJson;
             this.resident = resident;
             this.months = months;
@@ -64,8 +66,8 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         SharedPreferences p = prefs(context);
         String rates = p.getString(KEY_RATES, null);
         int months = p.getInt(KEY_CONFIG_MONTHS, p.getInt(KEY_MONTHS, 2));
-        if (rates == null || (months != 1 && months != 2)) return null;
-        return new WidgetConfiguration(rates, p.getBoolean(KEY_RESIDENT, false), months);
+        if (rates == null || (months < 1 || months > 3)) return null;
+        return new WidgetConfiguration(rates, p.getBoolean(KEY_RESIDENT, false), months,p.getInt("billing_anchor",10));
     }
 
     /** Shared by both in-app sync and the one-tap Home widget refresh. */
@@ -76,6 +78,8 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         if (config == null || config.months != months || result == null
                 || result.monthly == null || result.monthly.size() != months)
             return false;
+        BillingPeriod.Window expected=BillingPeriod.today(months,config.anchor);
+        for(int i=0;i<months;i++){EnelConnector.MonthUsage m=result.monthly.get(i);int index=expected.startYear*12+expected.startMonth-1+i;if(m.year!=index/12||m.month!=index%12+1)return false;}
         WidgetPricing pricing = WidgetPricing.parse(config.ratesJson, config.resident);
         org.json.JSONArray rows = new org.json.JSONArray();
         double monthlyTaxable = 0;
@@ -109,19 +113,21 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
     }
 
     static void saveHistory(Context context, EnelConnector.Result result) throws JSONException {
-        if (result != null && !result.history.isEmpty() && result.history.size() <= 4) {
-            prefs(context).edit().putString("history_json", HistoryMonths.serialize(result.history).toString())
+        if (result != null && !result.history.isEmpty() && result.history.size() <= 12) {
+            prefs(context).edit().putString("history_json", HistoryMonths.merge(prefs(context).getString("history_json","[]"),HistoryMonths.serialize(result.history)).toString())
                     .putLong("history_at",System.currentTimeMillis()).commit();
             refresh(context);
         }
     }
-    static org.json.JSONArray history(Context context) {
+    static org.json.JSONArray history(Context context) { return history(context,4); }
+    static org.json.JSONArray archive(Context context) { return history(context,12); }
+    private static org.json.JSONArray history(Context context,int count) {
         SharedPreferences p = prefs(context);
         // Upgrade: reuse the verified Enel months from 5.x until the first wider fetch.
         // Manual totals cannot supply a monthly history.
         String previous = "enel".equals(p.getString(KEY_SOURCE,""))
                 ? p.getString(KEY_MONTHLY,"[]") : "[]";
-        try { return HistoryMonths.slots(p.getString("history_json", previous), java.util.Calendar.getInstance()); }
+        try { return HistoryMonths.slots(p.getString("history_json", previous), java.util.Calendar.getInstance(),count); }
         catch (JSONException e) { return new org.json.JSONArray(); }
     }
     static void saveUnit(Context context, String unit) {
@@ -134,7 +140,11 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
      * This does not change the date or value of any previous measured usage.
      */
     static boolean saveConfiguration(Context context, int months, String ratesJson, boolean resident) {
-        if (months != 1 && months != 2 || ratesJson == null || ratesJson.length() > 16000)
+        return saveConfiguration(context,months,ratesJson,resident,prefs(context).getInt("billing_anchor",10));
+    }
+    static boolean saveConfiguration(Context context,int months,String ratesJson,boolean resident,int anchor) {
+        if(anchor<1||anchor>12)return false;
+        if (months < 1 || months > 3 || ratesJson == null || ratesJson.length() > 16000)
             return false;
         final WidgetPricing pricing;
         try { pricing = WidgetPricing.parse(ratesJson, resident); }
@@ -143,6 +153,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         SharedPreferences p = prefs(context);
         SharedPreferences.Editor edit = p.edit()
                 .putInt(KEY_CONFIG_MONTHS, months)
+                .putInt("billing_anchor",anchor)
                 .putString(KEY_RATES, ratesJson)
                 .putBoolean(KEY_RESIDENT, resident);
 
@@ -273,7 +284,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
                 .putString(KEY_PERIOD, period)
                 .putString(KEY_MONTHLY, monthlyJson)
                 .putLong(KEY_TIMESTAMP, System.currentTimeMillis())
-                .putString(KEY_STATUS, partial ? "Bimestre in corso · costo non definitivo" : "")
+                .putString(KEY_STATUS, partial ? "Periodo in corso · costo non definitivo" : "")
                 .putBoolean(KEY_BUSY, false)
                 .commit();
         if (ok) refresh(context);
@@ -288,6 +299,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
             JSONObject state = new JSONObject();
             state.put("rates", new JSONObject(p.getString(KEY_RATES,"{}")));
             state.put("unit", p.getString("display_unit", "eur"));
+            state.put("anchor",p.getInt("billing_anchor",10));
             state.put("months", p.getInt(KEY_CONFIG_MONTHS, p.getInt(KEY_MONTHS, 2)));
             state.put("resident", p.getBoolean(KEY_RESIDENT, false));
             return state;
@@ -314,7 +326,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
     private static boolean valid(double kwh, double euro, int months, String period) {
         return Double.isFinite(kwh) && kwh > 0 && kwh < 1_000_000
                 && Double.isFinite(euro) && euro >= 0 && euro <= 10_000_000
-                && (months == 1 || months == 2)
+                && (months >= 1 && months <= 3)
                 && period != null && period.length() <= 90
                 && period.indexOf('\n') < 0 && period.indexOf('\r') < 0;
     }
@@ -504,7 +516,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
             float fontScale=context.getResources().getConfiguration().fontScale;
             views.setImageViewBitmap(R.id.widget_chart,MonthlyChart.draw(context,history,spec,spec.chartHeight(fontScale,showStatus),bitmapPixels));
         }else{
-            views.setTextViewText(R.id.widget_brand,spec.compact()?"Costo Luce":"Costo Luce · v6.5.1");
+            views.setTextViewText(R.id.widget_brand,spec.compact()?"Costo Luce":"Costo Luce · v6.6.0");
             views.setViewVisibility(R.id.widget_chart_note,android.view.View.GONE);
             if("enel".equals(p.getString(KEY_SOURCE,"")))try{org.json.JSONArray rows=new org.json.JSONArray(p.getString(KEY_MONTHLY,"[]"));if(rows.length()>0)views.setTextViewText(R.id.widget_period,compactPeriod(rows));}catch(Exception ignored){}
         }
@@ -661,7 +673,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         views.setOnClickPendingIntent(R.id.widget_refresh, refreshPending);
         views.setOnClickPendingIntent(R.id.widget_status, refreshPending);
         boolean chart = p.getInt("page_"+widgetId,0)==1;
-        views.setTextViewText(R.id.widget_brand,chart?"Consumi ultimi 4 mesi":"COSTO LUCE · v6.5.1");
+        views.setTextViewText(R.id.widget_brand,chart?"Consumi ultimi 4 mesi":"COSTO LUCE · v6.6.0");
         views.setViewVisibility(R.id.widget_units,chart?android.view.View.VISIBLE:android.view.View.GONE);
         views.setViewVisibility(R.id.widget_refresh,chart?android.view.View.GONE:android.view.View.VISIBLE);
         boolean showKwh="kwh".equals(p.getString("display_unit","eur"));

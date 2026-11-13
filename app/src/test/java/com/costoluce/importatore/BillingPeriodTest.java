@@ -62,4 +62,18 @@ public final class BillingPeriodTest {
         assertEquals("01062026", july.from);
         assertEquals("24072026", july.to);
     }
+    @Test public void userExampleCanShiftBimonthlyPairs(){
+        assertEquals("01112026",BillingPeriod.select(day(2026,11,13),2,9).from);
+        assertEquals("01102026",BillingPeriod.select(day(2026,11,13),2,8).from);
+    }
+    @Test public void quarterlyExampleHandlesDifferentStartingMonthsAndYearRollover(){
+        assertEquals("01112026",BillingPeriod.select(day(2026,11,13),3,8).from);
+        assertEquals("01092026",BillingPeriod.select(day(2026,11,13),3,9).from);
+        BillingPeriod.Window w=BillingPeriod.select(day(2027,1,5),3,12);
+        assertEquals("01122026",w.from);
+        java.util.List<EnelConnector.MonthUsage> rows=w.withFutureMonths(Arrays.asList(
+            new EnelConnector.MonthUsage(2026,12,100,31,31,744),new EnelConnector.MonthUsage(2027,1,10,5,5,120)));
+        assertEquals(3,rows.size());assertTrue(rows.get(2).future);assertEquals(2,rows.get(2).month);
+    }
+    @Test(expected=IllegalArgumentException.class) public void invalidExampleIsRejected(){BillingPeriod.select(day(2026,11,13),3,0);}
 }

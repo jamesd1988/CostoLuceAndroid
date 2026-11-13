@@ -65,7 +65,7 @@ final class WidgetPricing {
     double estimatedCost(double kwh,int months){return estimatedCost(kwh,months,months*taxableMonthly(kwh/months),months);}
     double estimatedCost(double kwh,int months,double residentTaxableKwh){return estimatedCost(kwh,months,residentTaxableKwh,months);}
     double estimatedCost(double kwh,int months,double residentTaxableKwh,int activeMonths){
-        if(!Double.isFinite(kwh)||kwh<0||kwh>=1_000_000||(months!=1&&months!=2)||activeMonths<0||activeMonths>months
+        if(!Double.isFinite(kwh)||kwh<0||kwh>=1_000_000||(months<1||months>3)||activeMonths<0||activeMonths>months
                 ||!Double.isFinite(residentTaxableKwh)||residentTaxableKwh<0||residentTaxableKwh>kwh+0.0001)
             throw new IllegalArgumentException("Consumo o imponibile non valido.");
         double energy=values[0]*(fixed[0]?activeMonths:kwh);

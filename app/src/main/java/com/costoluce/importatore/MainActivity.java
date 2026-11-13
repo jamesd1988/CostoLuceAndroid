@@ -33,6 +33,7 @@ public final class MainActivity extends Activity {
     private static final int MAX_FILE_BYTES = 1_500_000;
     private WebView web;
     private int preferredMonths = 2;
+    private int preferredAnchor = 10;
     private final ExecutorService background = Executors.newSingleThreadExecutor();
     private boolean enelBusy = false;
     private boolean areraBusy = false;
@@ -104,7 +105,8 @@ public final class MainActivity extends Activity {
                 int months = Integer.parseInt(uri.getQueryParameter("months"));
                 String rates = uri.getQueryParameter("rates");
                 boolean resident = "1".equals(uri.getQueryParameter("resident"));
-                success = CostoLuceWidgetProvider.saveConfiguration(this, months, rates, resident);
+                success = CostoLuceWidgetProvider.saveConfiguration(this, months, rates, resident,requestAnchor(uri));
+                if(success){preferredMonths=months;preferredAnchor=requestAnchor(uri);}
             } catch (RuntimeException ignored) { }
             boolean enelReady = new EnelCredentialStore(this).hasSaved();
             boolean automatic = "1".equals(uri.getQueryParameter("auto"));
@@ -131,7 +133,7 @@ public final class MainActivity extends Activity {
                 int months = Integer.parseInt(uri.getQueryParameter("months"));
                 String rates = uri.getQueryParameter("rates");
                 boolean resident = "1".equals(uri.getQueryParameter("resident"));
-                success = CostoLuceWidgetProvider.saveSnapshot(this, kwh, euro, months,
+                success = CostoLuceWidgetProvider.saveConfiguration(this,months,rates,resident,requestAnchor(uri)) && CostoLuceWidgetProvider.saveSnapshot(this, kwh, euro, months,
                         uri.getQueryParameter("source"), uri.getQueryParameter("period"),
                         rates, resident, uri.getQueryParameter("monthly"));
             } catch (RuntimeException ignored) {
@@ -148,14 +150,16 @@ public final class MainActivity extends Activity {
             return true;
         }
         if ("enel-sync".equals(action)) {
-            preferredMonths = "1".equals(uri.getQueryParameter("months")) ? 1 : 2;
+            preferredMonths = "1".equals(uri.getQueryParameter("months")) ? 1 : "3".equals(uri.getQueryParameter("months")) ? 3 : 2;
+            preferredAnchor=requestAnchor(uri);
             startEnelSync(); return true;
         }
         if ("enel-config".equals(action)) { showEnelConfiguration(); return true; }
         if ("enel-clear".equals(action)) { confirmRemoveCredentials(); return true; }
         if ("enel-check".equals(action)) { checkEnelPublic(); return true; }
         if ("sync".equals(action)) {
-            preferredMonths = "1".equals(uri.getQueryParameter("months")) ? 1 : 2;
+            preferredMonths = "1".equals(uri.getQueryParameter("months")) ? 1 : "3".equals(uri.getQueryParameter("months")) ? 3 : 2;
+            preferredAnchor=requestAnchor(uri);
             openPortalInsideApp(); return true;
         }
         if ("portal".equals(action)) { openPortalInExternalBrowser(); return true; }
@@ -182,7 +186,7 @@ public final class MainActivity extends Activity {
         if (web == null || web.getUrl() == null || !web.getUrl().startsWith(HOME)) return;
         deliverArera(AreraRepository.state(this,""));
         checkArera(false);
-        web.evaluateJavascript("window.onHistoryNative("+CostoLuceWidgetProvider.history(this).toString()+","+CostoLuceWidgetProvider.prefs(this).getLong("history_at",0L)+");",null);
+        web.evaluateJavascript("window.onHistoryNative("+CostoLuceWidgetProvider.archive(this).toString()+","+CostoLuceWidgetProvider.prefs(this).getLong("history_at",0L)+");",null);
         JSONObject snapshot = CostoLuceWidgetProvider.getLatestSnapshot(this);
         JSONObject config = CostoLuceWidgetProvider.getWidgetConfiguration(this);
         web.evaluateJavascript("window.onWidgetNativeState("
@@ -274,7 +278,7 @@ public final class MainActivity extends Activity {
         remember.setChecked(false); // Explicit opt-in to durable credential storage.
         content.addView(remember);
         TextView note = new TextView(this);
-        note.setText("Periodo importato: bimestre di fatturazione e ultimi quattro mesi, incluso quello corrente. Il riepilogo con i nomi dei mesi è mostrato nella schermata principale. Non è un'API pubblica ufficiale e potrebbe non funzionare.");
+        note.setText("Periodo importato: ciclo configurato di 1, 2 o 3 mesi e storico esteso, quando disponibile, incluso il mese corrente. Il riepilogo con i nomi dei mesi è mostrato nella schermata principale. Non è un'API pubblica ufficiale e potrebbe non funzionare.");
         content.addView(note);
         scroller.addView(content);
         AlertDialog dialog=new AlertDialog.Builder(this)
@@ -300,6 +304,7 @@ public final class MainActivity extends Activity {
         final int requestId = ++enelRequestId;
         enelStatus("Inizio collegamento Enel. Durata massima prevista: circa 90 secondi...", false);
         final int selectedMonths=preferredMonths;
+        final int selectedAnchor=preferredAnchor;
         // This UI watchdog guarantees visible feedback even when an HTTP library blocks.
         uiHandler.postDelayed(() -> {
             if(enelBusy && enelRequestId == requestId && !isFinishing()) {
@@ -308,7 +313,7 @@ public final class MainActivity extends Activity {
         }, 100000);
         background.execute(() -> {
             try {
-                EnelConnector.Result result=EnelConnector.fetch(credentials,selectedMonths, phase -> {
+                EnelConnector.Result result=EnelConnector.fetch(credentials,selectedMonths,selectedAnchor, phase -> {
                     if (!isFinishing()) runOnUiThread(() -> {
                         if (enelRequestId == requestId && enelBusy) enelStatus(phase, false);
                     });
@@ -329,6 +334,7 @@ public final class MainActivity extends Activity {
                             org.json.JSONObject detail=new org.json.JSONObject();
                             detail.put("kwh",result.kwh);
                             detail.put("months",selectedMonths);
+                            detail.put("anchor",selectedAnchor);
                             detail.put("period",result.period);
                             org.json.JSONArray monthly=new org.json.JSONArray();
                             for(EnelConnector.MonthUsage m : result.monthly) {
@@ -344,7 +350,7 @@ public final class MainActivity extends Activity {
                                 monthly.put(row);
                             }
                             detail.put("monthly",monthly);
-                            web.evaluateJavascript("window.onHistoryNative("+CostoLuceWidgetProvider.history(this).toString()+","+CostoLuceWidgetProvider.prefs(this).getLong("history_at",0L)+");",null);
+                            web.evaluateJavascript("window.onHistoryNative("+CostoLuceWidgetProvider.archive(this).toString()+","+CostoLuceWidgetProvider.prefs(this).getLong("history_at",0L)+");",null);
                             web.evaluateJavascript("window.onEnelConsumption("+detail.toString()+");",null);
                         } catch(org.json.JSONException e) {
                             enelStatus("Errore nella visualizzazione del riepilogo mensile.",true);
@@ -375,6 +381,9 @@ public final class MainActivity extends Activity {
     }
 
     int getPreferredMonths() { return preferredMonths; }
+    private int requestAnchor(Uri uri){
+        try{String raw=uri.getQueryParameter("anchor");int a=raw==null?CostoLuceWidgetProvider.prefs(this).getInt("billing_anchor",10):Integer.parseInt(raw);return a>=1&&a<=12?a:0;}catch(Exception e){return 0;}
+    }
 
     void openPortalInsideApp() {
         if (web != null) web.loadUrl(PORTAL);

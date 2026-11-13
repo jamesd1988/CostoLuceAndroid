@@ -4,7 +4,7 @@
   // Non interagisce mai con pagine, PIN o pulsanti SPID/CIE.
   if (window.__costoLuceCaptureInstalled) return;
   window.__costoLuceCaptureInstalled = true;
-  var selectedMonths = Number(window.__costoLuceMonths) === 1 ? 1 : 2;
+  var selectedMonths = Number(window.__costoLuceMonths) === 1 ? 1 : Number(window.__costoLuceMonths) === 3 ? 3 : 2;
   var lastSent = '';
   var scanTimer = 0;
   var lastAction = 0;
@@ -166,6 +166,7 @@
     status('Accesso rilevato. Non posso identificare con sicurezza la sezione o il periodo: nessun dato è stato importato.', false);
   }
   function scan() {
+    if(selectedMonths===3){status('Per il trimestre usa la connessione Enel o importa un file con il periodo esatto. Il recupero automatico dal Portale Consumi non verifica questo raggruppamento.',false);return;}
     var text = visibleText();
     // Non importare totali quando si è sulla pagina pubblica di autenticazione.
     if (/entra\s+con\s+(?:spid|cie)|accedi\s+con\s+(?:spid|cie)/i.test(text) &&

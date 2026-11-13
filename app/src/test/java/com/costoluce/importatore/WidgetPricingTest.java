@@ -43,4 +43,12 @@ public final class WidgetPricingTest {
     public void invalidConsumptionCannotBeStored() throws Exception {
         WidgetPricing.parse(rates(), true).estimatedCost(-1, 2);
     }
+    @Test public void quarterKeepsMonthlyExciseAndExcludesFutureFixedFees()throws Exception{
+        WidgetPricing pricing=WidgetPricing.parse(rates(),true);
+        double taxable=WidgetPricing.taxableMonthly(178)+WidgetPricing.taxableMonthly(160)+WidgetPricing.taxableMonthly(400);
+        assertEquals(pricing.estimatedCost(178,1)+pricing.estimatedCost(160,1)+pricing.estimatedCost(400,1),pricing.estimatedCost(738,3,taxable,3),1e-8);
+        org.json.JSONObject json=new org.json.JSONObject(rates());org.json.JSONObject meta=new org.json.JSONObject();meta.put("transport",new org.json.JSONObject().put("type","fixed"));json.put("_meta",meta);json.put("transport",12);
+        WidgetPricing fixed=WidgetPricing.parse(json.toString(),true);
+        assertEquals(26.4,fixed.estimatedCost(100,3,0,3)-fixed.estimatedCost(100,3,0,1),1e-8);
+    }
 }

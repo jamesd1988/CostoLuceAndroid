@@ -111,14 +111,18 @@ public final class EnelConnector {
         return fetch(credentials, months, null);
     }
 
-    static synchronized Result fetch(Credentials credentials, int months, Progress progress) throws IOException, JSONException {
+    static Result fetch(Credentials credentials, int months, Progress progress) throws IOException, JSONException {
+        return fetch(credentials,months,10,progress);
+    }
+
+    static synchronized Result fetch(Credentials credentials,int months,int anchor,Progress progress) throws IOException,JSONException {
         final long deadline = System.nanoTime() + MAX_SYNC_MS * 1_000_000L;
         credentials.validate();
-        if (months != 1 && months != 2) throw new IOException("Periodo non supportato.");
+        if (months < 1 || months > 3) throw new IOException("Periodo non supportato.");
         // Respect the customer's bimonthly billing cycle. The active month
         // is included only through today's date; no future kWh are inferred.
-        BillingPeriod.Window window = BillingPeriod.today(months);
-        String from = HistoryMonths.from(java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("Europe/Rome")));
+        BillingPeriod.Window window = BillingPeriod.today(months,anchor);
+        String from = HistoryMonths.from(java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("Europe/Rome")),months,anchor);
         String to = window.to;
 
         CookieManager jar = new CookieManager(null, CookiePolicy.ACCEPT_ORIGINAL_SERVER);

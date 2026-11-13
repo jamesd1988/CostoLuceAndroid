@@ -43,4 +43,20 @@ public class HistoryMonthsTest {
         EnelConnector.Result result=EnelConnector.forBillingWindow(new EnelConnector.Result(12,"",1,rows),BillingPeriod.select(day(2026,12,12),2));
         assertEquals(2,result.monthly.size());assertTrue(result.monthly.get(1).future);assertEquals(2027,result.monthly.get(1).year);assertEquals(12,result.kwh,0);
     }
+    @Test public void rangeCoversFourQuarterlyBillsWithoutInventingMonths(){
+        assertEquals("01022026",HistoryMonths.from(day(2026,11,13),3,8));
+        assertEquals("01112025",HistoryMonths.from(day(2026,10,13),3,8));
+        assertEquals("01082026",HistoryMonths.from(day(2026,11,13),1,8));
+    }
+    @Test public void cachedCurrentMonthRemainsPartialAfterRollover()throws Exception{
+        JSONArray saved=HistoryMonths.serialize(Arrays.asList(new EnelConnector.MonthUsage(2026,11,40,12,12,288)));
+        JSONArray rows=HistoryMonths.slots(saved.toString(),day(2026,12,1),12);
+        assertEquals(12,rows.length());JSONObject november=rows.getJSONObject(10);assertEquals(11,november.getInt("month"));assertTrue(november.getBoolean("partial"));
+        assertFalse(rows.getJSONObject(11).getBoolean("available"));
+    }
+    @Test public void mergingMissingResponsesPreservesMeasuredZeros()throws Exception{
+        JSONArray old=HistoryMonths.serialize(Arrays.asList(new EnelConnector.MonthUsage(2026,9,0,30,30,720)));
+        JSONArray unavailable=HistoryMonths.serialize(Arrays.asList(new EnelConnector.MonthUsage(2026,9,0,0,30,0)));
+        JSONArray merged=HistoryMonths.merge(old.toString(),unavailable);assertEquals(1,merged.length());assertEquals(720,merged.getJSONObject(0).getInt("hourSamples"));
+    }
 }

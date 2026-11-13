@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#f4f7fc" />
-  <title>Costo Luce 6.5.1</title>
+  <title>Costo Luce 6.6.0</title>
   <style>
     :root { --ink:#152844; --muted:#718198; --blue:#365cda; --blue2:#5472ed; --pale:#eaf0ff; --line:#e5eaf3; --bg:#f4f7fc; --green:#108266; }
     * { box-sizing:border-box; }
@@ -110,10 +110,11 @@
     .rate-editor{position:fixed;inset:0;z-index:100;display:flex;align-items:flex-end;justify-content:center}.sheet-backdrop{position:absolute;inset:0;background:#010a16bb}.rate-sheet{position:relative;max-width:520px;width:100%;max-height:90%;overflow-y:auto;padding:12px 22px calc(24px + env(safe-area-inset-bottom));border:1px solid #3a5a7d;border-bottom:0;border-radius:25px 25px 0 0;background:linear-gradient(125deg,#102c4a,#061b32);box-shadow:0 -15px 70px #0004}.sheet-handle{width:42px;height:4px;border-radius:5px;background:#6686a7;margin:0 auto 16px}.sheet-heading{display:flex;justify-content:space-between;align-items:center;margin-bottom:25px}.sheet-heading h2{font-size:23px;margin:0}.sheet-heading button{background:none;border:0;color:#bed1ec;font-size:30px;line-height:1;padding:0 3px}.rate-sheet label{display:block;font-size:12px;margin:17px 0 9px;color:#ecf2ff}.sheet-field{display:flex;align-items:center;gap:8px;padding:11px 12px;border:1px solid #b2c8df;border-radius:11px;background:#082039}.sheet-field input{font-size:16px;font-weight:700;border:0;background:none;outline:0;color:#f6f8ff;width:100%;min-width:0}.sheet-field input:disabled{opacity:1;color:#c9ddf4}.sheet-field span{font-size:13px;color:#d1e4f9;white-space:nowrap}.sheet-type{display:flex;border:1px solid #527294;border-radius:22px;padding:2px;background:#061c34}.sheet-type button{flex:1;border:0;background:none;border-radius:20px;padding:10px;color:#d4e3f7;font-size:13px}.sheet-type button.active{background:#0875ff;color:white}.sheet-type #draft-fixed.active{background:linear-gradient(#70efd7,#35d7bd);color:#062e36;font-weight:750}.sheet-help{font-size:11px;line-height:1.5;color:#cedef2;margin:10px 0}.sheet-error{min-height:18px;color:#ffbea4;font-size:11px;line-height:1.5;margin:9px 0}.sheet-actions{display:flex;gap:13px;margin-top:20px}.sheet-actions button{border:0;border-radius:17px;padding:14px;font-size:13px;font-weight:750}.sheet-cancel{background:none;color:#d0dff4;flex:1}.sheet-save{flex:2;background:#0875ff;color:white}@media(max-width:350px){.rate-card{padding:12px}.rate-card-controls{gap:6px}.rate-type button{padding:7px;min-width:48px}.rate-price{padding:8px}.rate-price input{font-size:14px}}
     .add-rate{width:100%;display:flex;justify-content:center;align-items:center;gap:6px;border:1px solid #2b76c7;border-radius:14px;padding:10px;background:#0c335c;color:#e5f3ff;font-size:13px;font-weight:700;margin:0 0 13px}.add-rate span{font-size:22px;line-height:1}.add-rate:disabled{opacity:.45}.undo-rate{margin:0 4px 8px;padding:8px 12px;border:1px solid #347673;background:#103c45;color:#8cefdc;border-radius:11px;font-size:12px}.rate-delete{display:block;width:100%;border:1px solid #a35462;background:#55253555;color:#ffb2bb;border-radius:13px;padding:10px;font-size:12px;margin-top:8px}.rate-confirm{padding:12px;border:1px solid #85525c;background:#342637;border-radius:14px;margin-top:10px;color:#f8dbe0;font-size:12px;line-height:1.5}.rate-confirm p{margin:0 0 9px}.rate-confirm button{padding:8px 12px;border:1px solid #6b5c76;background:#182b45;color:#f3e9f3;border-radius:10px;margin-right:8px}.rate-confirm .confirm-danger{background:#a13d51;border-color:#c36576;color:white}
   .arera-card{margin:14px 0 20px}.arera-card h3{margin:0 0 10px}.arera-card p{font-size:12px;line-height:1.55;color:#bdcee4}.arera-card label{display:block;font-size:12px;margin:12px 0 6px;color:#d9e6f5}.arera-card select,.arera-card input{width:100%;box-sizing:border-box;background:#102c49;color:#eef6ff;border:1px solid #315578;border-radius:12px;padding:12px;font-size:14px;min-height:46px}.arera-profile{display:flex;gap:12px}.arera-profile>div{flex:1;min-width:0}.arera-card .add-rate{margin:12px 0}.arera-card .rate-confirm p{overflow-wrap:anywhere}.arera-card button:disabled{opacity:.5}
+.chart-heading{flex-wrap:wrap}.chart-heading h2{flex:1;min-width:120px}.chart-heading .mini-seg{flex-shrink:0}.history-col>span{font-size:11px;overflow-wrap:anywhere}.history-col strong{font-size:12px}.mini-seg button{padding:6px 9px}
 </style>
 </head>
 <body>
-<main class="shell"><header class="mast"><div class="logo" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m14 2-10 12h7l-1 8 10-13h-7z" fill="white"/></svg></div><div><h1>Costo Luce</h1><p class="sub">v6.5.1</p></div><button class="gear" aria-label="Impostazioni" onclick="showView('settings')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 3-1 3-3 1 1 4-2 2 2 3 3-1 2 3h3l1-3 3-1-1-4 2-2-2-3-3 1-2-3z"/><circle cx="11" cy="10" r="3"/></svg></button></header><div id="page-home"><div class="seg unit-toggle" role="group" aria-label="Unità di visualizzazione"><span>Visualizza</span><button id="unitEur" onclick="setDisplayUnit('eur')">€</button><button id="unitKwh" onclick="setDisplayUnit('kwh')">kWh</button></div><section class="card result" aria-live="polite"><div class="period-heading"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v5m10-5v5M3 11h18"/></svg><div><span>Periodo di fatturazione</span><p id="summaryPeriod"></p></div><b class="badge">In corso</b></div><div class="overview-metrics"><div><div id="summaryLabel" class="metric-label">Costo stimato</div><div id="total" class="total">—</div></div><div><div id="otherLabel" class="metric-label">Consumo</div><div id="summaryOther" class="total secondary">—</div></div></div></section><section class="card history-card"><div class="chart-heading"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V12m7 8V4m7 16V8"/></svg><h2>Consumi ultimi 4 mesi</h2><div class="mini-seg"><button id="chartKwh" onclick="setDisplayUnit('kwh')">kWh</button><button id="chartEur" onclick="setDisplayUnit('eur')">€</button></div></div><div class="chart-badge"><span class="badge">Corrente parziale</span></div><div class="plot-frame"><div id="historyAxis" class="chart-axis" aria-hidden="true"></div><div id="historyChart" class="history-chart" role="img" aria-label="Storico mensile Enel"></div></div><div class="chart-footer"><div><span>Enel · ultimo aggiornamento</span><b id="historyUpdated">Nessuna lettura disponibile</b></div><a class="refresh-app" href="costoluce://enel-sync?months=2" id="homeRefresh">↻ Aggiorna</a></div><p id="homeStatus" class="home-status" role="status" hidden></p><p class="chart-note">Misure mancanti indicate con —. Stima con le tariffe salvate, incluse le quote fisse configurate.</p></section></div><div id="page-consumption" hidden><h2 class="page-title">Consumi</h2><section class="card" aria-labelledby="calc-title">
+<main class="shell"><header class="mast"><div class="logo" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m14 2-10 12h7l-1 8 10-13h-7z" fill="white"/></svg></div><div><h1>Costo Luce</h1><p class="sub">v6.6.0</p></div><button class="gear" aria-label="Impostazioni" onclick="showView('settings')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 3-1 3-3 1 1 4-2 2 2 3 3-1 2 3h3l1-3 3-1-1-4 2-2-2-3-3 1-2-3z"/><circle cx="11" cy="10" r="3"/></svg></button></header><div id="page-home"><div class="seg unit-toggle" role="group" aria-label="Unità di visualizzazione"><span>Visualizza</span><button id="unitEur" onclick="setDisplayUnit('eur')">€</button><button id="unitKwh" onclick="setDisplayUnit('kwh')">kWh</button></div><section class="card result" aria-live="polite"><div class="period-heading"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v5m10-5v5M3 11h18"/></svg><div><span>Periodo di fatturazione</span><p id="summaryPeriod"></p></div><b class="badge">In corso</b></div><div class="overview-metrics"><div><div id="summaryLabel" class="metric-label">Costo stimato</div><div id="total" class="total">—</div></div><div><div id="otherLabel" class="metric-label">Consumo</div><div id="summaryOther" class="total secondary">—</div></div></div></section><section class="card history-card"><div class="chart-heading"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V12m7 8V4m7 16V8"/></svg><h2 id="historyTitle">Consumi ultimi 4 mesi</h2><div class="mini-seg"><button id="chartBill" onclick="setChartMode('bill')">Bolletta</button><button id="chartKwh" onclick="setChartMode('kwh')">kWh</button><button id="chartEur" onclick="setChartMode('eur')">€</button></div></div><div class="chart-badge"><span class="badge" id="historyBadge">Corrente parziale</span></div><div class="plot-frame"><div id="historyAxis" class="chart-axis" aria-hidden="true"></div><div id="historyChart" class="history-chart" role="img" aria-label="Storico mensile Enel"></div></div><p id="historyTotal" class="tariff-help" hidden></p><div class="chart-footer"><div><span>Enel · ultimo aggiornamento</span><b id="historyUpdated">Nessuna lettura disponibile</b></div><a class="refresh-app" href="costoluce://enel-sync?months=2" id="homeRefresh">↻ Aggiorna</a></div><p id="homeStatus" class="home-status" role="status" hidden></p><p class="chart-note">Misure mancanti indicate con —. Stima con le tariffe salvate, incluse le quote fisse configurate.</p></section></div><div id="page-consumption" hidden><h2 class="page-title">Consumi</h2><section class="card" aria-labelledby="calc-title">
       <div id="calc-title" class="eyebrow">Consumo da calcolare</div>
       <div class="field-box"><input class="biginput" id="kwh" type="number" inputmode="decimal" min="0" step="0.1" value="" aria-label="Energia consumata in kilowattora"><span class="unit">kWh</span></div>
 </section><section class="card importcard" aria-labelledby="import-title">
@@ -145,10 +146,10 @@
       <h2 class="sect-title" id="detail-title">Dettaglio del consumo</h2>
       <p id="costParts" class="cost-parts"></p><div id="breakdown"></div>
       <div class="sumline"><span>Totale variabile</span><span id="total2">—</span></div>
-    </section><p class="note">Costo / kWh: <b id="perKwh">—</b> · Imponibile accisa: <b id="taxKwh">—</b></p></div><div id="page-rates" hidden><h2 class="page-title">Tariffe</h2><p class="tariff-subtitle">Personalizza le voci della bolletta</p><section class="card arera-card" aria-labelledby="areraTitle"><h3 id="areraTitle">Tariffe ufficiali ARERA</h3><p>Rete, ASOS e ARIM. Controllo all’apertura, al massimo ogni 24 ore. I controlli non modificano le tariffe salvate.</p><button id="areraCheck" class="add-rate" onclick="checkAreraCatalog()">↻ Controlla aggiornamenti ARERA</button><p id="areraCatalogStatus" class="tariff-help"></p><label for="areraMonth">Mese di riferimento</label><select id="areraMonth" aria-label="Mese delle tariffe ARERA"></select><div class="arera-profile"><div><label for="areraResident">Abitazione</label><select id="areraResident"><option value="resident">Residente</option><option value="nonresident">Non residente</option></select></div><div><label for="areraPower">Potenza impegnata (kW)</label><input id="areraPower" inputmode="decimal" type="text" value="3"></div></div><p class="tariff-help">La residenza qui seleziona le tariffe ARERA; l’agevolazione accisa si imposta in Periodo.</p><button id="areraPreviewButton" class="add-rate" disabled onclick="previewArera()">Verifica valori da importare</button><p id="areraMessage" role="status" aria-live="polite"></p><div id="areraPreview" class="rate-confirm" hidden><b id="areraPreviewTitle"></b><div id="areraPreviewRows"></div><p>Saranno aggiornate le voci indicate, inclusi importi, tipo fisso/variabile e voci eliminate. I nomi personalizzati restano. Controlla di non avere già aggiunto le stesse quote rete con altri nomi: quelle righe restano e potrebbero duplicare i costi.</p><button onclick="byId('areraPreview').hidden=true;areraDraft=null">Annulla</button><button onclick="applyArera()">Importa valori ARERA</button></div><p id="areraApplied" class="tariff-help"></p><p class="tariff-help">Il mese scelto fornisce le tariffe per tutti i calcoli, anche il grafico storico: non ricostruisce le tariffe di ciascun mese. Quote annuali convertite in mensili; quote potenza moltiplicate per i kW indicati. Energia, commercializzazione, dispacciamento, sbilanciamento e imposte restano invariati.</p><p class="tariff-help">Fonte: ARERA · Corrispettivi mercato libero domestico. Se un mese non è pubblicato, scegli esplicitamente un mese disponibile: il risultato resta una stima.</p></section><section class="card arera-card" aria-labelledby="offerTitle"><h3 id="offerTitle">Completa quote fisse</h3><p>Riferimento: fattura E-Light agosto–settembre 2026.</p><p><b>Commercializzazione vendita</b> · 12,00 €/mese<br><b>DISPbt · parte fissa</b> · 0,092250 €/mese</p><button id="offerComplete" class="add-rate" onclick="completeOfferFixed()">＋ Aggiungi solo le voci mancanti</button><p id="offerMessage" role="status" aria-live="polite"></p><p>Le voci già riconosciute vengono conservate, anche se hai modificato l’importo. Se le hai rinominate con nomi diversi, verifica di non duplicarle. Dopo l’aggiunta puoi modificarle o eliminarle con la matita.</p><details><summary>Dispacciamento e sbilanciamento</summary><p>Restano modificabili nelle rispettive righe. Per verificare agosto–settembre 2026: dispacciamento 0,025043 €/kWh; sbilanciamento 0,001042598 €/kWh, media ponderata sui 178 kWh di agosto e 160 di settembre. Questo valore storico non viene applicato automaticamente ai mesi successivi.</p></details><p>ARERA aggiorna le quote di rete e gli oneri; queste due quote dipendono invece dalla tua offerta. I valori di riferimento non garantiscono i prezzi dei periodi successivi.</p></section><div class="tariff-filter" role="group" aria-label="Filtra le voci"><button id="filter-all" onclick="setRateFilter('all')">Tutte</button><button id="filter-variable" onclick="setRateFilter('variable')">Variabili</button><button id="filter-fixed" onclick="setRateFilter('fixed')">Fisse</button></div><button id="addRateButton" class="add-rate" onclick="openNewRate()"><span aria-hidden="true">＋</span> Aggiungi voce</button><div id="rateFields" class="rate-cards"></div><p id="rateStatus" class="rate-status" role="status"></p><button id="undoRateButton" class="undo-rate" onclick="undoRateDeletion()" hidden>↶ Annulla eliminazione</button><p class="tariff-help">Fisso: importo mensile, indipendente dai kWh. Le quote mensili sono conteggiate nei mesi iniziati del periodo; nel calcolo manuale, nei mesi selezionati.</p><p class="tariff-help">IVA e perdite restano percentuali. Rinominarle modifica l’etichetta, mantenendo il relativo calcolo.</p><button class="reset reset-tariffs" onclick="requestResetRates()">Ripristina voci e prezzi predefiniti</button><div id="rateResetConfirm" class="rate-confirm" hidden><p>Ripristinare le voci originali? Nomi e prezzi personalizzati saranno sostituiti e le nuove voci rimosse.</p><button onclick="cancelResetRates()">Annulla</button><button class="confirm-danger" onclick="resetRates()">Ripristina</button></div><p class="tariff-help">Le voci iniziali e i prezzi di riferimento restano quelli della fattura giugno–luglio 2026. Puoi personalizzarli secondo il tuo contratto.</p></div><div id="page-period" hidden><h2 class="page-title">Periodo di fatturazione</h2><section class="card">      <div class="controlhead">Periodo di consumo</div>
-      <div class="seg" role="group" aria-label="Periodo"><button id="m1" type="button" onclick="setMonths(1)">Mese corrente</button><button id="m2" class="active" type="button" onclick="setMonths(2)">Bimestre fattura</button></div>
+    </section><p class="note">Costo / kWh: <b id="perKwh">—</b> · Imponibile accisa: <b id="taxKwh">—</b></p></div><div id="page-rates" hidden><h2 class="page-title">Tariffe</h2><p class="tariff-subtitle">Personalizza le voci della bolletta</p><section class="card arera-card" aria-labelledby="billingTitle"><h3 id="billingTitle">Come arriva la tua bolletta?</h3><label for="billingFrequency">Periodicità</label><select id="billingFrequency" onchange="billingDraftChanged(true)"><option value="1">Mensile · 1 mese</option><option value="2">Bimestrale · 2 mesi</option><option value="3">Trimestrale · 3 mesi</option></select><div id="billingExampleFields"><label for="billingAnchor">Esempio dalla tua bolletta: primo mese del gruppo</label><select id="billingAnchor" onchange="billingDraftChanged()"><option value="">Scegli un mese</option><option value="1">Gennaio</option><option value="2">Febbraio</option><option value="3">Marzo</option><option value="4">Aprile</option><option value="5">Maggio</option><option value="6">Giugno</option><option value="7">Luglio</option><option value="8">Agosto</option><option value="9">Settembre</option><option value="10">Ottobre</option><option value="11">Novembre</option><option value="12">Dicembre</option></select><p>Se la bolletta copre agosto + settembre, scegli Agosto. Per agosto + settembre + ottobre, scegli Trimestrale e Agosto.</p></div><p id="billingExample" aria-live="polite"></p><button class="add-rate" onclick="saveBillingSetup()">Salva raggruppamento</button><p id="billingSetupStatus" role="status"></p><p id="billingActive"></p><p>Il grafico Bolletta somma i mesi di ogni gruppo con le tariffe salvate. Sono stime dell’elettricità, non importi ufficiali fatturati; canone TV o altre voci non configurate restano esclusi.</p></section><section class="card arera-card" aria-labelledby="areraTitle"><h3 id="areraTitle">Tariffe ufficiali ARERA</h3><p>Rete, ASOS e ARIM. Controllo all’apertura, al massimo ogni 24 ore. I controlli non modificano le tariffe salvate.</p><button id="areraCheck" class="add-rate" onclick="checkAreraCatalog()">↻ Controlla aggiornamenti ARERA</button><p id="areraCatalogStatus" class="tariff-help"></p><label for="areraMonth">Mese di riferimento</label><select id="areraMonth" aria-label="Mese delle tariffe ARERA"></select><div class="arera-profile"><div><label for="areraResident">Abitazione</label><select id="areraResident"><option value="resident">Residente</option><option value="nonresident">Non residente</option></select></div><div><label for="areraPower">Potenza impegnata (kW)</label><input id="areraPower" inputmode="decimal" type="text" value="3"></div></div><p class="tariff-help">La residenza qui seleziona le tariffe ARERA; l’agevolazione accisa si imposta in Periodo.</p><button id="areraPreviewButton" class="add-rate" disabled onclick="previewArera()">Verifica valori da importare</button><p id="areraMessage" role="status" aria-live="polite"></p><div id="areraPreview" class="rate-confirm" hidden><b id="areraPreviewTitle"></b><div id="areraPreviewRows"></div><p>Saranno aggiornate le voci indicate, inclusi importi, tipo fisso/variabile e voci eliminate. I nomi personalizzati restano. Controlla di non avere già aggiunto le stesse quote rete con altri nomi: quelle righe restano e potrebbero duplicare i costi.</p><button onclick="byId('areraPreview').hidden=true;areraDraft=null">Annulla</button><button onclick="applyArera()">Importa valori ARERA</button></div><p id="areraApplied" class="tariff-help"></p><p class="tariff-help">Il mese scelto fornisce le tariffe per tutti i calcoli, anche il grafico storico: non ricostruisce le tariffe di ciascun mese. Quote annuali convertite in mensili; quote potenza moltiplicate per i kW indicati. Energia, commercializzazione, dispacciamento, sbilanciamento e imposte restano invariati.</p><p class="tariff-help">Fonte: ARERA · Corrispettivi mercato libero domestico. Se un mese non è pubblicato, scegli esplicitamente un mese disponibile: il risultato resta una stima.</p></section><section class="card arera-card" aria-labelledby="offerTitle"><h3 id="offerTitle">Completa quote fisse</h3><p>Riferimento: fattura E-Light agosto–settembre 2026.</p><p><b>Commercializzazione vendita</b> · 12,00 €/mese<br><b>DISPbt · parte fissa</b> · 0,092250 €/mese</p><button id="offerComplete" class="add-rate" onclick="completeOfferFixed()">＋ Aggiungi solo le voci mancanti</button><p id="offerMessage" role="status" aria-live="polite"></p><p>Le voci già riconosciute vengono conservate, anche se hai modificato l’importo. Se le hai rinominate con nomi diversi, verifica di non duplicarle. Dopo l’aggiunta puoi modificarle o eliminarle con la matita.</p><details><summary>Dispacciamento e sbilanciamento</summary><p>Restano modificabili nelle rispettive righe. Per verificare agosto–settembre 2026: dispacciamento 0,025043 €/kWh; sbilanciamento 0,001042598 €/kWh, media ponderata sui 178 kWh di agosto e 160 di settembre. Questo valore storico non viene applicato automaticamente ai mesi successivi.</p></details><p>ARERA aggiorna le quote di rete e gli oneri; queste due quote dipendono invece dalla tua offerta. I valori di riferimento non garantiscono i prezzi dei periodi successivi.</p></section><div class="tariff-filter" role="group" aria-label="Filtra le voci"><button id="filter-all" onclick="setRateFilter('all')">Tutte</button><button id="filter-variable" onclick="setRateFilter('variable')">Variabili</button><button id="filter-fixed" onclick="setRateFilter('fixed')">Fisse</button></div><button id="addRateButton" class="add-rate" onclick="openNewRate()"><span aria-hidden="true">＋</span> Aggiungi voce</button><div id="rateFields" class="rate-cards"></div><p id="rateStatus" class="rate-status" role="status"></p><button id="undoRateButton" class="undo-rate" onclick="undoRateDeletion()" hidden>↶ Annulla eliminazione</button><p class="tariff-help">Fisso: importo mensile, indipendente dai kWh. Le quote mensili sono conteggiate nei mesi iniziati del periodo; nel calcolo manuale, nei mesi selezionati.</p><p class="tariff-help">IVA e perdite restano percentuali. Rinominarle modifica l’etichetta, mantenendo il relativo calcolo.</p><button class="reset reset-tariffs" onclick="requestResetRates()">Ripristina voci e prezzi predefiniti</button><div id="rateResetConfirm" class="rate-confirm" hidden><p>Ripristinare le voci originali? Nomi e prezzi personalizzati saranno sostituiti e le nuove voci rimosse.</p><button onclick="cancelResetRates()">Annulla</button><button class="confirm-danger" onclick="resetRates()">Ripristina</button></div><p class="tariff-help">Le voci iniziali e i prezzi di riferimento restano quelli della fattura giugno–luglio 2026. Puoi personalizzarli secondo il tuo contratto.</p></div><div id="page-period" hidden><h2 class="page-title">Periodo di fatturazione</h2><section class="card">      <div class="controlhead">Periodo di consumo</div>
+      <p id="periodConfigSummary" class="help"></p><button class="add-rate" onclick="showView('rates');byId('billingTitle').scrollIntoView({block:'start'})">Configura il raggruppamento in Tariffe</button>
       <div class="switchrow"><div class="switchlabel"><b>Agevolazione accisa domestica</b><span>Residente con potenza fino a 3 kW</span></div><label class="switch"><input type="checkbox" id="resident" checked aria-label="Applica esenzione accisa per residenza"><span class="track"></span></label></div>
-    <p class="help">Bimestri: ottobre–novembre, dicembre–gennaio e così via. Nessuna proiezione dei consumi futuri.</p></section></div><div id="page-settings" hidden><h2 class="page-title">Impostazioni</h2><section class="card"><h3>Account Enel</h3><p class="step">Gestisci le credenziali cifrate sul telefono.</p><a class="mainbtn" href="costoluce://enel-config">Configura account</a></section><section class="card widgetcard" aria-labelledby="widget-title">
+    <p class="help">Mensile, bimestrale o trimestrale: il raggruppamento si configura in Tariffe con un esempio dalla tua bolletta. Nessun consumo futuro viene inventato.</p></section></div><div id="page-settings" hidden><h2 class="page-title">Impostazioni</h2><section class="card"><h3>Account Enel</h3><p class="step">Gestisci le credenziali cifrate sul telefono.</p><a class="mainbtn" href="costoluce://enel-config">Configura account</a></section><section class="card widgetcard" aria-labelledby="widget-title">
       <div class="eyebrow" id="widget-title">Widget Home · collegamento automatico</div>
       <p class="step">Tariffe, periodo e consumi reali vengono sincronizzati con il widget
         automaticamente quando li modifichi o li importi. Non occorre premere Salva.</p>
@@ -201,13 +202,16 @@
   function saveRateUndo(){try{if(rateUndo)localStorage.setItem('costoluce_rate_undo_v3',JSON.stringify(rateUndo));else localStorage.removeItem?.('costoluce_rate_undo_v3')}catch(e){}}
 
   let historyRows=[];
+  let chartMode=null;
+  try{const mode=localStorage.getItem('costoluce_chart_mode_v1');if(['bill','kwh','eur'].includes(mode))chartMode=mode}catch(e){}
   let displayUnit='eur';try{displayUnit=localStorage.getItem('costoluce_display_unit_v1')==='kwh'?'kwh':'eur'}catch(e){}
   function setDisplayUnit(unit,notify=true){
     displayUnit=unit==='kwh'?'kwh':'eur';
+    if(chartMode!=='bill')chartMode=displayUnit;
     try{localStorage.setItem('costoluce_display_unit_v1',displayUnit)}catch(e){}
     byId('unitEur').classList.toggle('active',displayUnit==='eur');
     byId('unitKwh').classList.toggle('active',displayUnit==='kwh');
-    byId('chartKwh').classList.toggle('active',displayUnit==='kwh');byId('chartEur').classList.toggle('active',displayUnit==='eur');
+    byId('chartKwh').classList.toggle('active',chartMode==='kwh');byId('chartEur').classList.toggle('active',chartMode==='eur');byId('chartBill').classList.toggle('active',chartMode==='bill');
     recalc();
     if(notify)window.location.href='costoluce://display-unit?unit='+displayUnit;
   }
@@ -218,26 +222,56 @@
   }
   function chartScale(max){if(max<=0)return 1;const base=Math.pow(10,Math.floor(Math.log10(max/4)));const step=[1,2,5,10].find(n=>n*base>=max/4)*base;return step*4}
   function monthlyCost(k){return calculateCosts(k,1,byId('resident').checked?taxableMonthly(k):k,1).total}
+  function setChartMode(mode){
+    if(!['bill','kwh','eur'].includes(mode))return;chartMode=mode;
+    try{localStorage.setItem('costoluce_chart_mode_v1',mode)}catch(e){}
+    if(mode==='bill')renderHistory();else setDisplayUnit(mode);
+  }
+  function billingHistory(today=new Date()){
+    const cycle=selectedPeriod(months,today),first=new Date(cycle[0].year,cycle[0].month-1,1),result=[];
+    const current=today.getFullYear()*12+today.getMonth();
+    for(let group=3;group>=0;group--){
+      const start=new Date(first.getFullYear(),first.getMonth()-group*months,1),end=new Date(start.getFullYear(),start.getMonth()+months-1,1);
+      let amount=0,kwh=0,available=true,partial=false,active=0;
+      for(let i=0;i<months;i++){
+        const d=new Date(start.getFullYear(),start.getMonth()+i,1),index=d.getFullYear()*12+d.getMonth();
+        if(index>current){partial=true;continue}
+        active++;const row=historyRows.find(r=>r.year===d.getFullYear()&&r.month===d.getMonth()+1);
+        if(!row||!row.available||!Number.isFinite(row.kwh)||row.kwh<0){available=false;continue}
+        kwh+=row.kwh;amount+=monthlyCost(row.kwh);partial=partial||Boolean(row.partial)||index===current;
+      }
+      const short=d=>italianMonth(d.getFullYear(),d.getMonth()+1).slice(0,3);
+      const label=months===1?short(start):short(start)+'–'+short(end);
+      const years=start.getFullYear()===end.getFullYear()?String(start.getFullYear()):start.getFullYear()+'–'+end.getFullYear();
+      result.push({year:start.getFullYear(),month:start.getMonth()+1,label,years,kwh,value:amount,available:available&&active>0,partial});
+    }
+    return result;
+  }
   function renderHistory(){
     const el=byId('historyChart');if(!el)return;el.innerHTML='';
-    const today=new Date();const rows=[];
-    for(let i=0;i<4;i++){const d=new Date(today.getFullYear(),today.getMonth()-3+i,1);rows.push(historyRows.find(r=>r.year===d.getFullYear()&&r.month===d.getMonth()+1)||{year:d.getFullYear(),month:d.getMonth()+1,available:false,partial:i===3})}
-    const values=rows.map(r=>r.available?(displayUnit==='kwh'?r.kwh:monthlyCost(r.kwh)):0);const max=chartScale(Math.max(0,...values));
+    const today=new Date();let rows=[];const bill=chartMode==='bill',kwhMode=chartMode==='kwh';
+    if(bill)rows=billingHistory(today);else for(let i=0;i<4;i++){const d=new Date(today.getFullYear(),today.getMonth()-3+i,1);rows.push(historyRows.find(r=>r.year===d.getFullYear()&&r.month===d.getMonth()+1)||{year:d.getFullYear(),month:d.getMonth()+1,available:false,partial:i===3})}
+    byId('historyTitle').textContent=bill?'Bollette stimate':'Consumi ultimi 4 mesi';byId('historyBadge').textContent=bill?'Periodo in corso':'Corrente parziale';
+    for(const [id,mode] of [['chartBill','bill'],['chartKwh','kwh'],['chartEur','eur']]){byId(id).classList.toggle('active',chartMode===mode);byId(id).setAttribute('aria-pressed',String(chartMode===mode))}
+    const values=rows.map(r=>r.available?(bill?r.value:kwhMode?r.kwh:monthlyCost(r.kwh)):0);const max=chartScale(Math.max(0,...values));
+    byId('historyTotal').hidden=!bill;byId('historyTotal').textContent=bill&&!rows.some(r=>r.available)?'Somma non disponibile: dati insufficienti.':bill?'Somma importi disponibili: '+euro(values.reduce((a,b)=>a+b,0))+(rows.some(r=>r.available&&r.partial)?' · include il periodo parziale':'')+(rows.some(r=>!r.available)?' · esclusi i periodi con dati mancanti':''):'';
     const axis=byId("historyAxis");axis.innerHTML="";for(let tick=4;tick>=0;tick--){const label=document.createElement("span");label.textContent=rows.some(r=>r.available)?decimal(max*tick/4,max<4?1:0):tick===0?"0":"";axis.appendChild(label)}
     const descriptions=[];
     rows.forEach((r,i)=>{const col=document.createElement('div');col.className='history-col'+(i===3?' current':'');
-      const track=document.createElement('div');track.className='history-track';const value=document.createElement('strong');value.textContent=r.available?(displayUnit==='kwh'?decimal(values[i],1):euro(values[i])):'—';track.appendChild(value);
+      const track=document.createElement('div');track.className='history-track';const value=document.createElement('strong');value.textContent=r.available?(kwhMode?decimal(values[i],1):euro(values[i])):'—';track.appendChild(value);
       if(r.available){const bar=document.createElement('div');bar.className='history-bar';bar.style.height=(values[i]/max*115)+'px';track.appendChild(bar)}
-      col.appendChild(track);const name=document.createElement('span');name.textContent=italianMonth(r.year,r.month).slice(0,3);const year=document.createElement('span');year.textContent=String(r.year);name.appendChild(year);col.appendChild(name);
+      col.appendChild(track);const name=document.createElement('span');name.textContent=r.label||italianMonth(r.year,r.month).slice(0,3);const year=document.createElement('span');year.textContent=r.years||String(r.year);name.appendChild(year);col.appendChild(name);
       const status=document.createElement('small');status.textContent=!r.available?'Mancante':i===3||r.partial?'Parziale':'Completo';col.appendChild(status);el.appendChild(col);
-      descriptions.push(italianMonth(r.year,r.month)+': '+value.textContent+' '+(displayUnit==='kwh'?'kWh':'€ stimati')+', '+status.textContent);
+      descriptions.push((r.label?r.label+' '+r.years:italianMonth(r.year,r.month))+': '+value.textContent+' '+(kwhMode?'kWh':'€ stimati')+', '+status.textContent);
     });el.setAttribute('aria-label',descriptions.join('. '));
   }
   window.onHistoryNative=function(rows,savedAt){historyRows=Array.isArray(rows)?rows:[];byId('historyUpdated').textContent=savedAt?new Intl.DateTimeFormat('it-IT',{dateStyle:'short',timeStyle:'short'}).format(new Date(savedAt)):'Nessuna lettura disponibile';renderHistory()};
   let months=2;
+  let billingAnchor=10;
   try {
     const storedMonths=localStorage.getItem('costoluce_months_v1');
-    if(storedMonths==='1'||storedMonths==='2') months=Number(storedMonths);
+    if(['1','2','3'].includes(storedMonths)) months=Number(storedMonths);
+    const anchor=Number(localStorage.getItem('costoluce_billing_anchor_v1'));if(Number.isInteger(anchor)&&anchor>=1&&anchor<=12)billingAnchor=anchor;
   }catch(e){}
   let lastCalculatedCost=0;
   let widgetSyncTimer=null;
@@ -262,17 +296,37 @@
   // The customer's billing cycle is even + odd months:
   // June-July, Aug-Sep, Oct-Nov, Dec-Jan, Feb-Mar, Apr-May.
   // One-month mode always shows the current calendar month.
-  function selectedPeriod(count, today){
+  function selectedPeriod(count, today, anchor=billingAnchor){
     const now=today||new Date();
     let first=new Date(now.getFullYear(),now.getMonth(),1);
-    if(count===2 && (now.getMonth()+1)%2===1)
-      first=new Date(now.getFullYear(),now.getMonth()-1,1);
+    const offset=((now.getMonth()+1-anchor)%count+count)%count;
+    first=new Date(now.getFullYear(),now.getMonth()-offset,1);
     const result=[];
     for(let offset=0;offset<count;offset++){
       const d=new Date(first.getFullYear(),first.getMonth()+offset,1);
       result.push({year:d.getFullYear(),month:d.getMonth()+1});
     }
     return result;
+  }
+  function billingDraftChanged(resetAnchor=false){
+    const count=Number(byId('billingFrequency').value);if(resetAnchor&&count>1)byId('billingAnchor').value='';
+    byId('billingExampleFields').hidden=count===1;
+    const anchor=Number(byId('billingAnchor').value);
+    if(count>1&&(!Number.isInteger(anchor)||anchor<1||anchor>12)){byId('billingExample').textContent='Scegli il primo mese di un gruppo riportato nella tua bolletta.';return}
+    const first=count===1?1:anchor,names=[];
+    for(let offset=0;offset<count;offset++)names.push(new Intl.DateTimeFormat('it-IT',{month:'long'}).format(new Date(2026,first-1+offset,1)));
+    const next=[];for(let offset=0;offset<count;offset++)next.push(new Intl.DateTimeFormat('it-IT',{month:'long'}).format(new Date(2026,first-1+count+offset,1)));
+    byId('billingExample').textContent=count===1?'Ogni mese è una bolletta separata.':'Il tuo esempio: '+names.join(' + ')+'. Gruppo successivo: '+next.join(' + ')+'.';
+  }
+  function renderBillingSetup(){
+    byId('billingFrequency').value=String(months);byId('billingAnchor').value=String(billingAnchor);billingDraftChanged();
+    byId('billingActive').textContent='Schema salvato: '+(months===1?'mensile':months===2?'bimestrale':'trimestrale')+'. Periodo attuale: '+selectedPeriod(months).map(r=>italianMonth(r.year,r.month)).join(' + ')+'.';
+    byId('periodConfigSummary').textContent=byId('billingActive').textContent;
+  }
+  function saveBillingSetup(){
+    const count=Number(byId('billingFrequency').value),anchor=count===1?billingAnchor:Number(byId('billingAnchor').value);
+    if(![1,2,3].includes(count)||!Number.isInteger(anchor)||anchor<1||anchor>12){byId('billingSetupStatus').textContent='Indica un esempio di gruppo scegliendo il primo mese.';return false}
+    setMonths(count,anchor);byId('billingSetupStatus').textContent='Schema salvato e sincronizzato con il widget. Aggiorna Enel per i consumi del periodo scelto.';return true;
   }
   function renderMonthPending(){
     const target=byId('monthlyRows');target.innerHTML='';
@@ -292,18 +346,17 @@
   }
   function updateRequestedPeriod(){
     const names=selectedPeriod(months).map(x=>italianMonth(x.year,x.month));
-    byId('requestedPeriod').textContent=(months===2?'Bimestre di fatturazione: ':'Mese in corso: ')+
+    byId('requestedPeriod').textContent=(months===3?'Trimestre di fatturazione: ':months===2?'Bimestre di fatturazione: ':'Mese in corso: ')+
       names.join(' + ')+'. Il mese corrente è incluso; sono usati solo i consumi già disponibili.';
   }
-  function setMonths(v){
-    if(v!==1&&v!==2)return;
-    const changed=months!==v;
+  function setMonths(v,anchor=billingAnchor){
+    if(![1,2,3].includes(v)||!Number.isInteger(anchor)||anchor<1||anchor>12)return;
+    const changed=months!==v||billingAnchor!==anchor;
     months=v;
-    if(changed){try{localStorage.setItem('costoluce_months_v1',String(months))}catch(e){}}
-    const link=byId('enelSync');if(link)link.href='costoluce://enel-sync?months='+v;
-    byId('m1').classList.toggle('active',v===1);
-    byId('m2').classList.toggle('active',v===2);
-    const legacy=byId('openSync');if(legacy)legacy.href='costoluce://sync?months='+v;
+    billingAnchor=anchor;
+    if(changed){try{localStorage.setItem('costoluce_months_v1',String(months));localStorage.setItem('costoluce_billing_anchor_v1',String(anchor))}catch(e){}}
+    const link=byId('enelSync');if(link)link.href='costoluce://enel-sync?months='+v+'&anchor='+anchor;
+    const legacy=byId('openSync');if(legacy)legacy.href='costoluce://sync?months='+v+'&anchor='+anchor;
     if(changed && lastEnelImport){
       lastEnelImport=false;
       lastEnelMonthly=[];
@@ -314,7 +367,7 @@
       byId('importStatus').className='importstatus';
       byId('importStatus').textContent='Periodo cambiato. Aggiorna i consumi da Enel per ottenere i valori del nuovo intervallo.';
     }
-    updateRequestedPeriod();
+    updateRequestedPeriod();renderBillingSetup();
     if(changed){
       renderMonthPending();
       widgetPeriod='';
@@ -433,7 +486,7 @@
     byId('taxKwh').textContent=decimal(taxKwh,1)+' kWh';
     const dest=byId('breakdown');dest.innerHTML='';
     for(const [name,value,desc] of items){const row=document.createElement('div');row.className='lineitem';const text=document.createElement('div');text.innerHTML='<div class="labeltext"></div><div class="detail"></div>';text.children[0].textContent=name;text.children[1].textContent=desc;const money=document.createElement('span');money.className='money';money.textContent=euro(value);row.appendChild(text);row.appendChild(money);dest.appendChild(row)}
-    byId('homeRefresh').href='costoluce://enel-sync?months='+months;
+    byId('homeRefresh').href='costoluce://enel-sync?months='+months+'&anchor='+billingAnchor;
     scheduleWidgetSync();
     return total;
   }
@@ -536,7 +589,7 @@
       lastEnelImport=false;
       lastEnelMonthly=[];
       status.className='importstatus ok';
-      status.textContent='Importati '+decimal(result.kwh,3)+' kWh · '+result.origin+'. Verifica che il periodo del file coincida con quello selezionato (1 o 2 mesi).';
+      status.textContent='Importati '+decimal(result.kwh,3)+' kWh · '+result.origin+'. Verifica che il periodo del file coincida con quello selezionato (1, 2 o 3 mesi).';
       recalc();
     }catch(e){status.className='importstatus err';status.textContent='Importazione non riuscita: '+String(e.message||e);}
   }
@@ -552,7 +605,7 @@
   };
   window.onEnelConsumption=function(data){
     const status=byId('importStatus');
-    if(!data||!Array.isArray(data.monthly)||![1,2].includes(Number(data.months))||
+    if(!data||!Array.isArray(data.monthly)||![1,2,3].includes(Number(data.months))||
         data.monthly.length!==Number(data.months)||
         !Number.isFinite(Number(data.kwh))||Number(data.kwh)<0){
       status.className='importstatus err';
@@ -577,6 +630,7 @@
       status.textContent='La somma mensile non corrisponde al totale Enel: importazione annullata.';
       return;
     }
+    if(data.anchor!==undefined&&(Number(data.anchor)!==billingAnchor||Number(data.months)!==months)){status.className='importstatus err';status.textContent='Schema modificato durante il recupero: aggiorna Enel per il nuovo gruppo.';return;}
     const expected=selectedPeriod(Number(data.months));
     if(list.some((entry,index)=>entry.year!==expected[index].year||
                                   entry.month!==expected[index].month)){
@@ -602,7 +656,7 @@
         (entry.year===now.getFullYear()&&entry.month>now.getMonth()+1);
       if(isFuture){
         right.textContent='Non iniziato';
-        detail.textContent='Mese successivo del bimestre';
+        detail.textContent='Mese futuro del periodo';
         upcoming++;
       }else if(entry.days===0){
         right.textContent='Non disponibile';
@@ -641,10 +695,10 @@
     recalc();
     byId('homeStatus').hidden=true;
     status.className='importstatus '+((missing||incomplete||ongoing||upcoming)?'err':'ok');
-    status.textContent=(missing||incomplete||ongoing||upcoming?'Dati disponibili, bimestre in corso: ':'Dati ricevuti: ')+
+    status.textContent=(missing||incomplete||ongoing||upcoming?'Dati disponibili, periodo in corso: ':'Dati ricevuti: ')+
       'riepilogo mensile disponibile qui sotto. Totale '+decimal(data.kwh,3)+' kWh.';
   };
-  const enelMatch=/^#enel=(\d{1,8}(?:\.\d{1,3})?)&months=([12])&days=(\d{1,3})$/.exec(location.hash);
+  const enelMatch=/^#enel=(\d{1,8}(?:\.\d{1,3})?)&months=([123])&days=(\d{1,3})$/.exec(location.hash);
   if(enelMatch){
     const k=Number(enelMatch[1]);const m=Number(enelMatch[2]);
     if(Number.isFinite(k)&&k>=0&&k<1000000){
@@ -688,7 +742,7 @@
   // No Enel credentials are transferred through this channel.
   function buildWidgetSyncUrl(){
     const kwh=safeNumber(byId('kwh').value);
-    const common='months='+months+
+    const common='months='+months+'&anchor='+billingAnchor+
       '&resident='+(byId('resident').checked?'1':'0')+
       '&rates='+encodeURIComponent(JSON.stringify(serializedRates()))+
       '&auto=1';
@@ -731,10 +785,12 @@
     let localRates=null;try{localRates=localStorage.getItem('costoluce_rates_v1')}catch(e){}
     if(!localRates&&config&&config.rates){for(const key of Object.keys(initial))if(typeof config.rates[key]==='number')tariffs[key]=config.rates[key];loadRateMeta(config.rates._meta);loadCustomRates(config.rates._custom);save();fillRates()}
     if(config && config.unit)setDisplayUnit(config.unit,false);
-    if(config && [1,2].includes(Number(config.months))){
+    if(config && [1,2,3].includes(Number(config.months))){
       const saved=(()=>{try{return localStorage.getItem('costoluce_months_v1')}catch(e){return null}})();
-      const wanted=saved==='1'||saved==='2'?Number(saved):Number(config.months);
-      setMonths(wanted);
+      const wanted=['1','2','3'].includes(saved)?Number(saved):Number(config.months);
+      const localAnchor=Number(localStorage.getItem('costoluce_billing_anchor_v1'));
+      const anchor=Number.isInteger(localAnchor)&&localAnchor>=1&&localAnchor<=12?localAnchor:Number(config.anchor)||10;
+      setMonths(wanted,anchor);
       const residence=(()=>{try{return localStorage.getItem('costoluce_resident_v1')}catch(e){return null}})();
       byId('resident').checked=residence===null?Boolean(config.resident):residence==='1';
       recalc();
@@ -759,7 +815,7 @@
   };
   window.onWidgetRestored=function(data){
     if(!data||!Number.isFinite(Number(data.kwh))||Number(data.kwh)<=0||
-       ![1,2].includes(Number(data.months)))return;
+       ![1,2,3].includes(Number(data.months)))return;
     if(data.source==='enel'&&Array.isArray(data.monthly)&&
        data.monthly.length===Number(data.months)){
       window.onEnelConsumption(data);

@@ -1,4 +1,4 @@
-name: Costo Luce - APK 6.5.1
+name: Costo Luce - APK 6.6.0
 
 on:
   push:
@@ -16,7 +16,7 @@ permissions:
 
 # Avoid competing releases after multiple rapid pushes.
 concurrency:
-  group: costoluce-apk-v6-5-1
+  group: costoluce-apk-v6-6-0
   cancel-in-progress: true
 
 jobs:
@@ -64,6 +64,7 @@ jobs:
             tests/test_rate_rows.js \
             tests/test_arera.js \
             tests/test_offer.js \
+            tests/test_billing_cycles.js \
             tests/test_widget.js \
             tests/test_widget_wiring.js; do
             echo "TEST: $test"
@@ -116,15 +117,17 @@ jobs:
             grep -q 'PASS: WebView launch' instrumentation.txt
             if grep -q 'FAIL:' instrumentation.txt; then exit 1; fi
             mkdir -p dist
-            adb exec-out run-as com.costoluce.cloud cat files/screenshots/app-6.5.1.png > dist/app-6.5.1.png
+            adb exec-out run-as com.costoluce.cloud cat files/screenshots/app-6.6.0.png > dist/app-6.6.0.png
             adb logcat -d -s CostoLuceARERA:W '*:S'
-            adb exec-out run-as com.costoluce.cloud cat files/screenshots/tariffe-6.5.1.png > dist/tariffe-6.5.1.png
-            adb exec-out run-as com.costoluce.cloud cat files/screenshots/tariffe-offerta-6.5.1.png > dist/tariffe-offerta-6.5.1.png
-            adb exec-out run-as com.costoluce.cloud cat files/screenshots/tariffe-editor-6.5.1.png > dist/tariffe-editor-6.5.1.png
-            for size in compact medium large; do for page in summary history; do adb exec-out run-as com.costoluce.cloud cat "files/screenshots/widget-$page-$size-6.5.1.png" > "dist/widget-$page-$size-6.5.1.png"; done; done
-            for variant in 2x1 wide-row intermediate; do adb exec-out run-as com.costoluce.cloud cat "files/screenshots/widget-$variant-6.5.1.png" > "dist/widget-$variant-6.5.1.png"; done
-            adb exec-out run-as com.costoluce.cloud cat files/screenshots/widget-compact-refresh-6.5.1.png > dist/widget-compact-refresh-6.5.1.png
-            test "$(file dist/*.png | grep -c 'PNG image data')" -eq 14
+            adb exec-out run-as com.costoluce.cloud cat files/screenshots/tariffe-6.6.0.png > dist/tariffe-6.6.0.png
+            adb exec-out run-as com.costoluce.cloud cat files/screenshots/tariffe-offerta-6.6.0.png > dist/tariffe-offerta-6.6.0.png
+            adb exec-out run-as com.costoluce.cloud cat files/screenshots/tariffe-periodo-6.6.0.png > dist/tariffe-periodo-6.6.0.png
+            adb exec-out run-as com.costoluce.cloud cat files/screenshots/bollette-6.6.0.png > dist/bollette-6.6.0.png
+            adb exec-out run-as com.costoluce.cloud cat files/screenshots/tariffe-editor-6.6.0.png > dist/tariffe-editor-6.6.0.png
+            for size in compact medium large; do for page in summary history; do adb exec-out run-as com.costoluce.cloud cat "files/screenshots/widget-$page-$size-6.6.0.png" > "dist/widget-$page-$size-6.6.0.png"; done; done
+            for variant in 2x1 wide-row intermediate; do adb exec-out run-as com.costoluce.cloud cat "files/screenshots/widget-$variant-6.6.0.png" > "dist/widget-$variant-6.6.0.png"; done
+            adb exec-out run-as com.costoluce.cloud cat files/screenshots/widget-compact-refresh-6.6.0.png > dist/widget-compact-refresh-6.6.0.png
+            test "$(file dist/*.png | grep -c 'PNG image data')" -eq 16
       - name: Controllo APK e widget Android
         shell: bash
         run: |
@@ -143,8 +146,8 @@ jobs:
           grep -q "android.permission.ACCESS_NETWORK_STATE" permissions-compiled.txt
           grep -q "android.permission.INTERNET" permissions-compiled.txt
           mkdir -p dist
-          cp "$APK" dist/CostoLuce_v6.5.1_TariffeComplete.apk
-          sha256sum dist/CostoLuce_v6.5.1_TariffeComplete.apk
+          cp "$APK" dist/CostoLuce_v6.6.0_PeriodiBollette.apk
+          sha256sum dist/CostoLuce_v6.6.0_PeriodiBollette.apk
 
       # Publish only after JVM, build and emulator checks have passed.
       - name: Pubblica APK su GitHub Release
@@ -153,8 +156,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          TAG="v6.5.1"
-          APK="dist/CostoLuce_v6.5.1_TariffeComplete.apk"
+          TAG="v6.6.0"
+          APK="dist/CostoLuce_v6.6.0_PeriodiBollette.apk"
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" "$APK" dist/*.png --clobber
             gh api --method PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/$TAG" -f sha="$GITHUB_SHA" -F force=true
@@ -162,9 +165,9 @@ jobs:
           else
             gh release create "$TAG" "$APK" dist/*.png \
               --target "$GITHUB_SHA" \
-              --title "Costo Luce v6.5.1 - Completamento quote fisse" \
+              --title "Costo Luce v6.6.0 - Periodi e grafico bollette" \
               --notes-file RELEASE_NOTES.md \
               --prerelease
           fi
           echo "### APK pubblicato" >> "$GITHUB_STEP_SUMMARY"
-          echo "https://github.com/$GITHUB_REPOSITORY/releases/download/v6.5.1/CostoLuce_v6.5.1_TariffeComplete.apk" >> "$GITHUB_STEP_SUMMARY"
+          echo "https://github.com/$GITHUB_REPOSITORY/releases/download/v6.6.0/CostoLuce_v6.6.0_PeriodiBollette.apk" >> "$GITHUB_STEP_SUMMARY"

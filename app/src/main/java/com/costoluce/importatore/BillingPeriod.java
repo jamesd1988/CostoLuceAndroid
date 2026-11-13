@@ -8,7 +8,8 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 /**
- * Italian electricity billing period, anchored to even starting months:
+ * Italian billing cycles of one, two or three months, anchored to a user example.
+ * Legacy configuration defaults to even starting months:
  * Oct-Nov, Dec-Jan, Feb-Mar, Apr-May, Jun-Jul, Aug-Sep.
  * An in-progress month is queried through today; a future month is never
  * requested from Enel and is displayed as "not started".
@@ -52,15 +53,18 @@ final class BillingPeriod {
     }
 
     static Window select(Calendar reference, int months) {
-        if (months != 1 && months != 2)
+        return select(reference, months, 10);
+    }
+
+    static Window select(Calendar reference, int months, int anchorMonth) {
+        if (months < 1 || months > 3 || anchorMonth < 1 || anchorMonth > 12)
             throw new IllegalArgumentException("Periodo non supportato.");
         Calendar now = Calendar.getInstance(ROME, Locale.ITALY);
         now.setTimeInMillis(reference.getTimeInMillis());
         Calendar start = (Calendar) now.clone();
         start.set(Calendar.DAY_OF_MONTH, 1);
-        // January is odd and is the second month of the December-January cycle.
-        if (months == 2 && (start.get(Calendar.MONTH) + 1) % 2 == 1)
-            start.add(Calendar.MONTH, -1);
+        // Anchor is the first month in an example group; the phase repeats across years.
+        start.add(Calendar.MONTH, -Math.floorMod(start.get(Calendar.MONTH)+1-anchorMonth,months));
         SimpleDateFormat formatter = new SimpleDateFormat("ddMMyyyy", Locale.ITALY);
         formatter.setTimeZone(ROME);
         return new Window(months, formatter.format(start.getTime()),
@@ -71,6 +75,9 @@ final class BillingPeriod {
 
     static Window today(int months) {
         return select(Calendar.getInstance(ROME, Locale.ITALY), months);
+    }
+    static Window today(int months,int anchorMonth) {
+        return select(Calendar.getInstance(ROME, Locale.ITALY), months,anchorMonth);
     }
 
     static boolean currentMonth(EnelConnector.MonthUsage m) {

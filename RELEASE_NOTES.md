@@ -1,11 +1,14 @@
-Costo Luce 6.5.1 - Completamento quote fisse dell'offerta
+Costo Luce 6.6.0 - Periodi di fatturazione e grafico bollette
 
-- Nuova sezione in Tariffe: Completa quote fisse, con commercializzazione vendita a 12,00 euro/mese e DISPbt parte fissa a 0,092250 euro/mese, riferiti alla fattura E-Light agosto-settembre 2026.
-- Il comando Aggiungi solo le voci mancanti aggiunge le due quote con tipo Fisso, applica l'IVA configurata e sincronizza il widget.
-- Le voci già riconosciute per identificativo o nome sono conservate, anche con importi personalizzati. Richieste ripetute non creano duplicati. Eventuali nomi completamente diversi richiedono controllo dell'utente.
-- Matita, cambio tipo, eliminazione e ripristino continuano a funzionare sulle righe aggiunte. Nessuna migrazione automatica che possa raddoppiare costi già configurati.
-- Una voce omonima variabile, doppioni riconosciuti o spazio insufficiente interrompono l'aggiunta prima di modificare qualsiasi tariffa.
-- Nella sezione sono riportati separatamente i valori utili a verificare agosto-settembre: dispacciamento 0,025043 euro/kWh e sbilanciamento medio ponderato 0,001042598 euro/kWh. Non vengono applicati automaticamente alle tariffe correnti o future.
-- Importazione ARERA, controllo del catalogo ogni 24 ore all'apertura, credenziali, consumi e calcolo accisa conservati.
+- Configurazione in Tariffe: bolletta mensile, bimestrale o trimestrale. Per gruppi di due o tre mesi, indicare un esempio scegliendo il primo mese: anteprima dell'intero gruppo e del successivo, poi Salva raggruppamento.
+- Lo schema si ripete tra anni. Le configurazioni esistenti mantengono ottobre-novembre, dicembre-gennaio ecc. La schermata Periodo rimanda a Tariffe e conserva l'opzione accisa.
+- Tre pulsanti nel grafico dell'app: Bolletta (quattro periodi aggregati in euro), kWh (ultimi quattro mesi), euro (costi mensili). Somma degli importi disponibili, con esclusione dei periodi che hanno mesi mancanti e indicazione dei parziali.
+- Costi dei gruppi ottenuti sommando i mesi misurati, con accisa mensile e quote fisse per i mesi iniziati. Non si attribuiscono consumi o costi a mesi futuri.
+- Schema e mese di esempio persistono e vengono sincronizzati con il widget. Il recupero Enel e il riepilogo supportano uno, due o tre mesi; risposte appartenenti a vecchi gruppi vengono respinte.
+- Richiesta dello storico necessario per quattro cicli, fino a 12 mesi. Se il range esteso non è disponibile, il connettore tenta il solo periodo corrente. Le letture reali già salvate si conservano; i mesi mancanti non diventano zeri.
+- Il widget mantiene il grafico mensile e i due selettori euro/kWh, con riepilogo sul ciclo configurato. La vista Bolletta è nel grafico dell'app.
+- Gli importi sono stime con le tariffe attualmente salvate, non fatture ufficiali o una ricostruzione delle tariffe storiche. Canone TV e altre voci non configurate restano esclusi.
+- Il recupero automatico sperimentale dal Portale Consumi non verifica il trimestre: per tre mesi usare Enel diretto, CSV/TXT con intervallo esatto o inserimento manuale.
+- Credenziali cifrate, tariffe e personalizzazioni conservate.
 
-Test JavaScript su quote, IVA, duplicati, modifiche con matita, persistenza, conflitti e limite righe; controlli Android di sincronizzazione e parità app/widget, oltre ai test esistenti. APK di test.
+Verifiche JavaScript, JUnit su calendario/prezzi/storico, compilazione e test Android di configurazione, dati mancanti, sincronizzazione e layout widget. APK di test.
