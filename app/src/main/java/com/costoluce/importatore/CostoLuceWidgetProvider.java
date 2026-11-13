@@ -29,7 +29,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
     static final String ACTION_UNIT = "com.costoluce.cloud.action.WIDGET_UNIT";
     static final String ACTION_PAGE = "com.costoluce.cloud.action.WIDGET_PAGE";
     static final String ACTION_REFRESH = "com.costoluce.cloud.action.WIDGET_REFRESH";
-    private static final int REFRESH_JOB_ID = 225901;
+    static final int REFRESH_JOB_ID = 225901;
     private static final String KEY_KWH = "kwh";
     private static final String KEY_EUR = "estimated_euro";
     private static final String KEY_MONTHS = "months"; // Period of the last actual consumption
@@ -132,7 +132,26 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
     }
     static void saveUnit(Context context, String unit) {
         if (!"kwh".equals(unit) && !"eur".equals(unit)) return;
-        prefs(context).edit().putString("display_unit", unit).apply(); refresh(context);
+        SharedPreferences.Editor edit=prefs(context).edit().putString("display_unit",unit);
+        if(!"bill".equals(chartMode(context)))edit.putString("widget_chart_mode",unit);
+        edit.apply();refresh(context);
+    }
+    static String chartMode(Context context){return prefs(context).getString("widget_chart_mode",prefs(context).getString("display_unit","eur"));}
+    static void saveChartMode(Context context,String mode){
+        if(!"bill".equals(mode)&&!"kwh".equals(mode)&&!"eur".equals(mode))return;
+        SharedPreferences.Editor edit=prefs(context).edit().putString("widget_chart_mode",mode);
+        if(!"bill".equals(mode))edit.putString("display_unit",mode);
+        edit.apply();refresh(context);
+    }
+    static boolean offerCostsRecognized(Context context){
+        try{WidgetConfiguration c=readConfiguration(context);return c!=null&&BillHistory.offerCostsRecognized(c.ratesJson);}catch(Exception invalid){return false;}
+    }
+    static org.json.JSONArray chartRows(Context context){
+        if(!"bill".equals(chartMode(context)))return history(context);
+        WidgetConfiguration c=readConfiguration(context);WidgetPricing pricing=null;
+        try{if(c!=null)pricing=WidgetPricing.parse(c.ratesJson,c.resident);}catch(Exception invalid){}
+        try{return BillHistory.rows(archive(context),java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("Europe/Rome")),c==null?2:c.months,c==null?10:c.anchor,pricing);}
+        catch(Exception invalid){return new org.json.JSONArray();}
     }
     static boolean annualHistoryDue(Context context,int months,int anchor){
         SharedPreferences p=prefs(context);long elapsed=System.currentTimeMillis()-p.getLong("annual_history_attempt",0);
@@ -378,7 +397,12 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
     }
 
     @Override public void onReceive(Context context, Intent intent) {
-        if (intent != null && ACTION_UNIT.equals(intent.getAction())) { saveUnit(context,intent.getStringExtra("unit"));return; }
+        if (intent != null && ACTION_UNIT.equals(intent.getAction())) {
+            String mode=intent.getStringExtra("unit");saveChartMode(context,mode);
+            WidgetConfiguration c=readConfiguration(context);
+            if("bill".equals(mode)&&c!=null&&annualHistoryDue(context,c.months,c.anchor)&&new EnelCredentialStore(context).hasSaved())requestDataRefresh(context);
+            return;
+        }
         if (intent != null && ACTION_REFRESH.equals(intent.getAction())) {
             requestDataRefresh(context);
             return;
@@ -512,21 +536,23 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         views.setContentDescription(R.id.widget_status,status==null||status.isEmpty()?"Aggiorna i consumi Enel":status+". Tocca per aggiornare.");
         String date=savedAt>0?new SimpleDateFormat(spec.compact()?"HH:mm":"dd/MM · HH:mm",IT).format(new Date(savedAt)):"";
         if(!spec.detailed()&&savedAt>0)views.setTextViewText(R.id.widget_updated,(spec.compact()?"Agg. ":"Ultimo aggiornamento · ")+date);
-        org.json.JSONArray history=history(context);String years="";
+        boolean bills="bill".equals(chartMode(context));
+        org.json.JSONArray history=chartRows(context);String years="";
         if(history.length()>0){JSONObject first=history.optJSONObject(0),last=history.optJSONObject(history.length()-1);if(first!=null&&last!=null)years=first.optInt("year")==last.optInt("year")?Integer.toString(last.optInt("year")):first.optInt("year")+"–"+last.optInt("year");}
         if(chart){
-            views.setTextViewText(R.id.widget_brand,spec.compact()?"4 mesi\n"+years:spec.detailed()?"Consumi ultimi 4 mesi":"Ultimi 4 mesi\n"+years);
+            views.setTextViewText(R.id.widget_brand,bills?(spec.compact()?"Stime\n€":"Bollette stimate"):(spec.compact()?"4 mesi\n"+(years.length()>4?String.format(IT,"%02d/%02d",history.optJSONObject(0).optInt("year")%100,history.optJSONObject(history.length()-1).optInt("year")%100):years):spec.detailed()?"Consumi ultimi 4 mesi":"Ultimi 4 mesi\n"+years));
             boolean missing=false;for(int i=0;i<history.length();i++){JSONObject r=history.optJSONObject(i);if(r==null||!r.optBoolean("available"))missing=true;}
             JSONObject last=history.optJSONObject(history.length()-1);
             String note=last!=null&&last.optBoolean("partial")?"* "+MonthlyChart.label(last)+" parziale":"";
             if(missing)note+=(note.isEmpty()?"":" · ")+"— dato mancante";
             if(!spec.compact()&&savedAt>0)note+=(note.isEmpty()?"":" · ")+"Agg. "+date;
-            views.setTextViewText(R.id.widget_chart_note,note.isEmpty()?"Misure mensili Enel":note);
+            if(bills&&!offerCostsRecognized(context))note="Quote fisse: verifica Tariffe"+(note.isEmpty()?"":" · "+note);
+            views.setTextViewText(R.id.widget_chart_note,note.isEmpty()?(bills?"Totale elettricità stimato":"Misure mensili Enel"):note);
             views.setViewVisibility(R.id.widget_chart_note,android.view.View.VISIBLE);
             float fontScale=context.getResources().getConfiguration().fontScale;
             views.setImageViewBitmap(R.id.widget_chart,MonthlyChart.draw(context,history,spec,spec.chartHeight(fontScale,showStatus),bitmapPixels));
         }else{
-            views.setTextViewText(R.id.widget_brand,spec.compact()?"Costo Luce":"Costo Luce · v6.7.0");
+            views.setTextViewText(R.id.widget_brand,spec.compact()?"Costo Luce":"Costo Luce · v6.8.0");
             views.setViewVisibility(R.id.widget_chart_note,android.view.View.GONE);
             if("enel".equals(p.getString(KEY_SOURCE,"")))try{org.json.JSONArray rows=new org.json.JSONArray(p.getString(KEY_MONTHLY,"[]"));if(rows.length()>0)views.setTextViewText(R.id.widget_period,compactPeriod(rows));}catch(Exception ignored){}
         }
@@ -683,14 +709,13 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         views.setOnClickPendingIntent(R.id.widget_refresh, refreshPending);
         views.setOnClickPendingIntent(R.id.widget_status, refreshPending);
         boolean chart = p.getInt("page_"+widgetId,0)==1;
-        views.setTextViewText(R.id.widget_brand,chart?"Consumi ultimi 4 mesi":"COSTO LUCE · v6.7.0");
+        views.setTextViewText(R.id.widget_brand,chart?"Consumi ultimi 4 mesi":"COSTO LUCE · v6.8.0");
         views.setViewVisibility(R.id.widget_units,chart?android.view.View.VISIBLE:android.view.View.GONE);
         views.setViewVisibility(R.id.widget_refresh,chart?android.view.View.GONE:android.view.View.VISIBLE);
-        boolean showKwh="kwh".equals(p.getString("display_unit","eur"));
-        views.setInt(R.id.widget_unit_kwh,"setBackgroundResource",showKwh?R.drawable.costoluce_widget_pill_selected:R.drawable.costoluce_widget_pill_idle);
-        views.setInt(R.id.widget_unit_eur,"setBackgroundResource",showKwh?R.drawable.costoluce_widget_pill_idle:R.drawable.costoluce_widget_pill_selected);
-        String[] units={"kwh","eur"};int[] buttons={R.id.widget_unit_kwh,R.id.widget_unit_eur};
-        for(int i=0;i<2;i++){
+        String selectedMode=chartMode(context);
+        String[] units={"bill","kwh","eur"};int[] buttons={R.id.widget_unit_bill,R.id.widget_unit_kwh,R.id.widget_unit_eur};
+        for(int i=0;i<units.length;i++){
+            views.setInt(buttons[i],"setBackgroundResource",units[i].equals(selectedMode)?R.drawable.costoluce_widget_pill_selected:R.drawable.costoluce_widget_pill_idle);
             Intent unit=new Intent(context,CostoLuceWidgetProvider.class).setAction(ACTION_UNIT).putExtra("unit",units[i])
                     .setData(android.net.Uri.parse("costoluce://widget-unit/"+units[i]));
             views.setOnClickPendingIntent(buttons[i],PendingIntent.getBroadcast(context,2100+i,unit,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE));
@@ -724,7 +749,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         }
         if(chart) {
 
-            views.setContentDescription(R.id.widget_chart,MonthlyChart.description(context,history(context)));
+            views.setContentDescription(R.id.widget_chart,MonthlyChart.description(context,chartRows(context)));
         }
         int target=chart?0:1;
         for(int viewId : new int[]{R.id.widget_prev,R.id.widget_next,R.id.widget_dots}) {

@@ -25,7 +25,8 @@ public final class WidgetUpdateJobService extends JobService {
                 if (config == null)
                     throw new IllegalStateException("Apri Costo Luce e premi Aggiorna widget Home per configurare le tariffe.");
                 CostoLuceWidgetProvider.setRefreshStatus(this, "Enel: collegamento in corso...", true);
-                boolean annual=CostoLuceWidgetProvider.annualHistoryDue(this,config.months,config.anchor);
+                boolean annual=CostoLuceWidgetProvider.annualHistoryDue(this,config.months,config.anchor)
+                    ||(params.getJobId()==CostoLuceWidgetProvider.REFRESH_JOB_ID&&"bill".equals(CostoLuceWidgetProvider.chartMode(this)));
                 if(annual)CostoLuceWidgetProvider.markAnnualHistoryAttempt(this,config.months,config.anchor);
                 EnelConnector.Result result = EnelConnector.fetch(credentials, config.months, config.anchor, annual, phase -> {
                     if (stopped.get()) return;

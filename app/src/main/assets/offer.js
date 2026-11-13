@@ -32,7 +32,13 @@ function completeOfferFixed(){
 }
 function renderBillPricingNotice(){
   const el=byId('billPricingNotice');el.hidden=chartMode!=='bill';if(el.hidden)return;
-  try{const missing=missingOfferRows();el.hidden=!missing.length;byId('billPricingText').textContent=missing.length?'Stima potenzialmente incompleta: quote fisse di vendita non riconosciute. Verifica le voci in Tariffe.':''}
+  try{const missing=missingOfferRows();el.hidden=!missing.length;byId('billPricingText').textContent=missing.length?'Stima incompleta se queste quote non sono già presenti con altri nomi. Riferimento E-Light agosto–settembre 2026: '+missing.map(r=>r.name+' '+decimal(r.value,6)+' €/mese').join('; ')+'. Puoi aggiungere le quote di riferimento o verificare le tue Tariffe.':''}
   catch(e){el.hidden=false;byId('billPricingText').textContent='Verifica le quote fisse in Tariffe: '+e.message}
+}
+function completeBillOffer(){
+  const ok=completeOfferFixed();
+  if(ok){byId('billTariffStatus').hidden=false;byId('billTariffStatus').textContent='Quote fisse riconosciute e importi ricalcolati. Restano le tariffe salvate: verifica i prezzi validi per il periodo della tua bolletta.'}
+  else{byId('billPricingNotice').hidden=false;byId('billPricingText').textContent=byId('offerMessage').textContent}
+  return ok;
 }
 renderBillPricingNotice();
