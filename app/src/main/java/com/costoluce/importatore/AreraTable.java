@@ -69,8 +69,8 @@ final class AreraTable {
     }
     private static Document xml(Map<String,byte[]> files,String path)throws Exception{
         byte[] data=files.get(path);if(data==null)throw new IOException("Tabella incompleta");
-        String text=new String(data,StandardCharsets.UTF_8).toUpperCase(Locale.ROOT);
-        if(text.contains("<!DOCTYPE")||text.contains("<!ENTITY"))throw new IOException("XML non consentito");
+        String text=StandardCharsets.UTF_8.newDecoder().decode(java.nio.ByteBuffer.wrap(data)).toString().toUpperCase(Locale.ROOT);
+        if(text.indexOf('\0')>=0||text.contains("<!DOCTYPE")||text.contains("<!ENTITY"))throw new IOException("XML non consentito");
         DocumentBuilderFactory factory=DocumentBuilderFactory.newInstance();factory.setExpandEntityReferences(false);
         return factory.newDocumentBuilder().parse(new ByteArrayInputStream(data));
     }

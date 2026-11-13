@@ -41,4 +41,11 @@ public class AreraTableTest {
     @Test(expected=IOException.class) public void missingHeaderFailsClosed()throws Exception{AreraTable.parse(changed(">SOS<",">UNKNOWN<"),2026);}
     @Test(expected=IOException.class) public void entitiesAreRejected()throws Exception{AreraTable.parse(changed("<sst ","<!DOCTYPE sst [<!ENTITY x SYSTEM 'file:///private'>]><sst "),2026);}
     @Test(expected=IOException.class) public void wrongYearIsNotSubstituted()throws Exception{AreraTable.parse(fixture(),2027);}
+    @Test(expected=IOException.class) public void alternateEncodingCannotBypassXmlGuards()throws Exception{
+        ByteArrayOutputStream bytes=new ByteArrayOutputStream();
+        try(ZipInputStream input=new ZipInputStream(new ByteArrayInputStream(fixture()));ZipOutputStream output=new ZipOutputStream(bytes)){
+            ZipEntry entry;while((entry=input.getNextEntry())!=null){output.putNextEntry(new ZipEntry(entry.getName()));String xml=new String(input.readAllBytes(),java.nio.charset.StandardCharsets.UTF_8).replace("UTF-8","UTF-16");output.write(xml.getBytes(java.nio.charset.StandardCharsets.UTF_16));output.closeEntry();}
+        }
+        AreraTable.parse(bytes.toByteArray(),2026);
+    }
 }
