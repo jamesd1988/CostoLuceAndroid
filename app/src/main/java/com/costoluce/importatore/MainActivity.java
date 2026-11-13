@@ -133,9 +133,9 @@ public final class MainActivity extends Activity {
                 int months = Integer.parseInt(uri.getQueryParameter("months"));
                 String rates = uri.getQueryParameter("rates");
                 boolean resident = "1".equals(uri.getQueryParameter("resident"));
-                success = CostoLuceWidgetProvider.saveConfiguration(this,months,rates,resident,requestAnchor(uri)) && CostoLuceWidgetProvider.saveSnapshot(this, kwh, euro, months,
+                success = CostoLuceWidgetProvider.saveSnapshot(this, kwh, euro, months,
                         uri.getQueryParameter("source"), uri.getQueryParameter("period"),
-                        rates, resident, uri.getQueryParameter("monthly"));
+                        rates, resident, uri.getQueryParameter("monthly"),requestAnchor(uri));
             } catch (RuntimeException ignored) {
                 // Invalid input: do not store or log any arbitrary content.
             }

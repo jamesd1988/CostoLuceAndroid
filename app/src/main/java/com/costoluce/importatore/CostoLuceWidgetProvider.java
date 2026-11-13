@@ -215,6 +215,10 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
     static boolean saveSnapshot(Context context, double kwh, double euro, int months,
                                 String source, String period, String ratesJson, boolean resident,
                                 String monthlyJson) {
+        return saveSnapshot(context,kwh,euro,months,source,period,ratesJson,resident,monthlyJson,prefs(context).getInt("billing_anchor",10));
+    }
+    static boolean saveSnapshot(Context context,double kwh,double euro,int months,String source,String period,String ratesJson,boolean resident,String monthlyJson,int anchor) {
+        if(anchor<1||anchor>12)return false;
         if (!valid(kwh, euro, months, period)
                 || (!"manuale".equals(source) && !"file".equals(source)
                     && !"portale".equals(source) && !"enel".equals(source)))
@@ -242,6 +246,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         long at = sameMeasurement ? previous.getLong(KEY_TIMESTAMP, 0L)
                 : System.currentTimeMillis();
         SharedPreferences.Editor edit = previous.edit()
+                .putInt("billing_anchor",anchor)
                 .putString(KEY_KWH, Double.toString(kwh))
                 .putString(KEY_EUR, Double.toString(euro))
                 .putInt(KEY_MONTHS, months)
