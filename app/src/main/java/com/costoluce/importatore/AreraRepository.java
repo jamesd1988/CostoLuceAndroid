@@ -30,13 +30,20 @@ final class AreraRepository {
             java.util.Iterator<String> keys=data.keys();while(keys.hasNext()){String k=keys.next();merged.put(k,data.get(k));}
             prefs(c).edit().putString("catalog",merged.toString()).putLong("checked",now).apply();
             return state(c,"");
-        }catch(Exception e){return state(c,"Controllo ARERA non riuscito: conservati gli ultimi dati scaricati. Nessuna tariffa modificata.");}
+        }catch(Exception e){
+            // Public source only: this diagnostic never contains account information.
+            android.util.Log.w("CostoLuceARERA","Public catalogue year="+year+": "+e.getClass().getSimpleName()+": "+e.getMessage());
+            return state(c,"Controllo ARERA non riuscito: conservati gli ultimi dati scaricati. Nessuna tariffa modificata.");
+        }
     }
     private static byte[] download(String address)throws Exception{
         HttpsURLConnection connection=(HttpsURLConnection)new URL(address).openConnection();
         connection.setInstanceFollowRedirects(false);connection.setConnectTimeout(15000);connection.setReadTimeout(15000);
+        connection.setRequestProperty("User-Agent","Mozilla/5.0 (Linux; Android) CostoLuce/6.5.0");
+        connection.setRequestProperty("Accept","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/octet-stream;q=0.9");
         try{
-            if(connection.getResponseCode()!=200)throw new IOException("Fonte non disponibile");
+            int status=connection.getResponseCode();
+            if(status!=200)throw new IOException("Fonte pubblica HTTP "+status);
             try(InputStream input=connection.getInputStream();ByteArrayOutputStream out=new ByteArrayOutputStream()){
                 byte[] buffer=new byte[8192];int n;while((n=input.read(buffer))!=-1){if(out.size()+n>2_000_000)throw new IOException("File troppo grande");out.write(buffer,0,n);}return out.toByteArray();
             }

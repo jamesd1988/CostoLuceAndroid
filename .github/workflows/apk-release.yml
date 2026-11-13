@@ -116,6 +116,7 @@ jobs:
             if grep -q 'FAIL:' instrumentation.txt; then exit 1; fi
             mkdir -p dist
             adb exec-out run-as com.costoluce.cloud cat files/screenshots/app-6.5.0.png > dist/app-6.5.0.png
+            adb logcat -d -s CostoLuceARERA:W '*:S'
             adb exec-out run-as com.costoluce.cloud cat files/screenshots/tariffe-6.5.0.png > dist/tariffe-6.5.0.png
             adb exec-out run-as com.costoluce.cloud cat files/screenshots/tariffe-editor-6.5.0.png > dist/tariffe-editor-6.5.0.png
             for size in compact medium large; do for page in summary history; do adb exec-out run-as com.costoluce.cloud cat "files/screenshots/widget-$page-$size-6.5.0.png" > "dist/widget-$page-$size-6.5.0.png"; done; done
