@@ -38,7 +38,7 @@ public class AreraTableTest {
     }
     private double round(double v){return Math.round(v*100)/100.0;}
     @Test(expected=IOException.class) public void changedUnitFailsClosed()throws Exception{AreraTable.parse(changed("Quota fissa (euro/anno)","Quota fissa (euro/mese)"),2026);}
-    @Test(expected=IOException.class) public void missingHeaderFailsClosed()throws Exception{AreraTable.parse(changed("ASOS","UNKNOWN"),2026);}
+    @Test(expected=IOException.class) public void missingHeaderFailsClosed()throws Exception{AreraTable.parse(changed(">SOS<",">UNKNOWN<"),2026);}
     @Test(expected=IOException.class) public void entitiesAreRejected()throws Exception{AreraTable.parse(changed("<sst ","<!DOCTYPE sst [<!ENTITY x SYSTEM 'file:///private'>]><sst "),2026);}
     @Test(expected=IOException.class) public void wrongYearIsNotSubstituted()throws Exception{AreraTable.parse(fixture(),2027);}
 }

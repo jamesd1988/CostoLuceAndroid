@@ -219,6 +219,12 @@ public class WidgetSmokeTestRunner extends Instrumentation {
         Bundle test=new Bundle();test.putString("id","InstrumentationTestRunner");test.putInt("numtests",1);test.putInt("current",1);test.putString("class",getClass().getName());test.putString("test","realRemoteViewsPages");sendStatus(1,test);
         try {
             Context c=getTargetContext();
+            org.json.JSONObject areraFixture;
+            try(InputStream input=getContext().getAssets().open("arera-2026-layout.b64");ByteArrayOutputStream bytes=new ByteArrayOutputStream()){
+                byte[] buffer=new byte[4096];int n;while((n=input.read(buffer))!=-1)bytes.write(buffer,0,n);
+                areraFixture=AreraTable.parse(android.util.Base64.decode(bytes.toByteArray(),android.util.Base64.DEFAULT),2026);
+            }
+            if(Math.abs(areraFixture.getJSONObject("2026-08").getJSONObject("resident").getDouble("asos")-.031515)>1e-10)throw new AssertionError("ARERA parser on Android");
             Activity activity=startActivitySync(new Intent(c,MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             Thread.sleep(2500);previewWeb=findWeb(activity.findViewById(android.R.id.content));capture("app-6.5.0");
             android.webkit.WebView web=findWeb(activity.findViewById(android.R.id.content));
@@ -240,6 +246,12 @@ public class WidgetSmokeTestRunner extends Instrumentation {
             double nativeCost=pricing.estimatedCost(479,2,218,2);
             assertScript(web,"if(Math.abs(calculateCosts(479,2,218,2).total-"+nativeCost+")>0.000001)throw Error('App/widget pricing mismatch');if(!undoRateDeletion()||!rateMeta.dispatch.enabled)throw Error('Restore default');openRateEditor(customKeys[0]);requestDeleteRate();if(!confirmDeleteRate()||customKeys.length!==0)throw Error('Delete custom');if(!undoRateDeletion()||customKeys.length!==1)throw Error('Restore custom');openRateEditor('energy');if(!document.getElementById('rateDeleteButton').hidden||requestDeleteRate())throw Error('Protected Energy');closeRateEditor()");
             assertScript(web,"resetRates();setRateFilter('all');showView('home')");Thread.sleep(1000);
+            String areraPayload="{\"months\":"+areraFixture+",\"checkedAt\":0,\"error\":\"\"}";
+            assertScript(web,"showView('rates');window.onAreraCatalog("+areraPayload+");byId('areraMonth').value='2026-08';byId('areraResident').value='resident';byId('areraPower').value='3';previewArera();if(!areraDraft||byId('areraPreview').hidden)throw Error('ARERA preview');if(!applyArera()||customKeys.length!==3)throw Error('ARERA import');openRateEditor('asos');byId('rateAmount').value='0.04';if(!saveRateEditor())throw Error('ARERA pencil');window.onAreraCatalog("+areraPayload+");if(tariffs.asos!==.04)throw Error('ARERA check overwrites manual edit')");
+            Thread.sleep(1200);waitForIdleSync();saved=CostoLuceWidgetProvider.readConfiguration(c);
+            if(saved==null||new org.json.JSONObject(saved.ratesJson).getJSONArray("_custom").length()!=3)throw new AssertionError("ARERA fixed network rows did not reach widget");
+            double areraNativeCost=WidgetPricing.parse(saved.ratesJson,saved.resident).estimatedCost(338,2,38,2);
+            assertScript(web,"if(Math.abs(calculateCosts(338,2,38,2).total-"+areraNativeCost+")>0.000001)throw Error('ARERA app/widget mismatch');resetRates();setRateFilter('all');showView('home')");Thread.sleep(1000);
             checkIntrinsicResize(c);
             int[][] smallSizes={{96,48},{110,56},{130,64},{150,80},{180,96},{300,64},{130,160},{180,180},{240,220},{130,500}};
             for(int[] size:smallSizes)for(int page=0;page<2;page++)for(float scale:new float[]{1,1.3f})checkSmallWidget(activity,c,size[0],size[1],page,scale);

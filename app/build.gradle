@@ -30,6 +30,8 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
+    // Public source fixture is packaged only in the test APK, never in production data.
+    sourceSets { androidTest.assets.srcDirs += ['src/test/resources'] }
 }
 
 // Test JVM: verifica raggruppamento dei dati orari in mesi solari.
