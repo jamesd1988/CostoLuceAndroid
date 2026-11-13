@@ -124,7 +124,7 @@ jobs:
             for size in compact medium large; do for page in summary history; do adb exec-out run-as com.costoluce.cloud cat "files/screenshots/widget-$page-$size-6.5.1.png" > "dist/widget-$page-$size-6.5.1.png"; done; done
             for variant in 2x1 wide-row intermediate; do adb exec-out run-as com.costoluce.cloud cat "files/screenshots/widget-$variant-6.5.1.png" > "dist/widget-$variant-6.5.1.png"; done
             adb exec-out run-as com.costoluce.cloud cat files/screenshots/widget-compact-refresh-6.5.1.png > dist/widget-compact-refresh-6.5.1.png
-            test "$(file dist/*.png | grep -c 'PNG image data')" -eq 13
+            test "$(file dist/*.png | grep -c 'PNG image data')" -eq 14
       - name: Controllo APK e widget Android
         shell: bash
         run: |
