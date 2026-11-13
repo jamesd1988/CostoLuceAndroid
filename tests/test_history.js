@@ -19,7 +19,7 @@ const saved=new Map();const localStorage={getItem:k=>saved.get(k)??null,setItem:
 const ctx={window:{location:{}},location:{hash:''},document:{getElementById:getId,createElement:fakeElement},localStorage,Date:FixedDate,Intl,Number,Object,Math,String,JSON,isFinite,console};
 vm.createContext(ctx);vm.runInContext(code,ctx);
 
-assert.strictEqual(getId('historyChart').children.length,4);
+assert.strictEqual(getId('historyChart').children.length,13);
 assert.ok(getId('historyChart').children.every(c=>c.children[2].textContent==='Mancante'));
 ctx.window.onHistoryNative([
  {year:2026,month:8,kwh:0,available:false},
@@ -28,7 +28,7 @@ ctx.window.onHistoryNative([
  {year:2026,month:11,kwh:241,available:true,partial:true}
 ]);
 ctx.setDisplayUnit('kwh');
-let columns=getId('historyChart').children;
+let columns=getId('historyChart').children.slice(-4);
 assert.strictEqual(columns[0].children[0].children[0].textContent,'—');
 assert.strictEqual(columns[0].children[0].children.length,1,'Missing month has no bar');
 assert.strictEqual(columns[1].children[0].children[0].textContent,'0,0');
@@ -39,7 +39,7 @@ assert.strictEqual(saved.get('costoluce_display_unit_v1'),'kwh');
 assert.strictEqual(ctx.window.location.href,'costoluce://display-unit?unit=kwh');
 ctx.setDisplayUnit('eur');
 assert.match(getId('total').textContent,/119,71/);
-assert.match(getId('historyChart').children[2].children[0].children[0].textContent,/59,42/);
+assert.match(getId('historyChart').children.slice(-4)[2].children[0].children[0].textContent,/59,42/);
 assert.strictEqual(saved.get('costoluce_display_unit_v1'),'eur');
 console.log('PASS: four real-data slots, missing versus measured zero, partial current month, persistent euro/kWh toggle and monthly excise');
 

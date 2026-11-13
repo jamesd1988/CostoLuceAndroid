@@ -16,8 +16,9 @@ final class HistoryMonths {
     static String from(Calendar reference,int months,int anchor) {
         BillingPeriod.Window window=BillingPeriod.select(reference,months,anchor);
         Calendar first=Calendar.getInstance(TimeZone.getTimeZone("Europe/Rome"));first.clear();first.set(window.startYear,window.startMonth-1,1);first.add(Calendar.MONTH,-3*months);
-        Calendar four=Calendar.getInstance(first.getTimeZone());four.setTimeInMillis(reference.getTimeInMillis());four.set(Calendar.DAY_OF_MONTH,1);four.add(Calendar.MONTH,-3);
-        if(four.before(first))first=four;
+        Calendar annual=Calendar.getInstance(first.getTimeZone());annual.setTimeInMillis(reference.getTimeInMillis());annual.set(Calendar.DAY_OF_MONTH,1);annual.add(Calendar.MONTH,-12);
+        BillingPeriod.Window annualGroup=BillingPeriod.select(annual,months,anchor);
+        first.clear();first.set(annualGroup.startYear,annualGroup.startMonth-1,1);
         SimpleDateFormat f=new SimpleDateFormat("ddMMyyyy",Locale.ITALY);f.setTimeZone(first.getTimeZone());return f.format(first.getTime());
     }
     static JSONArray serialize(List<EnelConnector.MonthUsage> months) throws JSONException {
@@ -36,7 +37,7 @@ final class HistoryMonths {
         return slots(saved,reference,4);
     }
     static JSONArray slots(String saved, Calendar reference,int count) throws JSONException {
-        if(count<1||count>12)throw new JSONException("Storico non valido");
+        if(count<1||count>24)throw new JSONException("Storico non valido");
         JSONArray source = new JSONArray(saved); JSONArray out = new JSONArray();
         Calendar c = Calendar.getInstance(TimeZone.getTimeZone("Europe/Rome"));
         c.setTimeInMillis(reference.getTimeInMillis()); c.set(Calendar.DAY_OF_MONTH,1); c.add(Calendar.MONTH,1-count);
@@ -64,6 +65,11 @@ final class HistoryMonths {
         for(JSONArray rows:new JSONArray[]{new JSONArray(saved),incoming})for(int i=0;i<rows.length();i++){
             JSONObject r=rows.getJSONObject(i);if(r.optInt("hourSamples")>0&&r.optInt("days")>0)map.put(r.optInt("year")*100+r.optInt("month"),r);
         }
-        while(map.size()>12)map.pollFirstEntry();JSONArray result=new JSONArray();for(JSONObject row:map.values())result.put(row);return result;
+        while(map.size()>24)map.pollFirstEntry();JSONArray result=new JSONArray();for(JSONObject row:map.values())result.put(row);return result;
+    }
+    static int archiveCount(String saved,Calendar reference)throws JSONException{
+        int current=reference.get(Calendar.YEAR)*12+reference.get(Calendar.MONTH),count=13;
+        JSONArray rows=new JSONArray(saved);for(int i=0;i<rows.length();i++){JSONObject r=rows.getJSONObject(i);if(r.optInt("hourSamples")>0&&r.optInt("days")>0)count=Math.max(count,current-(r.optInt("year")*12+r.optInt("month")-1)+1);}
+        return Math.min(24,count);
     }
 }

@@ -23,7 +23,7 @@ assert.doesNotMatch(provider,/setOnClickPendingIntent\(R\.id\.widget_root/,
  'Parent root must not steal the refresh-button click');
 
 assert.match(provider,/Tasto premuto alle/,'Every tap must show an immediate visible acknowledgement');
-assert.match(jobService,/EnelConnector\.fetch\(credentials,\s*config\.months,\s*config\.anchor,\s*phase\s*->/,
+assert.match(jobService,/EnelConnector\.fetch\(credentials,\s*config\.months,\s*config\.anchor,\s*annual,\s*phase\s*->/,
  'Background sync must report its stage');
 assert.match(widgetLayout,/android:id="@\+id\/widget_refresh"/);
 assert.match(widgetLayout,/android:layout_width="48dp"/);

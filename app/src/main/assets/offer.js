@@ -30,3 +30,9 @@ function completeOfferFixed(){
     return true;
   }catch(e){byId('offerMessage').textContent=e.message;return false}
 }
+function renderBillPricingNotice(){
+  const el=byId('billPricingNotice');el.hidden=chartMode!=='bill';if(el.hidden)return;
+  try{const missing=missingOfferRows();el.hidden=!missing.length;byId('billPricingText').textContent=missing.length?'Stima potenzialmente incompleta: quote fisse di vendita non riconosciute. Verifica le voci in Tariffe.':''}
+  catch(e){el.hidden=false;byId('billPricingText').textContent='Verifica le quote fisse in Tariffe: '+e.message}
+}
+renderBillPricingNotice();

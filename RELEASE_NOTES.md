@@ -1,14 +1,13 @@
-Costo Luce 6.6.0 - Periodi di fatturazione e grafico bollette
+Costo Luce 6.7.0 - Storico annuale e grafico scorrevole
 
-- Configurazione in Tariffe: bolletta mensile, bimestrale o trimestrale. Per gruppi di due o tre mesi, indicare un esempio scegliendo il primo mese: anteprima dell'intero gruppo e del successivo, poi Salva raggruppamento.
-- Lo schema si ripete tra anni. Le configurazioni esistenti mantengono ottobre-novembre, dicembre-gennaio ecc. La schermata Periodo rimanda a Tariffe e conserva l'opzione accisa.
-- Tre pulsanti nel grafico dell'app: Bolletta (quattro periodi aggregati in euro), kWh (ultimi quattro mesi), euro (costi mensili). Somma degli importi disponibili, con esclusione dei periodi che hanno mesi mancanti e indicazione dei parziali.
-- Costi dei gruppi ottenuti sommando i mesi misurati, con accisa mensile e quote fisse per i mesi iniziati. Non si attribuiscono consumi o costi a mesi futuri.
-- Schema e mese di esempio persistono e vengono sincronizzati con il widget. Il recupero Enel e il riepilogo supportano uno, due o tre mesi; risposte appartenenti a vecchi gruppi vengono respinte.
-- Richiesta dello storico necessario per quattro cicli, fino a 12 mesi. Se il range esteso non è disponibile, il connettore tenta il solo periodo corrente. Le letture reali già salvate si conservano; i mesi mancanti non diventano zeri.
-- Il widget mantiene il grafico mensile e i due selettori euro/kWh, con riepilogo sul ciclo configurato. La vista Bolletta è nel grafico dell'app.
-- Gli importi sono stime con le tariffe attualmente salvate, non fatture ufficiali o una ricostruzione delle tariffe storiche. Canone TV e altre voci non configurate restano esclusi.
-- Il recupero automatico sperimentale dal Portale Consumi non verifica il trimestre: per tre mesi usare Enel diretto, CSV/TXT con intervallo esatto o inserimento manuale.
-- Credenziali cifrate, tariffe e personalizzazioni conservate.
+- La vista Bolletta richiede 12 mesi conclusi più il mese corrente. L'inizio si estende, quando necessario, per includere il primo bimestre/trimestre completo. Non viene garantita la disponibilità di dati che Enel non restituisce.
+- Il periodo corrente viene recuperato prima dello storico. Le richieste storiche sono suddivise in blocchi fino a tre mesi; in caso di rifiuto o mese senza misure viene tentato il singolo mese. Tutto resta nel limite complessivo di 90 secondi.
+- Apertura di Bolletta: controllo automatico al massimo ogni 24 ore per schema di raggruppamento, solo con credenziali già salvate e senza aprire finestre di login. Aggiorna nell'app forza un nuovo tentativo. I normali aggiornamenti widget leggono il periodo corrente e richiedono l'anno solo quando necessario.
+- Conservazione delle letture reali già salvate, fino a 24 mesi. I mesi non disponibili restano mancanti; le misure a zero sono distinte dall'assenza di dati.
+- Grafico scorrevole orizzontalmente nell'app per Bolletta, kWh ed euro. Si apre sui periodi recenti; scorrimento con il dito o pulsanti Precedenti/Recenti. La posizione viene conservata durante i ricalcoli, asse verticale fisso e scala comune allo storico.
+- Somma delle bollette arrotondata sugli importi visualizzati: 99,40 + 111,43 produce 210,83. Nessuna somma costruita con importi nascosti o dati mancanti. Asse e griglia riallineati alla base delle barre.
+- Avviso di stima potenzialmente incompleta se le quote fisse di vendita non vengono riconosciute, con accesso a Tariffe. Non sono inseriti automaticamente costi contrattuali nei profili personalizzati.
+- Gli importi storici restano stime con le tariffe attualmente salvate; non ricostruiscono i prezzi storici e non includono canone TV o altre voci non configurate.
+- Credenziali, prezzi e raggruppamenti salvati conservati; il widget mantiene il grafico mensile senza introdurre swipe RemoteViews.
 
-Verifiche JavaScript, JUnit su calendario/prezzi/storico, compilazione e test Android di configurazione, dati mancanti, sincronizzazione e layout widget. APK di test.
+Verifiche: calendario annuale e archivio su JVM, test JS su richieste automatiche, dati mancanti, avviso quote e regressione dei centesimi; controlli browser di scroll/posizione/overflow; compilazione e test Android dell'interfaccia e del widget. APK di test. Il recupero annuale su account Enel personale richiede la prova sul dispositivo con l'account dell'utente.

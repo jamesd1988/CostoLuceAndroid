@@ -149,6 +149,16 @@ public final class MainActivity extends Activity {
             }
             return true;
         }
+        if ("enel-history".equals(action)) {
+            if(web==null||!HOME.equals(web.getUrl())||enelBusy)return true;
+            CostoLuceWidgetProvider.WidgetConfiguration c=CostoLuceWidgetProvider.readConfiguration(this);
+            if(c==null||!CostoLuceWidgetProvider.annualHistoryDue(this,c.months,c.anchor))return true;
+            if(!new EnelCredentialStore(this).hasSaved()){enelStatus("Collega Enel e salva le credenziali cifrate per recuperare lo storico annuale.",false);return true;}
+            preferredMonths=c.months;preferredAnchor=c.anchor;
+            try{EnelConnector.Credentials credentials=new EnelCredentialStore(this).read();if(credentials!=null)downloadEnel(credentials,false);else enelStatus("Configura Enel per recuperare lo storico annuale.",false);}
+            catch(Exception unavailable){enelStatus("Credenziali salvate non disponibili: configura Enel per recuperare lo storico annuale.",true);}
+            return true;
+        }
         if ("enel-sync".equals(action)) {
             preferredMonths = "1".equals(uri.getQueryParameter("months")) ? 1 : "3".equals(uri.getQueryParameter("months")) ? 3 : 2;
             preferredAnchor=requestAnchor(uri);
@@ -305,6 +315,7 @@ public final class MainActivity extends Activity {
         enelStatus("Inizio collegamento Enel. Durata massima prevista: circa 90 secondi...", false);
         final int selectedMonths=preferredMonths;
         final int selectedAnchor=preferredAnchor;
+        CostoLuceWidgetProvider.markAnnualHistoryAttempt(this,selectedMonths,selectedAnchor);
         // This UI watchdog guarantees visible feedback even when an HTTP library blocks.
         uiHandler.postDelayed(() -> {
             if(enelBusy && enelRequestId == requestId && !isFinishing()) {

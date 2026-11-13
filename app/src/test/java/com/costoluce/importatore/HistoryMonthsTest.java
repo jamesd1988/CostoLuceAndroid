@@ -44,9 +44,10 @@ public class HistoryMonthsTest {
         assertEquals(2,result.monthly.size());assertTrue(result.monthly.get(1).future);assertEquals(2027,result.monthly.get(1).year);assertEquals(12,result.kwh,0);
     }
     @Test public void rangeCoversFourQuarterlyBillsWithoutInventingMonths(){
-        assertEquals("01022026",HistoryMonths.from(day(2026,11,13),3,8));
-        assertEquals("01112025",HistoryMonths.from(day(2026,10,13),3,8));
-        assertEquals("01082026",HistoryMonths.from(day(2026,11,13),1,8));
+        assertEquals("01112025",HistoryMonths.from(day(2026,11,13),3,8));
+        assertEquals("01082025",HistoryMonths.from(day(2026,10,13),3,8));
+        assertEquals("01112025",HistoryMonths.from(day(2026,11,13),1,8));
+        assertEquals("01102025",HistoryMonths.from(day(2026,11,13),2,8));
     }
     @Test public void cachedCurrentMonthRemainsPartialAfterRollover()throws Exception{
         JSONArray saved=HistoryMonths.serialize(Arrays.asList(new EnelConnector.MonthUsage(2026,11,40,12,12,288)));
@@ -58,5 +59,14 @@ public class HistoryMonthsTest {
         JSONArray old=HistoryMonths.serialize(Arrays.asList(new EnelConnector.MonthUsage(2026,9,0,30,30,720)));
         JSONArray unavailable=HistoryMonths.serialize(Arrays.asList(new EnelConnector.MonthUsage(2026,9,0,0,30,0)));
         JSONArray merged=HistoryMonths.merge(old.toString(),unavailable);assertEquals(1,merged.length());assertEquals(720,merged.getJSONObject(0).getInt("hourSamples"));
+    }
+    @Test public void annualArchiveKeepsThirteenMonthsAndUpToTwoYears()throws Exception{
+        JSONArray empty=new JSONArray();assertEquals(13,HistoryMonths.archiveCount(empty.toString(),day(2026,11,13)));
+        JSONArray old=HistoryMonths.serialize(Arrays.asList(new EnelConnector.MonthUsage(2025,1,30,31,31,744)));
+        assertEquals(23,HistoryMonths.archiveCount(old.toString(),day(2026,11,13)));
+        assertEquals(24,HistoryMonths.slots(old.toString(),day(2026,11,13),24).length());
+        java.util.List<EnelConnector.MonthUsage> values=new java.util.ArrayList<>();Calendar month=day(2024,1,1);
+        for(int i=0;i<30;i++,month.add(Calendar.MONTH,1))values.add(new EnelConnector.MonthUsage(month.get(Calendar.YEAR),month.get(Calendar.MONTH)+1,1,1,31,24));
+        assertEquals(24,HistoryMonths.merge("[]",HistoryMonths.serialize(values)).length());
     }
 }

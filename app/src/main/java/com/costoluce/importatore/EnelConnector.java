@@ -115,7 +115,10 @@ public final class EnelConnector {
         return fetch(credentials,months,10,progress);
     }
 
-    static synchronized Result fetch(Credentials credentials,int months,int anchor,Progress progress) throws IOException,JSONException {
+    static Result fetch(Credentials credentials,int months,int anchor,Progress progress) throws IOException,JSONException {
+        return fetch(credentials,months,anchor,true,progress);
+    }
+    static synchronized Result fetch(Credentials credentials,int months,int anchor,boolean extended,Progress progress) throws IOException,JSONException {
         final long deadline = System.nanoTime() + MAX_SYNC_MS * 1_000_000L;
         credentials.validate();
         if (months < 1 || months > 3) throw new IOException("Periodo non supportato.");
@@ -141,24 +144,54 @@ public final class EnelConnector {
             if (saml == null) throw new IOException("Autenticazione Enel non completata. Può essere richiesto un passaggio aggiuntivo o il login può essere cambiato.");
             report(progress, "Fase 3/4: conferma sessione Enel...");
             request(SAML, "SAMLResponse="+encode(saml), deadline);
-            String url = AGGREGATE + "?pod=" + encode(credentials.pod) + "&userNumber=" + encode(credentials.userNumber)
-                    + "&validityFrom=" + from + "&validityTo=" + to;
-            report(progress, "Fase 4/4: recupero dei consumi elettrici...");
-            Result parsed;
-            try {
-                parsed = parseTotal(new JSONObject(request(url,null,deadline)),from,to);
-            } catch(IOException | JSONException historyUnavailable) {
-                // Keep the working billing sync when a wider history is refused.
-                report(progress,"Storico esteso non disponibile: recupero il periodo di fatturazione.");
-                String billingUrl=AGGREGATE+"?pod="+encode(credentials.pod)+"&userNumber="+encode(credentials.userNumber)
-                        +"&validityFrom="+window.from+"&validityTo="+to;
-                parsed=parseTotal(new JSONObject(request(billingUrl,null,deadline)),window.from,to);
+            report(progress, "Fase 4/4: recupero del periodo corrente...");
+            Result billing=readRange(credentials,window.from,to,deadline);
+            java.util.TreeMap<Integer,MonthUsage> archive=new java.util.TreeMap<>();
+            for(MonthUsage month:billing.monthly)archive.put(month.year*100+month.month,month);
+            if(extended){
+                final TimeZone zone=TimeZone.getTimeZone("Europe/Rome");
+                SimpleDateFormat format=new SimpleDateFormat("ddMMyyyy",Locale.ITALY);format.setTimeZone(zone);
+                Calendar earliest=Calendar.getInstance(zone),end=Calendar.getInstance(zone);
+                try{earliest.setTime(format.parse(from));end.setTime(format.parse(window.from));}catch(ParseException invalid){throw new IOException("Date storico non valide");}
+                end.add(Calendar.DAY_OF_MONTH,-1);
+                while(!end.before(earliest)&&deadline-System.nanoTime()>8_000_000_000L){
+                    Calendar start=(Calendar)end.clone();start.set(Calendar.DAY_OF_MONTH,1);start.add(Calendar.MONTH,-2);
+                    if(start.before(earliest))start=(Calendar)earliest.clone();
+                    report(progress,"Storico Enel: "+format.format(start.getTime())+" – "+format.format(end.getTime()));
+                    try{
+                        Result chunk=readRange(credentials,format.format(start.getTime()),format.format(end.getTime()),deadline);
+                        for(MonthUsage month:chunk.monthly)archive.put(month.year*100+month.month,month);
+                        for(MonthUsage missing:chunk.monthly)if(missing.hourSamples==0&&deadline-System.nanoTime()>8_000_000_000L){
+                            Calendar single=Calendar.getInstance(zone);single.clear();single.set(missing.year,missing.month-1,1);
+                            String singleFrom=format.format(single.getTime());single.set(Calendar.DAY_OF_MONTH,single.getActualMaximum(Calendar.DAY_OF_MONTH));
+                            try{Result retry=readRange(credentials,singleFrom,format.format(single.getTime()),deadline);for(MonthUsage row:retry.monthly)if(row.hourSamples>0)archive.put(row.year*100+row.month,row);}
+                            catch(IOException|JSONException unavailableMonth){report(progress,"Storico parziale: alcuni mesi non sono disponibili.");}
+                        }
+                    }catch(IOException|JSONException unavailable){
+                        // Some accounts refuse multi-month ranges. Try individual calendar months,
+                        // keeping the verified current billing result even if historical requests fail.
+                        Calendar month=(Calendar)end.clone();month.set(Calendar.DAY_OF_MONTH,1);
+                        while(!month.before(start)&&deadline-System.nanoTime()>8_000_000_000L){
+                            Calendar last=(Calendar)month.clone();last.set(Calendar.DAY_OF_MONTH,last.getActualMaximum(Calendar.DAY_OF_MONTH));
+                            try{Result chunk=readRange(credentials,format.format(month.getTime()),format.format(last.getTime()),deadline);for(MonthUsage row:chunk.monthly)archive.put(row.year*100+row.month,row);}
+                            catch(IOException|JSONException missing){report(progress,"Storico parziale: alcuni mesi non sono disponibili.");}
+                            month.add(Calendar.MONTH,-1);
+                        }
+                    }
+                    end=(Calendar)start.clone();end.add(Calendar.DAY_OF_MONTH,-1);
+                }
             }
+            Result parsed=new Result(billing.kwh,billing.period,billing.days,new java.util.ArrayList<>(archive.values()));
             return forBillingWindow(parsed,window);
         } finally {
             jar.getCookieStore().removeAll();
             CookieHandler.setDefault(previous);
         }
+    }
+
+    private static Result readRange(Credentials credentials,String from,String to,long deadline)throws IOException,JSONException{
+        String address=AGGREGATE+"?pod="+encode(credentials.pod)+"&userNumber="+encode(credentials.userNumber)+"&validityFrom="+from+"&validityTo="+to;
+        return parseTotal(new JSONObject(request(address,null,deadline)),from,to);
     }
 
     static Result forBillingWindow(Result parsed, BillingPeriod.Window window) {

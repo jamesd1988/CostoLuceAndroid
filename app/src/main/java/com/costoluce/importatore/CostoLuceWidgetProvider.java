@@ -113,27 +113,32 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
     }
 
     static void saveHistory(Context context, EnelConnector.Result result) throws JSONException {
-        if (result != null && !result.history.isEmpty() && result.history.size() <= 12) {
+        if (result != null && !result.history.isEmpty() && result.history.size() <= 24) {
             prefs(context).edit().putString("history_json", HistoryMonths.merge(prefs(context).getString("history_json","[]"),HistoryMonths.serialize(result.history)).toString())
                     .putLong("history_at",System.currentTimeMillis()).commit();
             refresh(context);
         }
     }
     static org.json.JSONArray history(Context context) { return history(context,4); }
-    static org.json.JSONArray archive(Context context) { return history(context,12); }
+    static org.json.JSONArray archive(Context context) { return history(context,0); }
     private static org.json.JSONArray history(Context context,int count) {
         SharedPreferences p = prefs(context);
         // Upgrade: reuse the verified Enel months from 5.x until the first wider fetch.
         // Manual totals cannot supply a monthly history.
         String previous = "enel".equals(p.getString(KEY_SOURCE,""))
                 ? p.getString(KEY_MONTHLY,"[]") : "[]";
-        try { return HistoryMonths.slots(p.getString("history_json", previous), java.util.Calendar.getInstance(),count); }
+        try {String saved=p.getString("history_json",previous);java.util.Calendar now=java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("Europe/Rome"));return HistoryMonths.slots(saved,now,count==0?HistoryMonths.archiveCount(saved,now):count); }
         catch (JSONException e) { return new org.json.JSONArray(); }
     }
     static void saveUnit(Context context, String unit) {
         if (!"kwh".equals(unit) && !"eur".equals(unit)) return;
         prefs(context).edit().putString("display_unit", unit).apply(); refresh(context);
     }
+    static boolean annualHistoryDue(Context context,int months,int anchor){
+        SharedPreferences p=prefs(context);long elapsed=System.currentTimeMillis()-p.getLong("annual_history_attempt",0);
+        return elapsed<0||elapsed>=24*60*60*1000L||!((months+":"+anchor).equals(p.getString("annual_history_key","")));
+    }
+    static void markAnnualHistoryAttempt(Context context,int months,int anchor){prefs(context).edit().putLong("annual_history_attempt",System.currentTimeMillis()).putString("annual_history_key",months+":"+anchor).apply();}
     /**
      * Configure the widget without making up consumption data. A first Enel
      * fetch from the Home widget can then populate the first real snapshot.
@@ -521,7 +526,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
             float fontScale=context.getResources().getConfiguration().fontScale;
             views.setImageViewBitmap(R.id.widget_chart,MonthlyChart.draw(context,history,spec,spec.chartHeight(fontScale,showStatus),bitmapPixels));
         }else{
-            views.setTextViewText(R.id.widget_brand,spec.compact()?"Costo Luce":"Costo Luce · v6.6.0");
+            views.setTextViewText(R.id.widget_brand,spec.compact()?"Costo Luce":"Costo Luce · v6.7.0");
             views.setViewVisibility(R.id.widget_chart_note,android.view.View.GONE);
             if("enel".equals(p.getString(KEY_SOURCE,"")))try{org.json.JSONArray rows=new org.json.JSONArray(p.getString(KEY_MONTHLY,"[]"));if(rows.length()>0)views.setTextViewText(R.id.widget_period,compactPeriod(rows));}catch(Exception ignored){}
         }
@@ -678,7 +683,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         views.setOnClickPendingIntent(R.id.widget_refresh, refreshPending);
         views.setOnClickPendingIntent(R.id.widget_status, refreshPending);
         boolean chart = p.getInt("page_"+widgetId,0)==1;
-        views.setTextViewText(R.id.widget_brand,chart?"Consumi ultimi 4 mesi":"COSTO LUCE · v6.6.0");
+        views.setTextViewText(R.id.widget_brand,chart?"Consumi ultimi 4 mesi":"COSTO LUCE · v6.7.0");
         views.setViewVisibility(R.id.widget_units,chart?android.view.View.VISIBLE:android.view.View.GONE);
         views.setViewVisibility(R.id.widget_refresh,chart?android.view.View.GONE:android.view.View.VISIBLE);
         boolean showKwh="kwh".equals(p.getString("display_unit","eur"));
