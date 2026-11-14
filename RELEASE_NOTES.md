@@ -1,9 +1,10 @@
-Costo Luce 6.11.0 - Tariffe compatte e periodo integrato
+Costo Luce 6.12.0 - Proiezione della bolletta
 
-- Tariffe: riepilogo Periodo e ARERA, voci compatte modificabili con un tocco, filtri e Mostra tutte. Aggiunta, eliminazione e ripristino delle voci restano disponibili.
-- Periodo: pannello dedicato dentro Tariffe, scelta mensile/bimestrale/trimestrale e gruppo di esempio. Rimossa la scheda Periodo dalla navigazione.
-- ARERA: profilo e mese in un pannello, anteprima dei valori reali prima dell'importazione. Nessuna modifica automatica alle tariffe personalizzate durante il controllo disponibilità.
-- Agevolazione accisa disponibile in Tariffe > Imposte e agevolazioni. Quote fisse e ripristino rimangono accessibili senza allungare la lista principale.
-- Conservati credenziali cifrate, tariffe salvate, dati Enel, logica di calcolo e widget. Aggiornamento installabile sopra la versione precedente con la stessa firma.
+- Piccolo interruttore Proiezione nella modalità Bolletta: spento mostra la stima sui consumi disponibili, acceso la sostituisce con il totale previsto di fine periodo, campito. Le fatture emesse e il riepilogo attuale restano invariati. Scelta salvata sul telefono.
+- Media degli ultimi 7 giorni di calendario disponibili, con almeno 5 giornate complete. Giornate incomplete e quella in corso escluse dalla media; consumi zero validi. Letture ferme da oltre 7 giorni o dati insufficienti indicati senza importi inventati.
+- Periodi mensili, bimestrali e trimestrali: mesi conclusi completi conservati, giorni restanti stimati; costi fissi dell’intero periodo, variabili, accisa mese per mese e IVA configurati ricalcolati. Canone TV separato.
+- Dettagli espandibili con intervallo, numero di giorni usati, media e consumi aggiuntivi previsti. Proiezione al ritmo recente, soggetta a consumi e tariffe futuri.
+- Il connettore conserva i totali giornalieri reali già presenti nella risposta Enel, con distinzione fra giorni completi e parziali e gestione delle giornate di 23/25 ore. Dopo l’aggiornamento dell’app, premere Aggiorna per acquisire il dettaglio necessario. I vecchi totali mensili non vengono trasformati in letture giornaliere.
+- Prezzi salvati, credenziali cifrate, periodi, storico fatturato e widget conservati. L’opzione Proiezione riguarda il grafico Bolletta nell’app.
 
-Verifiche: suite JavaScript, test JVM e prova strumentale su emulatore Android in GitHub Actions, incluse sincronizzazione app/widget, modifica delle voci, importazione ARERA e raggruppamento del periodo.
+Verifiche: suite JavaScript (soglia 4/5/7 giorni, parziali, zero, dati vecchi, anni bisestili e cambio anno, tariffe reali del motore, scelta persistente), test JVM del parser e del dettaglio giornaliero, test su emulatore Android per barra esclusiva e sincronizzazione preesistente app/widget.

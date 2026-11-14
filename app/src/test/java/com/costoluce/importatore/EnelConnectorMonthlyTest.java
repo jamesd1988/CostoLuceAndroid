@@ -76,4 +76,24 @@ public final class EnelConnectorMonthlyTest {
         );
         EnelConnector.parseTotal(json,"01092026","31102026");
     }
+    private static String fullDay(String date,int hours) throws Exception {
+        org.json.JSONArray bins=new org.json.JSONArray();for(int hour=1;hour<=hours;hour++)bins.put(new JSONObject().put("name","H"+hour).put("value",.25));
+        return new JSONObject().put("date",date).put("binValues",bins).toString();
+    }
+    @Test public void dailyReadingsSurviveHistoryAndDistinguishPartialDays() throws Exception {
+        EnelConnector.Result r=EnelConnector.parseTotal(payload(fullDay("09112026",24)+","+fullDay("10112026",12)),"01112026","14112026");
+        assertEquals(2,r.monthly.get(0).daily.size());assertTrue(r.monthly.get(0).daily.get(0).complete);assertFalse(r.monthly.get(0).daily.get(1).complete);
+        assertEquals(6,r.monthly.get(0).daily.get(0).kwh,0);
+        org.json.JSONArray serialized=HistoryMonths.serialize(r.monthly);
+        java.util.Calendar reference=java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("Europe/Rome"));reference.clear();reference.set(2026,10,14);
+        org.json.JSONArray slots=HistoryMonths.slots(serialized.toString(),reference);
+        org.json.JSONArray days=slots.getJSONObject(3).getJSONArray("daily");assertEquals(2,days.length());assertEquals(9,days.getJSONObject(0).getInt("day"));assertTrue(days.getJSONObject(0).getBoolean("complete"));assertEquals(24,days.getJSONObject(0).getInt("hourSamples"));
+        assertEquals(9,r.kwh,0);
+    }
+    @Test public void daylightSavingDaysUseActualItalianDayLength() throws Exception {
+        EnelConnector.Result spring=EnelConnector.parseTotal(payload(fullDay("29032026",23)),"29032026","29032026");
+        EnelConnector.Result autumn=EnelConnector.parseTotal(payload(fullDay("25102026",25)),"25102026","25102026");
+        assertTrue(spring.monthly.get(0).daily.get(0).complete);assertTrue(autumn.monthly.get(0).daily.get(0).complete);
+        EnelConnector.Result incomplete=EnelConnector.parseTotal(payload(fullDay("25102026",24)),"25102026","25102026");assertFalse(incomplete.monthly.get(0).daily.get(0).complete);
+    }
 }

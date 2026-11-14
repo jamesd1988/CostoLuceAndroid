@@ -28,7 +28,9 @@ final class HistoryMonths {
             r.put("year",m.year); r.put("month",m.month); r.put("kwh",m.kwh);
             r.put("days",m.days); r.put("expectedDays",m.expectedDays);
             r.put("hourSamples",m.hourSamples); r.put("lastMeasuredDay",m.lastMeasuredDay);
-            rows.put(r);
+            JSONArray daily=new JSONArray();
+            for(EnelConnector.DayUsage day:m.daily){JSONObject entry=new JSONObject();entry.put("day",day.day);entry.put("kwh",day.kwh);entry.put("hourSamples",day.hourSamples);entry.put("complete",day.complete);daily.put(entry);}
+            r.put("daily",daily);rows.put(r);
         }
         return rows;
     }
@@ -54,6 +56,8 @@ final class HistoryMonths {
                     slot.put("partial",i==count-1 || r.optInt("days")<c.getActualMaximum(Calendar.DAY_OF_MONTH)
                             || r.optInt("hourSamples")<r.optInt("days")*23);
                     slot.put("lastMeasuredDay",r.optInt("lastMeasuredDay"));
+                    // Additive schema: old snapshots remain valid, but cannot manufacture daily readings.
+                    JSONArray daily=r.optJSONArray("daily");if(daily!=null&&daily.length()<=31)slot.put("daily",daily);
                 }
             }
             out.put(slot);

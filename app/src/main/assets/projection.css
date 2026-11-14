@@ -1,0 +1,21 @@
+.bill-projection-controls{margin:4px 0 16px}
+.bill-projection-row{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px}
+.bill-projection-row>span{font-size:11px;color:#b9cde2}
+.bill-projection-toggle{position:relative;display:flex;align-items:center;gap:8px;min-height:44px;font-size:12px;color:#e8f3ff}
+.bill-projection-toggle input{position:absolute;inset:0;width:100%;height:100%;opacity:0;margin:0;z-index:1}
+.bill-projection-switch{position:relative;width:30px;height:18px;flex-shrink:0;background:#3d5872;border-radius:12px;transition:background .2s}
+.bill-projection-switch:after{content:'';position:absolute;left:3px;top:3px;width:12px;height:12px;border-radius:50%;background:#c5d6e7;transition:transform .2s,background .2s}
+.bill-projection-toggle input:checked+.bill-projection-switch{background:#286d73}
+.bill-projection-toggle input:checked+.bill-projection-switch:after{transform:translateX(12px);background:#64e3c6}
+.bill-projection-toggle input:focus-visible+.bill-projection-switch{outline:2px solid #f0f7ff;outline-offset:4px}
+#billProjectionHint{font-size:11px;line-height:1.5;color:#b9cde2;margin:0}
+.history-col.current .history-bar.projected{background:repeating-linear-gradient(-45deg,#67dfc977 0px,#67dfc977 3px,#27778766 3px,#27778766 7px)}
+.bill-projection-amount{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:5px 10px;border-top:1px solid #294a67;padding-top:14px;margin-top:15px}
+.bill-projection-amount>span{font-size:11px;color:#b9cde2}
+.bill-projection-amount>strong{font-size:20px;letter-spacing:-.4px;color:#eff6ff}
+#billProjectionDetails{font-size:11px;line-height:1.6;color:#b9cde2;margin-top:4px}
+#billProjectionDetails summary{padding:10px 0;min-height:42px;cursor:pointer}
+#billProjectionDetails p{margin:5px 0 12px}
+.history-card:has(.bill-projection-controls:not([hidden]))>.chart-badge{display:none}
+#billProjectionControls[hidden],#billProjectionAmount[hidden],#billProjectionDetails[hidden]{display:none!important}
+@media(prefers-reduced-motion:reduce){.bill-projection-switch,.bill-projection-switch:after{transition:none}}

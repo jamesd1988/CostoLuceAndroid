@@ -57,9 +57,9 @@ function completeBillOffer(){
 }
 function renderBillBreakdown(rows){
   const dest=byId('billBreakdown');dest.innerHTML='';dest.hidden=chartMode!=='bill';if(dest.hidden)return;
-  const title=document.createElement('summary');title.textContent='Dettaglio fatture e stima corrente'+(rateEnabled('vat')?' (IVA inclusa)':' (IVA esclusa)');dest.appendChild(title);
+  const title=document.createElement('summary');title.textContent='Dettaglio fatture e '+(rows.some(r=>r.projection)?'proiezione finale':'stima corrente')+(rateEnabled('vat')?' (IVA inclusa)':' (IVA esclusa)');dest.appendChild(title);
   for(const row of rows.filter(r=>r.available)){
-    const p=document.createElement('p');p.textContent=row.status==='issued'?row.label+' '+row.years+': '+euro(row.value)+' elettricità fatturata · '+euro(row.other)+' fuori totale elettricità (canone TV/altre voci)':row.label+' '+row.years+': '+euro(row.variable)+' variabile + '+euro(row.fixed)+' fisso = '+euro(row.value)+' · stima corrente';dest.appendChild(p);
+    const p=document.createElement('p');p.textContent=row.status==='issued'?row.label+' '+row.years+': '+euro(row.value)+' elettricità fatturata · '+euro(row.other)+' fuori totale elettricità (canone TV/altre voci)':row.label+' '+row.years+': '+euro(row.variable)+' variabile + '+euro(row.fixed)+' fisso = '+euro(row.value)+(row.projection?' · proiezione finale':' · stima corrente');dest.appendChild(p);
   }
 }
 

@@ -74,6 +74,7 @@ public final class EnelConnector {
         final double kwh;
         final boolean future;
         final int lastMeasuredDay;
+        final java.util.List<DayUsage> daily = new java.util.ArrayList<>();
         MonthUsage(int year, int month, double kwh, int days, int expectedDays, int hourSamples) {
             this(year, month, kwh, days, expectedDays, hourSamples, false, 0);
         }
@@ -89,9 +90,17 @@ public final class EnelConnector {
         }
     }
 
+    static final class DayUsage {
+        final int day, hourSamples;
+        final double kwh;
+        final boolean complete;
+        DayUsage(int day,double kwh,int hourSamples,boolean complete){this.day=day;this.kwh=kwh;this.hourSamples=hourSamples;this.complete=complete;}
+    }
+
     private static final class MonthAccumulator {
         final int year, month, expectedDays;
         final Set<String> observedDays = new HashSet<>();
+        final java.util.List<DayUsage> daily = new java.util.ArrayList<>();
         double kwh;
         int hourSamples;
         int lastMeasuredDay;
@@ -309,6 +318,7 @@ public final class EnelConnector {
             JSONArray bins=day.optJSONArray("binValues");
             if(bins==null) throw new IOException("Mancano le misure orarie per una giornata.");
             Set<String> hours=new HashSet<>();
+            double dayKwh=0; boolean boundedHours=true;
             for(int j=0;j<bins.length();j++) {
                 JSONObject bin=bins.optJSONObject(j);
                 if(bin==null || !(bin.opt("value") instanceof Number))
@@ -319,12 +329,18 @@ public final class EnelConnector {
                 double value=((Number)bin.opt("value")).doubleValue();
                 if(!Double.isFinite(value)||value<0||value>10000)
                     throw new IOException("Valore kWh fuori intervallo.");
+                dayKwh+=value;boundedHours&=Integer.parseInt(hour.substring(1))<=25;
                 month.kwh+=value;
                 total+=value;
                 month.hourSamples++;
                 points++;
             }
             if(bins.length()>0) {
+                Calendar dayStart=(Calendar)dayCalendar.clone();dayStart.set(Calendar.HOUR_OF_DAY,0);dayStart.set(Calendar.MINUTE,0);dayStart.set(Calendar.SECOND,0);dayStart.set(Calendar.MILLISECOND,0);
+                Calendar nextDay=(Calendar)dayStart.clone();nextDay.add(Calendar.DAY_OF_MONTH,1);
+                int expectedHours=(int)((nextDay.getTimeInMillis()-dayStart.getTimeInMillis())/3600000L);
+                if(expectedHours==24){boolean zeroBased=true,oneBased=true;for(int h=0;h<24;h++){zeroBased&=hours.contains("H"+h);oneBased&=hours.contains("H"+(h+1));}boundedHours&=zeroBased||oneBased;}
+                month.daily.add(new DayUsage(dayCalendar.get(Calendar.DAY_OF_MONTH),dayKwh,bins.length(),boundedHours&&bins.length()==expectedHours));
                 month.observedDays.add(stamp);
                 month.lastMeasuredDay = Math.max(month.lastMeasuredDay,
                         dayCalendar.get(Calendar.DAY_OF_MONTH));
@@ -338,8 +354,8 @@ public final class EnelConnector {
         for(MonthAccumulator m : buckets.values()) {
             int n=m.observedDays.size();
             countedDays+=n;
-            monthly.add(new MonthUsage(m.year,m.month,m.kwh,n,m.expectedDays,m.hourSamples,
-                    false,m.lastMeasuredDay));
+            MonthUsage usage=new MonthUsage(m.year,m.month,m.kwh,n,m.expectedDays,m.hourSamples,false,m.lastMeasuredDay);
+            usage.daily.addAll(m.daily);monthly.add(usage);
         }
         return new Result(total,from+"-"+to,countedDays,monthly);
     }
