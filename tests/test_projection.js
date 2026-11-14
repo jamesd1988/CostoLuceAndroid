@@ -21,7 +21,15 @@ assert(!calc([...daily([9,10,11,12,13]),...daily([13])]).available,'Duplicate da
 assert(!calc(daily([9,10,11,12,13]),{rows:[october,{year:2026,month:11,kwh:50,available:true,partial:true}]}).available,'Old monthly-only snapshots cannot invent a daily average');
 assert(!calc(daily([9,10,11,12,13]),{rows:[{...october,partial:true},row(2026,11,daily([9,10,11,12,13]))]}).available,'Incomplete concluded months must be disclosed');
 const records=daily([9,10,11,12,13]);assert(!calc(records,{rows:[october,{...row(2026,11,records),kwh:100}]}).available,'Monthly and daily amounts must reconcile');
-const concluded=daily(Array.from({length:31},(_,i)=>i+1));concluded[0].complete=false;assert(!calc(records,{rows:[row(2026,10,concluded,false),row(2026,11,records)]}).available,'Partial hourly days in concluded months cannot become definitive merely through monthly metadata');
+// Regression for the user's October/November account: complete monthly coverage,
+// but one October day is excluded from the daily reference sample (e.g. 24 bins on a 25-hour day).
+const concluded=daily(Array.from({length:31},(_,i)=>i+1));concluded[24].complete=false;
+const octoberDaily=row(2026,10,concluded,false);
+const recovered=calc(records,{rows:[octoberDaily,row(2026,11,records)]});
+assert(recovered.available,'A valid concluded monthly total must not be rejected by hourly reference-day flags');
+assert.equal(recovered.monthly[0].kwh,octoberDaily.kwh);assert.equal(recovered.monthly[0].estimatedDays,0);assert.equal(recovered.sampleDays,5);
+assert(!calc(daily([10,11,12,13]),{rows:[octoberDaily,row(2026,11,daily([10,11,12,13]))]}).available,'Historical days must not bypass the five recent-day threshold');
+const mismatched=JSON.parse(JSON.stringify(octoberDaily));mismatched.kwh+=1;assert(!calc(records,{rows:[mismatched,row(2026,11,records)]}).available,'Keep the monthly/daily total reconciliation');
 // First day of a new cycle: use real daily readings from the preceding month.
 result=projection.calculate({rows:[row(2026,9,daily([24,25,26,27,28,29,30]),false)],period:[{year:2026,month:10},{year:2026,month:11}],today:new Date(2026,9,1,12),price});assert(result.available);assert.equal(result.observedKwh,0);assert.equal(result.kwh,61*8);assert.equal(result.sampleDays,7);
 // Monthly, quarterly, leap-year and year-crossing windows use actual calendar lengths.

@@ -38,8 +38,10 @@
       const first=ordinal(item.year,item.month,1),days=monthDays(item.year,item.month),end=first+days-1,row=monthly.get(item.year*12+item.month);
       let actual=0,projected=0,estimatedDays=0;
       if(end<now&&row?.available&&!row.partial&&Number.isFinite(row.kwh)&&row.kwh>=0){
+        // A concluded monthly total is not a weekly reference sample. Preserve its real sum
+        // even when an hourly day is excluded from the recent complete-day average.
         if(Array.isArray(row.daily)&&row.daily.length){
-          let verified=0;for(let d=0;d<days;d++){const day=daily.get(first+d);if(!day?.complete)return unavailable('Un mese concluso contiene giornate incomplete. Aggiorna Enel prima di calcolare la proiezione.');verified+=day.kwh;}
+          let verified=0;for(let d=0;d<days;d++){const day=daily.get(first+d);if(!day)return unavailable('Manca una giornata nel dettaglio del mese concluso. Aggiorna Enel.');verified+=day.kwh;}
           if(Math.abs(verified-row.kwh)>.02)return unavailable('Totale mensile e dettaglio giornaliero non coincidono. Aggiorna Enel.');
         }
         actual=projected=row.kwh;
