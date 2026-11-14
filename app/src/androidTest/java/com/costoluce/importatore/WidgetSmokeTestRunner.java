@@ -101,7 +101,7 @@ public class WidgetSmokeTestRunner extends Instrumentation {
             if(page==1||actual.unified()){android.widget.ImageView chart=view.findViewById(R.id.widget_chart);if(chart.getHeight()<40*density)throw new AssertionError("Chart collapsed");}
 
         });
-        if(fontScale==1&&width<=400&&height<=350)capture("widget-"+(page==0?"summary":"bill".equals(CostoLuceWidgetProvider.chartMode(c))?"bill":"history")+"-"+(width==280?"compact":width==340?"medium":"large")+"-6.14.0");
+        if(fontScale==1&&((width==280&&height==260)||(width==340&&height==300)||(width==400&&height==350)))capture("widget-"+(page==0?"summary":"bill".equals(CostoLuceWidgetProvider.chartMode(c))?"bill":"history")+"-"+(width==280?"compact":width==340?"medium":"large")+"-6.14.0");
         if(fontScale==1&&((width==130&&height==500)||(width==190&&height==420)||(width==260&&height==252)||(width==410&&height==210)||(width==420&&height==450)))capture("widget-adaptive-"+width+"x"+height+"-"+page+"-6.14.0");
         // Measurement fixtures stay in detached views: never saved or published as Enel data.
         checkedOnMainSync(()->{
@@ -221,6 +221,22 @@ public class WidgetSmokeTestRunner extends Instrumentation {
         });
     }
 
+    /** Exercise both sides of layout breakpoints, long values and refresh feedback without touching account data. */
+    private void checkAdaptiveEdges(Activity activity,Context c){
+        checkedOnMainSync(()->{
+            for(float fs:new float[]{1,1.3f,2})for(int[] size:new int[][]{{120,130},{130,330},{170,330},{239,400},{240,230},{240,250},{299,250},{340,190},{360,420}})for(int page=0;page<2;page++)for(boolean busy:new boolean[]{false,true}){
+                android.content.res.Configuration config=new android.content.res.Configuration(c.getResources().getConfiguration());config.fontScale=fs;
+                Context sized=activity.createConfigurationContext(config);
+                Context fixture=new android.content.ContextWrapper(sized){@Override public SharedPreferences getSharedPreferences(String name,int mode){return super.getSharedPreferences(name.equals(CostoLuceWidgetProvider.PREFS)?"widget_adaptive_edge_fixture":name,mode);}};
+                fixture.getSharedPreferences(CostoLuceWidgetProvider.PREFS,Context.MODE_PRIVATE).edit().clear().putLong("saved_at",1700000000000L).putString("kwh","398.7").putString("estimated_euro","141.45").putString("period","Dic 2026 + Gen 2027 + Feb 2027").putInt("page_4242",page).putBoolean("refresh_busy",busy).putString("refresh_status",busy?"Aggiornamento in corso":"").commit();
+                View view=CostoLuceWidgetProvider.createViewsForSize(fixture,4242,size[0],size[1]).apply(sized,null);float d=c.getResources().getDisplayMetrics().density;
+                for(int settle=0;settle<2;settle++){view.measure(View.MeasureSpec.makeMeasureSpec(Math.round(size[0]*d),View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(Math.round(size[1]*d),View.MeasureSpec.EXACTLY));view.layout(0,0,view.getMeasuredWidth(),view.getMeasuredHeight());}
+                try{assertBounds(view);}catch(AssertionError e){throw new AssertionError("Adaptive edge "+size[0]+"x"+size[1]+" font="+fs+" page="+page+" busy="+busy,e);}
+                if(fixture.getSharedPreferences(CostoLuceWidgetProvider.PREFS,Context.MODE_PRIVATE).getInt("page_4242",-1)!=page)throw new AssertionError("Adaptive rendering reset the saved page");
+            }
+        });
+    }
+
     @Override public void onCreate(Bundle arguments){super.onCreate(arguments);start();}
     @Override public void onStart(){
         Bundle result=new Bundle();
@@ -303,6 +319,7 @@ public class WidgetSmokeTestRunner extends Instrumentation {
             assertScript(web,"const backup=window.projectionSmokeBackup;setMonths(backup.months,backup.anchor);window.onHistoryNative(backup.rows);window.onInvoicesNative(backup.invoices);delete window.projectionSmokeBackup;showView('home')");
 
             checkIntrinsicResize(c);
+            checkAdaptiveEdges(activity,c);
             int[][] smallSizes={{96,48},{110,56},{130,64},{150,80},{180,96},{300,64},{130,160},{180,180},{240,220},{130,500}};
             for(int[] size:smallSizes)for(int page=0;page<2;page++)for(float scale:new float[]{1,1.3f})checkSmallWidget(activity,c,size[0],size[1],page,scale);
             int[][] sizes={{280,260},{340,300},{400,350},{280,500},{500,260},{130,500},{190,420},{260,252},{410,210},{420,450}};

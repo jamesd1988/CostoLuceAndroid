@@ -20,7 +20,7 @@ final class WidgetLayoutSpec {
     boolean smallSummary(){return !statsOnly()&&!fullPages();}
     boolean unified(){return width>=360&&height>=420*fontScale;}
     boolean horizontalChart(){return width<240;}
-    boolean sideBySide(){return width>=300;}
+    boolean sideBySide(){return width>=240;}
     boolean breakdown(){return !unified()&&height>=400*fontScale;}
     boolean shortWide(){return fullPages()&&height<250*fontScale;}
     boolean wideStats(){return statsOnly()&&width>=260;}

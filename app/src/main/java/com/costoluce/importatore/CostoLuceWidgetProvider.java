@@ -537,10 +537,10 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         views.setViewVisibility(R.id.widget_prev,spec.contentWidth()<144?android.view.View.GONE:android.view.View.VISIBLE);
         views.setViewVisibility(R.id.widget_refresh,android.view.View.VISIBLE);
         views.setViewVisibility(R.id.widget_period_badge,spec.width<240?android.view.View.GONE:android.view.View.VISIBLE);
-        views.setViewVisibility(R.id.widget_caption,spec.shortWide()?android.view.View.GONE:android.view.View.VISIBLE);
+        views.setViewVisibility(R.id.widget_caption,(spec.shortWide()||showStatus&&spec.height<280*spec.fontScale)?android.view.View.GONE:android.view.View.VISIBLE);
         views.setViewVisibility(R.id.widget_source,android.view.View.GONE);
         views.setViewVisibility(R.id.widget_updated,spec.shortWide()?android.view.View.GONE:android.view.View.VISIBLE);
-        if(spec.shortWide()){views.setViewPadding(R.id.widget_summary,0,0,0,0);views.setViewPadding(R.id.widget_metrics,0,Math.round(4*density),0,Math.round(4*density));}
+        if(spec.shortWide()){views.setViewPadding(R.id.widget_summary,0,0,0,0);views.setViewPadding(R.id.widget_metrics,0,Math.round(2*density),0,Math.round(2*density));}
         views.setViewVisibility(R.id.widget_status,showStatus?android.view.View.VISIBLE:android.view.View.GONE);
         views.setContentDescription(R.id.widget_refresh,(busy?"Aggiornamento in corso":"Aggiorna Enel in background")+(status==null||status.isEmpty()?"":". "+status));
         views.setTextViewTextSize(R.id.widget_brand,android.util.TypedValue.COMPLEX_UNIT_SP,spec.width<200?11:14);
