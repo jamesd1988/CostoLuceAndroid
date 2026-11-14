@@ -47,7 +47,7 @@ function areraPlan(){
 function previewArera(){
   try{
     areraDraft=areraPlan();const dest=byId('areraPreviewRows');dest.innerHTML='';
-    for(const [key,name,type,value] of areraDraft.rows){const row=document.createElement('p');row.textContent=(rateMeta[key]?.name||name)+': '+decimal(value,6)+' '+(type==='fixed'?'€/mese':'€/kWh');dest.appendChild(row)}
+    for(const [key,name,type,value] of areraDraft.rows){const row=document.createElement('div');row.className='tariff-preview-row';const title=document.createElement('span');title.textContent=rateMeta[key]?.name||name;const amount=document.createElement('strong');amount.textContent=new Intl.NumberFormat('it-IT',{maximumFractionDigits:6}).format(value)+' '+(type==='fixed'?'€/mese':'€/kWh');row.appendChild(title);row.appendChild(amount);dest.appendChild(row)}
     byId('areraPreviewTitle').textContent='Valori di '+areraMonthLabel(areraDraft.period)+' · '+decimal(areraDraft.power,1)+' kW';
     byId('areraPreview').hidden=false;byId('areraMessage').textContent='Il riepilogo mostra i valori che sostituiranno le corrispondenti voci, anche se personalizzate.';
   }catch(e){areraDraft=null;byId('areraPreview').hidden=true;byId('areraMessage').textContent=e.message}

@@ -1,0 +1,70 @@
+/* Compact tariff page; detailed controls stay in real, accessible bottom sheets. */
+#page-rates .tariff-subtitle{margin-bottom:16px}
+.tariff-setup{border:1px solid #254766;background:#0c2848;border-radius:19px;overflow:hidden;margin-bottom:20px}
+.tariff-setup button{width:100%;display:flex;align-items:center;gap:12px;padding:13px 14px;background:none;border:0;border-radius:0;color:#eef6ff;text-align:left;min-height:67px}
+.tariff-setup button+button{border-top:1px solid #254766}
+.tariff-setup-icon{height:34px;width:34px;flex-shrink:0;display:grid;place-items:center;background:#163d60;border-radius:11px;color:#9bc8f5}
+.tariff-setup-icon svg{width:20px;height:20px}
+.tariff-setup-copy{min-width:0;flex:1}
+.tariff-setup strong{font-size:14px;line-height:1.3;display:block}
+.tariff-setup small{font-size:11px;line-height:1.45;color:#b8cee6;display:block;margin-top:4px}
+.tariff-setup-arrow{font-size:25px;color:#9fc4e7}
+.tariff-rates-heading{display:flex;gap:10px;align-items:center;justify-content:space-between;margin:0 2px 12px}
+.tariff-rates-heading h3{font-size:16px;margin:0;letter-spacing:-.3px}
+.tariff-rates-heading #addRateButton{width:auto;min-height:44px;margin:0;padding:8px 0 8px 10px;font-size:12px;background:none;border:0;white-space:nowrap;color:#9dcdff;border-radius:8px}
+#page-rates .tariff-filter{margin-bottom:13px;padding:4px;border-radius:26px}
+#page-rates .tariff-filter button{min-height:44px;padding:9px 5px;font-size:12px}
+#page-rates #rateFields{border:1px solid #294b6a;border-radius:18px;background:#0d2948;overflow:hidden}
+#page-rates .rate-card{width:100%;margin:0;min-height:63px;padding:12px 13px;display:flex;align-items:center;gap:10px;text-align:left;background:none;color:#f0f7ff;border:0;border-bottom:1px solid #254563;border-radius:0;box-sizing:border-box}
+#page-rates .rate-card:last-child{border-bottom:0}
+#page-rates .rate-card[hidden]{display:none!important}
+.rate-row-copy{min-width:0;flex:1}
+.rate-row-copy strong{display:block;font-size:13px;font-weight:650;line-height:1.35;overflow-wrap:anywhere}
+.rate-row-copy small{display:block;font-size:11px;line-height:1.2;color:#b5cce3;margin-top:4px}
+.rate-row-value{font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.rate-row-icon{width:18px;height:20px;flex-shrink:0;color:#92b7d8}
+.rate-row-icon svg{width:18px;height:20px}
+.rates-more{width:100%;min-height:45px;padding:11px 8px;margin-top:8px;border:1px solid #284a6a;border-radius:12px;color:#99cbff;background:#0d2948;font-size:12px}
+.tariff-offer-link{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left;padding:13px 14px;margin:14px 0 0;min-height:49px;border:1px solid #284b68;border-radius:13px;background:#0c2642;color:#cde4f8;font-size:12px}
+.tariff-secondary{margin:14px 0 0;border-top:1px solid #264761;color:#c2d6ea;font-size:12px;line-height:1.5}
+.tariff-secondary>summary{padding:15px 3px;min-height:46px}
+.tariff-secondary .switchrow{padding:8px 2px 14px;align-items:center}
+.tariff-secondary .switchlabel{max-width:calc(100% - 65px)}
+.tariff-secondary .switchlabel b{font-size:12px}
+.tariff-secondary .switchlabel span{font-size:11px}
+.tariff-secondary .tariff-help{margin:7px 3px 13px}
+#rateStatus:empty{display:none}
+#page-rates .tariff-panel[hidden],#tariffSettings[hidden]{display:none!important}
+#tariffSettings{position:fixed;inset:0;z-index:90;display:flex;align-items:flex-end;justify-content:center}
+.tariff-panel-backdrop{position:absolute;inset:0;border:0;border-radius:0;background:#001022bb}
+.tariff-panel{position:relative;z-index:1;width:100%;max-width:520px;max-height:calc(100% - 24px);overflow-y:auto;overscroll-behavior:contain;background:#0c2848;border:1px solid #315572;border-radius:25px 25px 0 0;padding:0 20px max(22px,env(safe-area-inset-bottom));color:#f0f6ff;box-sizing:border-box;scrollbar-width:thin}
+.tariff-panel-header{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;gap:12px;background:#0c2848;padding:22px 0 12px;margin-bottom:8px}
+.tariff-panel-header:before{content:"";position:absolute;width:36px;height:4px;border-radius:4px;background:#7290a9;top:9px;left:calc(50% - 18px)}
+.tariff-panel-header h3{font-size:20px;line-height:1.25;letter-spacing:-.4px;margin:0}
+.tariff-panel-close{width:36px;height:36px;min-height:36px;flex-shrink:0;display:grid;place-items:center;padding:0;font-size:24px;border:1px solid #3a5b76;border-radius:50%;background:#102e4c;color:#e1efff}
+.tariff-panel p{font-size:12px;line-height:1.55;color:#c0d6ed;margin:10px 0}
+.tariff-panel label{font-size:12px;color:#deedfc;margin-top:16px;margin-bottom:8px;display:block}
+.tariff-panel select,.tariff-panel input[type=text]{width:100%;min-height:47px;box-sizing:border-box;border:1px solid #395c78;background:#071d35;border-radius:12px;padding:12px;color:#f4f8ff;font-size:16px}
+.tariff-panel .arera-profile{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:10px;margin-top:0}
+.tariff-panel .add-rate,.tariff-panel .tariff-primary{width:100%;min-height:47px;font-size:13px;border-radius:13px;margin-top:18px;padding:13px 9px;border:1px solid #238dff;background:#087bff;color:white;font-weight:700;text-align:center;box-sizing:border-box}
+.tariff-panel button:disabled{opacity:.5}
+.tariff-panel .tariff-check{width:100%;min-height:44px;padding:10px 0;background:none;color:#9ccaff;border:0;font-size:12px;margin-top:4px;text-align:left}
+.billing-choices{display:flex;gap:4px;padding:4px;border:1px solid #315475;border-radius:25px;margin:8px 0 14px;background:#071e37}
+.billing-choices button{flex:1;min-height:44px;padding:10px 3px;border:0;border-radius:21px;background:none;font-size:13px;color:#d8e9fc}
+.billing-choices button[aria-pressed=true]{background:#087bff;color:#fff;font-weight:700}
+.billing-chips{display:flex;flex-wrap:wrap;gap:7px;margin:16px 0}
+.billing-chips span{background:#123d49;color:#9cf5e1;border:1px solid #327f8c;padding:9px 11px;border-radius:10px;font-size:12px}
+.tariff-panel details{font-size:12px;color:#bdd4e9;line-height:1.5;margin-top:12px}
+.tariff-panel details>summary{padding:12px 0;min-height:44px;box-sizing:border-box}
+.tariff-panel .tariff-help{font-size:11px;margin:10px 0;line-height:1.55}
+.tariff-preview-row{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid #294b68;font-size:12px}
+.tariff-preview-row span{min-width:0;flex:1;color:#d7e8f9}
+.tariff-preview-row strong{font-variant-numeric:tabular-nums;text-align:right;font-size:12px;white-space:nowrap;color:#f0f7ff}
+.tariff-panel .rate-confirm{padding:0;border:0;background:none;border-radius:0}
+.tariff-preview-actions{display:flex;gap:10px;margin-top:18px}
+.tariff-preview-actions button{min-height:46px;padding:12px 10px;border:1px solid #3c6387;border-radius:12px;background:#103355;color:#d6eaff;font-size:12px}
+.tariff-preview-actions button:last-child{flex:1;background:#087bff;border-color:#238dff;color:white;font-weight:700}
+.tariff-panel #areraMessage,.tariff-panel #billingSetupStatus,.tariff-panel #offerMessage{color:#8fe9d3}
+.tariff-panel #areraMessage:empty,.tariff-panel #billingSetupStatus:empty,.tariff-panel #offerMessage:empty{display:none}
+.bottom-nav button{flex:1;max-width:120px}
+@media(max-width:350px){.tariff-panel{padding-left:16px;padding-right:16px}.tariff-panel .arera-profile{grid-template-columns:minmax(0,1fr)}.tariff-panel-header h3{font-size:19px}.rate-row-copy strong{font-size:12px}.rate-row-value{font-size:13px}}

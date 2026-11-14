@@ -502,6 +502,7 @@ public final class MainActivity extends Activity {
 
     @Override public void onBackPressed() {
         if (web != null && !HOME.equals(web.getUrl()) && !String.valueOf(web.getUrl()).startsWith(HOME + "#")) returnHome();
+        else if(web!=null)web.evaluateJavascript("Boolean(window.closeTopTariffDialog&&window.closeTopTariffDialog())",closed->{if(!"true".equals(closed)&&!isFinishing())MainActivity.super.onBackPressed();});
         else super.onBackPressed();
     }
 

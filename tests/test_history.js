@@ -43,6 +43,6 @@ assert.match(getId('historyChart').children.slice(-4)[2].children[0].children[0]
 assert.strictEqual(saved.get('costoluce_display_unit_v1'),'eur');
 console.log('PASS: four real-data slots, missing versus measured zero, partial current month, persistent euro/kWh toggle and monthly excise');
 
-ctx.showView('period');assert.strictEqual(getId('page-period').hidden,false);assert.strictEqual(getId('page-home').hidden,true);
-ctx.showView('home');assert.strictEqual(getId('page-period').hidden,true);assert.strictEqual(getId('page-home').hidden,false);
+let openedPanel='';ctx.openTariffPanel=kind=>{openedPanel=kind};ctx.showView('period');assert.strictEqual(getId('page-rates').hidden,false);assert.strictEqual(getId('page-home').hidden,true);assert.equal(openedPanel,'billing');assert(!html.includes('id="nav-period"'));assert(!html.includes('id="page-period"'));
+ctx.showView('home');assert.strictEqual(getId('page-rates').hidden,true);assert.strictEqual(getId('page-home').hidden,false);
 console.log('PASS: functional Home and Period navigation');
