@@ -186,7 +186,7 @@ public class WidgetSmokeTestRunner extends Instrumentation {
         });
         checkedOnMainSync(()->{
             View root=rendered.get(),refresh=root.findViewById(R.id.widget_small_refresh);
-            if(spec.statsOnly()&&refresh.getVisibility()!=(spec.statsRefreshPossible()?View.VISIBLE:View.GONE))throw new AssertionError("Missing compact refresh");
+            if(spec.statsOnly()&&refresh.getVisibility()!=(spec.statsRefreshPossible()?View.VISIBLE:View.GONE))throw new AssertionError("Missing compact refresh at "+width+"x"+height+" font="+fontScale);
             if(refresh.getVisibility()==View.VISIBLE){
                 float density=c.getResources().getDisplayMetrics().density;
                 if(refresh.getWidth()<48*density-1||refresh.getHeight()<48*density-1||root.hasOnClickListeners())throw new AssertionError("Refresh target small or intercepted by parent");
