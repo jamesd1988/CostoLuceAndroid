@@ -27,6 +27,7 @@ import java.util.Locale;
 public final class CostoLuceWidgetProvider extends AppWidgetProvider {
     static final String PREFS = "costoluce_widget_snapshot_v1";
     static final String ACTION_UNIT = "com.costoluce.cloud.action.WIDGET_UNIT";
+    static final String ACTION_POCKET = "com.costoluce.cloud.action.WIDGET_POCKET";
     static final String ACTION_PAGE = "com.costoluce.cloud.action.WIDGET_PAGE";
     static final String ACTION_REFRESH = "com.costoluce.cloud.action.WIDGET_REFRESH";
     static final int REFRESH_JOB_ID = 225901;
@@ -398,6 +399,16 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
     }
 
     @Override public void onReceive(Context context, Intent intent) {
+        if(intent!=null&&ACTION_POCKET.equals(intent.getAction())){
+            int id=intent.getIntExtra(AppWidgetManager.EXTRA_APPWIDGET_ID,-1);
+            android.appwidget.AppWidgetProviderInfo info=AppWidgetManager.getInstance(context).getAppWidgetInfo(id);
+            if(info!=null&&info.provider.equals(new ComponentName(context,CostoLuceWidgetProvider.class))){
+                String state=intent.getStringExtra("view");selectPocketView(context,id,state);
+                WidgetConfiguration c=readConfiguration(context);
+                if("bill".equals(state)&&c!=null&&annualHistoryDue(context,c.months,c.anchor)&&new EnelCredentialStore(context).hasSaved())requestDataRefresh(context);
+            }
+            return;
+        }
         if (intent != null && ACTION_UNIT.equals(intent.getAction())) {
             String mode=intent.getStringExtra("unit");saveChartMode(context,mode);
             WidgetConfiguration c=readConfiguration(context);
@@ -658,11 +669,51 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         return pixels*ratio;
     }
 
+    static boolean selectPocketView(Context context,int widgetId,String state){
+        if(!"summary".equals(state)&&!"bill".equals(state)&&!"eur".equals(state)&&!"kwh".equals(state))return false;
+        SharedPreferences.Editor edit=prefs(context).edit().putInt("page_"+widgetId,"summary".equals(state)?0:1);
+        if(!"summary".equals(state))edit.putString("widget_chart_mode",state);
+        edit.apply();refresh(context);return true;
+    }
+    private static RemoteViews createPocketViews(Context context,int widgetId,WidgetLayoutSpec spec,int bitmapPixels){
+        RemoteViews views=new RemoteViews(context.getPackageName(),R.layout.costoluce_widget_pocket);
+        SharedPreferences p=prefs(context);boolean chart=p.getInt("page_"+widgetId,0)==1;String mode=chartMode(context);
+        String next=!chart?"bill":"bill".equals(mode)?"eur":"eur".equals(mode)?"kwh":"summary";
+        String label=!chart?"Grafici ›":"bill".equals(mode)?"Bolletta € ›":"eur".equals(mode)?"€ mensili ›":"kWh ›";
+        views.setTextViewText(R.id.widget_pocket_cycle,label);
+        views.setTextViewTextSize(R.id.widget_pocket_cycle,android.util.TypedValue.COMPLEX_UNIT_PX,fitSmallValue(context,label,spec.width-16-48,42,12,false));
+        views.setContentDescription(R.id.widget_pocket_cycle,"Vista "+(!chart?"riepilogo":"bill".equals(mode)?"Bolletta":"eur".equals(mode)?"euro mensili":"kWh")+". Tocca per "+("summary".equals(next)?"tornare al riepilogo":"bill".equals(next)?"vedere il grafico Bolletta":"eur".equals(next)?"vedere gli euro mensili":"vedere i kWh"));
+        Intent cycle=new Intent(context,CostoLuceWidgetProvider.class).setAction(ACTION_POCKET).putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID,widgetId).putExtra("view",next).setData(android.net.Uri.parse("costoluce://widget-pocket/"+widgetId+"/"+next));
+        views.setOnClickPendingIntent(R.id.widget_pocket_cycle,PendingIntent.getBroadcast(context,widgetId,cycle,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE));
+        Intent refresh=new Intent(context,CostoLuceWidgetProvider.class).setAction(ACTION_REFRESH).addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
+        views.setOnClickPendingIntent(R.id.widget_small_refresh,PendingIntent.getBroadcast(context,1002,refresh,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE));
+        setRefreshAppearance(views,R.id.widget_small_refresh,p.getBoolean(KEY_BUSY,false));
+        views.setViewVisibility(R.id.widget_pocket_summary,chart?android.view.View.GONE:android.view.View.VISIBLE);
+        views.setViewVisibility(R.id.widget_chart,chart?android.view.View.VISIBLE:android.view.View.GONE);
+        if(chart){
+            org.json.JSONArray rows=chartRows(context);views.setContentDescription(R.id.widget_chart,MonthlyChart.description(context,rows)+" I valori preceduti da circa sono arrotondati per lo spazio disponibile.");
+            views.setImageViewBitmap(R.id.widget_chart,MonthlyChart.draw(context,rows,spec,Math.min(180,spec.height-64),bitmapPixels));
+        }else{
+            String energy="— kWh",cost="— €";long at=p.getLong(KEY_TIMESTAMP,0);
+            try{double kwh=Double.parseDouble(p.getString(KEY_KWH,"")),euro=Double.parseDouble(p.getString(KEY_EUR,""));if(at>0&&Double.isFinite(kwh)&&kwh>=0&&Double.isFinite(euro)&&euro>=0){NumberFormat nf=NumberFormat.getNumberInstance(IT);nf.setMaximumFractionDigits(1);energy=nf.format(kwh)+" kWh";cost=NumberFormat.getCurrencyInstance(IT).format(euro);}}catch(RuntimeException ignored){}
+            String period=p.getString(KEY_PERIOD,"Periodo corrente");try{org.json.JSONArray rows=new org.json.JSONArray(p.getString(KEY_MONTHLY,"[]"));if(rows.length()>0)period=compactPeriod(rows);}catch(Exception ignored){}
+            views.setTextViewText(R.id.widget_small_period,period);views.setTextViewText(R.id.widget_small_kwh,energy);views.setTextViewText(R.id.widget_small_cost,cost);
+            float body=spec.height-64-14*spec.fontScale;
+            views.setTextViewTextSize(R.id.widget_small_kwh,android.util.TypedValue.COMPLEX_UNIT_PX,fitSmallValue(context,energy,spec.width-16,body*.56f,26,true));
+            views.setTextViewTextSize(R.id.widget_small_cost,android.util.TypedValue.COMPLEX_UNIT_PX,fitSmallValue(context,cost,spec.width-16,body*.44f,20,false));
+            Intent open=new Intent(context,MainActivity.class).setAction("com.costoluce.cloud.action.OPEN_WIDGET").addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP|Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            PendingIntent pending=PendingIntent.getActivity(context,0,open,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
+            for(int id:new int[]{R.id.widget_small_period,R.id.widget_small_kwh,R.id.widget_small_cost})views.setOnClickPendingIntent(id,pending);
+        }
+        return views;
+    }
+
     static RemoteViews createViewsForSize(Context context,int widgetId,int width,int height) {
         return createViewsForSize(context,widgetId,width,height,bitmapBudget(context));
     }
     private static RemoteViews createViewsForSize(Context context,int widgetId,int width,int height,int bitmapPixels) {
         WidgetLayoutSpec spec=new WidgetLayoutSpec(width,height,context.getResources().getConfiguration().fontScale);
+        if(spec.pocketPages())return createPocketViews(context,widgetId,spec,bitmapPixels);
         if(!spec.fullPages())return createSmallViews(context,spec);
         RemoteViews views = new RemoteViews(context.getPackageName(), spec.unified()?R.layout.costoluce_widget_unified:spec.sideBySide()?R.layout.costoluce_widget_wide:R.layout.costoluce_widget);
         SharedPreferences p = prefs(context);
@@ -740,7 +791,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         views.setOnClickPendingIntent(R.id.widget_refresh, refreshPending);
         views.setOnClickPendingIntent(R.id.widget_status, refreshPending);
         boolean chart = !spec.unified() && p.getInt("page_"+widgetId,0)==1;
-        views.setTextViewText(R.id.widget_brand,chart?"Consumi ultimi 4 mesi":"COSTO LUCE · v6.14.0");
+        views.setTextViewText(R.id.widget_brand,chart?"Consumi ultimi 4 mesi":"COSTO LUCE · v6.14.1");
         views.setViewVisibility(R.id.widget_units,chart?android.view.View.VISIBLE:android.view.View.GONE);
         views.setViewVisibility(R.id.widget_refresh,chart?android.view.View.GONE:android.view.View.VISIBLE);
         String selectedMode=chartMode(context);

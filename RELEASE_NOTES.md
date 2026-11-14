@@ -1,9 +1,9 @@
-# Costo Luce 6.14.0 — Widget adattivo
+# Costo Luce 6.14.1 — Grafico costi anche nel widget 2 × 2
 
-- Riepilogo disposto in base a larghezza e altezza, con valori affiancati nei formati larghi e dettaglio dei mesi nei formati alti.
-- Storico disponibile anche nei widget stretti e alti: quattro barre orizzontali con importi e periodo leggibili.
-- Formati grandi con riepilogo e grafico insieme; colonne con proporzioni limitate per evitare allungamenti eccessivi.
-- Aggiorna anche nella pagina grafico. Selettore ciclico Bolletta/kWh/€ nei formati stretti, tre pulsanti nei formati larghi. Frecce e dot per le due pagine; nessuno zoom o swipe orizzontale simulato.
-- Conservati dati reali Enel, fatture, calcoli, credenziali e scelta delle unità. Aggiornamento installabile sopra la versione precedente con la stessa firma.
+- Nei formati piccoli, da 120 × 150 dp con caratteri standard, è disponibile anche il grafico a quattro barre.
+- Il selettore compatto passa fra riepilogo, Bolletta, € mensili e kWh. Aggiorna rimane accanto e lavora in background.
+- Importi preceduti da ≈ arrotondati solo nell’etichetta del grafico per motivi di spazio; valori esatti conservati nella descrizione accessibile e nell’app. Periodo corrente parziale marcato con *.
+- Nei formati più grandi rimane il layout adattivo della 6.14.0. La pagina e le tariffe sono conservate.
+- Dati Enel e fatture originali, costi fissi e variabili, imposte e credenziali non cambiano. Nessun dato inventato nell’app.
 
-Build di prova: test JavaScript, JVM e strumentazione Android su emulatore pulito; screenshot nativi allegati con dati di test dichiarati, isolati nell’APK di strumentazione. Le celle e il ridimensionamento finale dipendono dal launcher.
+Verifica con test JVM, JavaScript e RemoteViews Android, inclusi caratteri ingranditi e passaggi fra dimensioni. Anteprime popolate marcate come dati di test e confinate nell’APK di strumentazione. Celle effettive dipendenti dal launcher; installabile sopra la versione precedente con la stessa firma.

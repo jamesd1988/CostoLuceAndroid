@@ -14,3 +14,7 @@ Il launcher comunica dimensioni in dp, non celle. Il widget usa le dimensioni ef
 La pagina scelta viene conservata quando il widget passa a una misura più piccola o unificata. Toggle, importi fatturati, riparti, tariffe, credenziali e recupero Enel non cambiano. Nessuna gesture orizzontale simulata: RemoteViews usa frecce/dot; lo swipe della Home dipende dal launcher.
 
 Verifica: JVM per soglie e limiti; strumentazione Android su emulatore pulito per RemoteViews, misure intermedie, scala 1/1,3, valori lunghi, bersagli da 48 dp, conservazione stato, budget bitmap e regressione altezza intrinseca. Screenshot nativi popolati delle cinque forme aggiuntive pubblicati con l'APK, marcati come dati di test e generati da preferenze isolate nel solo APK di strumentazione; non equivalgono a un collaudo su ogni launcher Samsung.
+
+## 6.14.1: grafico nel formato 2 × 2
+
+Fra il riepilogo minimo e le pagine complete, da 120×150 dp (altezza adattata alla scala caratteri), è disponibile un layout con selettore ciclico e aggiorna da 48 dp, senza footer. Sequenza: riepilogo → Bolletta → € mensili → kWh → riepilogo. Quattro barre, etichette abbreviate e ≈ per importi arrotondati; date di inizio/fine su due righe nei bimestri/trimestri più stretti, * per dati parziali. Nessun arrotondamento dei dati salvati. Sotto queste misure o con caratteri troppo grandi viene privilegiata la leggibilità del riepilogo. Ridimensionando si conservano pagina e modalità del grafico.

@@ -43,6 +43,7 @@ final class MonthlyChart {
         return max;
     }
     static Bitmap draw(Context context, JSONArray rows, WidgetLayoutSpec spec, int chartHeight,int bitmapPixels) {
+        if(spec.pocketPages())return drawPocket(context,rows,spec,chartHeight,bitmapPixels);
         if(spec.horizontalChart())return drawHorizontal(context,rows,spec,chartHeight,bitmapPixels);
         float fontScale=context.getResources().getConfiguration().fontScale;
         float width=spec.contentWidth(),height=Math.max(40,chartHeight);
@@ -125,6 +126,33 @@ final class MonthlyChart {
             float bottom=top+slot-6,barHeight=Math.min(10,Math.max(3,slot-(separate?text*2+8:text+10)));
             paint.setColor(Color.rgb(26,57,93));canvas.drawRoundRect(0,bottom-barHeight,width,bottom,barHeight/2,barHeight/2,paint);
             if(available&&v>0){int start=current?Color.rgb(115,240,212):Color.rgb(65,166,255),end=current?Color.rgb(28,188,170):Color.rgb(7,91,239);paint.setShader(new LinearGradient(0,0,width,0,start,end,Shader.TileMode.CLAMP));canvas.drawRoundRect(0,bottom-barHeight,(float)(width*v/ceiling),bottom,barHeight/2,barHeight/2,paint);paint.setShader(null);}
+        }
+        return bitmap;
+    }
+    private static Bitmap drawPocket(Context context,JSONArray rows,WidgetLayoutSpec spec,int chartHeight,int bitmapPixels){
+        if(spec.width<240&&chartHeight>=160)return drawHorizontal(context,rows,spec,chartHeight,bitmapPixels);
+        float width=spec.width-16,height=Math.max(40,chartHeight),text=11*spec.fontScale;
+        float density=Math.min(3,Math.min(context.getResources().getDisplayMetrics().density,(float)Math.sqrt(bitmapPixels/(width*height))));
+        Bitmap bitmap=Bitmap.createBitmap(Math.max(1,Math.round(width*density)),Math.max(1,Math.round(height*density)),Bitmap.Config.ARGB_8888);
+        Canvas canvas=new Canvas(bitmap);canvas.scale(density,density);Paint p=new Paint(Paint.ANTI_ALIAS_FLAG);p.setTypeface(Typeface.create("sans-serif",Typeface.NORMAL));
+        double max=0;for(int i=0;i<4;i++){JSONObject row=rows.optJSONObject(i);if(row!=null&&row.optBoolean("available")&&Double.isFinite(value(context,row)))max=Math.max(max,value(context,row));}
+        double ceiling=scale(max);boolean twoLines=bills(context)&&spec.width<180;float step=width/4,bottom=height-text*(twoLines?2:1)-7,top=text+5;
+        for(int i=0;i<4;i++){
+            JSONObject row=rows.optJSONObject(i);if(row==null)continue;double v=value(context,row);boolean available=row.optBoolean("available")&&Double.isFinite(v),current=kwh(context)?row.optBoolean("partial"):"forecast".equals(row.optString("status"));
+            float x=step*(i+.5f),bar=available?(float)((bottom-top)*v/ceiling):0;
+            if(bar>0){p.setShader(new LinearGradient(0,bottom-bar,0,bottom,current?0xff73f0d4:0xff41a6ff,current?0xff1cbcaa:0xff075bef,Shader.TileMode.CLAMP));canvas.drawRoundRect(x-step*.33f,bottom-bar,x+step*.33f,bottom,Math.min(5,bar/2),Math.min(5,bar/2),p);p.setShader(null);}
+            p.setTextAlign(Paint.Align.CENTER);p.setColor(Color.WHITE);p.setTextSize(text);p.setTypeface(Typeface.create("sans-serif",Typeface.BOLD));
+            String amount=available?String.format(Locale.ITALY,kwh(context)?"%.1f":"%.2f",v):"—";
+            if(available&&p.measureText(amount)>step-2)amount="≈"+compactValue(v);
+            if(p.measureText(amount)>step-2)p.setTextSize(text*Math.max(.8f,(step-2)/p.measureText(amount)));
+            canvas.drawText(amount,x,Math.max(text,bottom-bar-4),p);
+            p.setTypeface(Typeface.create("sans-serif",Typeface.NORMAL));p.setTextSize(text);p.setColor(current?0xff64e7cf:0xffd2e0f4);
+            String label=bills(context)?row.optInt("month")+(twoLines?"–":"–"+row.optInt("endMonth")):label(row);
+            if(row.optBoolean("partial")&&!twoLines)label+="*";
+            if(p.measureText(label)>step-2)p.setTextSize(text*Math.max(.85f,(step-2)/p.measureText(label)));
+            canvas.drawText(label,x,bottom+text+3,p);
+            if(twoLines)canvas.drawText(row.optInt("endMonth")+(row.optBoolean("partial")?"*":""),x,bottom+text*2+4,p);
+
         }
         return bitmap;
     }

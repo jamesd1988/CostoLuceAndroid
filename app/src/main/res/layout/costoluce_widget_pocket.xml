@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/widget_small_root" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@drawable/costoluce_widget_bg" android:clipToOutline="true" android:padding="8dp">
+  <LinearLayout android:layout_width="match_parent" android:layout_height="48dp" android:orientation="horizontal" android:gravity="center_vertical">
+    <TextView android:id="@+id/widget_pocket_cycle" android:layout_width="0dp" android:layout_weight="1" android:layout_height="48dp" android:gravity="center" android:text="Grafici ›" android:textSize="12sp" android:textColor="#FFFFFF" android:maxLines="2" android:background="@drawable/costoluce_widget_pill_selected" />
+    <ImageButton android:id="@+id/widget_small_refresh" android:layout_width="48dp" android:layout_height="48dp" android:background="@drawable/costoluce_widget_refresh_bg" android:contentDescription="Aggiorna Enel in background" android:src="@drawable/costoluce_refresh_icon" android:padding="12dp" android:scaleType="fitCenter" />
+  </LinearLayout>
+  <LinearLayout android:id="@+id/widget_pocket_summary" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:orientation="vertical" android:gravity="center_vertical">
+    <TextView android:id="@+id/widget_small_period" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="#B6CBE6" android:textSize="10sp" android:includeFontPadding="false" android:maxLines="1" android:ellipsize="end" />
+    <TextView android:id="@+id/widget_small_kwh" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="#FFFFFF" android:textStyle="bold" android:textSize="24sp" android:includeFontPadding="false" android:maxLines="1" />
+    <TextView android:id="@+id/widget_small_cost" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="#64E7CF" android:textSize="20sp" android:includeFontPadding="false" android:maxLines="1" />
+  </LinearLayout>
+  <ImageView android:id="@+id/widget_chart" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:visibility="gone" android:scaleType="fitStart" android:contentDescription="Grafico costi e consumi" />
+</LinearLayout>

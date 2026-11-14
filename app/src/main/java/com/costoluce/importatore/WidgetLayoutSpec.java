@@ -17,7 +17,8 @@ final class WidgetLayoutSpec {
     boolean detailed(){return level==2;}
     boolean statsOnly(){return height<130*fontScale;}
     boolean fullPages(){return !statsOnly()&&((width>=130&&height>=330*fontScale)||(width>=240&&height>=230*fontScale)||(width>=340&&height>=190*fontScale));}
-    boolean smallSummary(){return !statsOnly()&&!fullPages();}
+    boolean pocketPages(){return !fullPages()&&width>=120&&height>=150*fontScale;}
+    boolean smallSummary(){return !statsOnly()&&!fullPages()&&!pocketPages();}
     boolean unified(){return width>=360&&height>=420*fontScale;}
     boolean horizontalChart(){return width<240;}
     boolean sideBySide(){return width>=240;}

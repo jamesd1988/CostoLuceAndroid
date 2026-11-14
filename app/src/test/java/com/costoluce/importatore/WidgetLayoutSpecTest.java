@@ -4,7 +4,10 @@ import static org.junit.Assert.*;
 public class WidgetLayoutSpecTest {
     @Test public void shapesUseBothAxesAndRespectFontScale(){
         assertTrue(new WidgetLayoutSpec(130,64).statsOnly());
-        assertTrue(new WidgetLayoutSpec(180,180).smallSummary());
+        assertTrue(new WidgetLayoutSpec(180,180).pocketPages());
+        assertTrue(new WidgetLayoutSpec(130,160).pocketPages());
+        assertFalse(new WidgetLayoutSpec(130,140).pocketPages());
+        assertFalse(new WidgetLayoutSpec(130,160,1.3f).pocketPages());
         assertTrue(new WidgetLayoutSpec(130,500).fullPages());
         assertTrue(new WidgetLayoutSpec(190,420).horizontalChart());
         assertTrue(new WidgetLayoutSpec(260,252).fullPages());
@@ -12,7 +15,7 @@ public class WidgetLayoutSpecTest {
         assertTrue(new WidgetLayoutSpec(420,450).unified());
         assertFalse(new WidgetLayoutSpec(420,450,1.3f).unified());
         assertFalse(new WidgetLayoutSpec(280,260,1.3f).fullPages());
-        assertTrue(new WidgetLayoutSpec(180,180).smallRefresh());
+        assertTrue(new WidgetLayoutSpec(130,140).smallRefresh());
         assertFalse(new WidgetLayoutSpec(96,48).statsRefreshPossible());
         assertTrue(new WidgetLayoutSpec(150,80).statsRefreshPossible());
     }
