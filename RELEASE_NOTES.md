@@ -1,9 +1,9 @@
-Costo Luce 6.13.0 - Consumi giornalieri dal grafico mensile
+# Costo Luce 6.14.0 — Widget adattivo
 
-- Tocca una colonna del grafico mensile nelle modalità kWh oppure € per aprire i consumi giornalieri del mese selezionato. Anche partendo dagli euro, il dettaglio mostra i kWh realmente rilevati.
-- Grafico giornaliero scorrevole, selezione di un giorno con valore preciso e stato della lettura, tabella espandibile di tutte le giornate e navigazione fra i mesi. Il ritorno ripristina modalità e posizione nello storico mensile; supportato il tasto Indietro Android.
-- Zero misurato, dato assente, giorno futuro e lettura parziale restano distinti. I totali mensili storici non vengono divisi per inventare consumi giornalieri; nessuna proiezione o ripartizione di costi nel nuovo dettaglio.
-- Aggiorna questo mese richiede a Enel il range esatto del mese selezionato, entro gli ultimi 24 mesi, usando la sessione e le credenziali cifrate già configurate. Il mese corrente è richiesto solo fino a oggi. Il periodo di fatturazione e il riepilogo corrente rimangono quelli impostati in Tariffe.
-- Conservati prezzi, credenziali, storico fatturato, widget e proiezione della bolletta. Aggiornamento installabile sopra la versione precedente con la stessa firma.
+- Riepilogo disposto in base a larghezza e altezza, con valori affiancati nei formati larghi e dettaglio dei mesi nei formati alti.
+- Storico disponibile anche nei widget stretti e alti: quattro barre orizzontali con importi e periodo leggibili.
+- Formati grandi con riepilogo e grafico insieme; colonne con proporzioni limitate per evitare allungamenti eccessivi.
+- Aggiorna anche nella pagina grafico. Selettore ciclico Bolletta/kWh/€ nei formati stretti, tre pulsanti nei formati larghi. Frecce e dot per le due pagine; nessuno zoom o swipe orizzontale simulato.
+- Conservati dati reali Enel, fatture, calcoli, credenziali e scelta delle unità. Aggiornamento installabile sopra la versione precedente con la stessa firma.
 
-Verifiche: suite JavaScript e test JVM per calendario, anni bisestili, range mensili, zero/mancanti/parziali e dati non validi; prove Android per apertura da entrambe le modalità, ritorno, valori giornalieri reali di test e assenza di dati senza valori inventati.
+Build di prova: test JavaScript, JVM e strumentazione Android su emulatore pulito; screenshot nativi allegati. Le celle e il ridimensionamento finale dipendono dal launcher.

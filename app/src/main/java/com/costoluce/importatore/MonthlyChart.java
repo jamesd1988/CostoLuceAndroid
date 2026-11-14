@@ -43,6 +43,7 @@ final class MonthlyChart {
         return max;
     }
     static Bitmap draw(Context context, JSONArray rows, WidgetLayoutSpec spec, int chartHeight,int bitmapPixels) {
+        if(spec.horizontalChart())return drawHorizontal(context,rows,spec,chartHeight,bitmapPixels);
         float fontScale=context.getResources().getConfiguration().fontScale;
         float width=spec.contentWidth(),height=Math.max(40,chartHeight);
         float density=Math.min(3,Math.min(context.getResources().getDisplayMetrics().density,(float)Math.sqrt(bitmapPixels/(width*height))));
@@ -98,6 +99,32 @@ final class MonthlyChart {
                 p.setColor(current?Color.rgb(99,230,206):Color.rgb(174,198,228));
                 canvas.drawText(!available[i]?"Assente":"issued".equals(row.optString("status"))?"Fatturata":"allocated".equals(row.optString("status"))?"Ripartito":"forecast".equals(row.optString("status"))?(row.optBoolean("partial")?"Stima*":"Stima"):row.optBoolean("partial")?"Parziale":"",x,height-2,p);
             }
+        }
+        return bitmap;
+    }
+    private static Bitmap drawHorizontal(Context context,JSONArray rows,WidgetLayoutSpec spec,int chartHeight,int bitmapPixels){
+        float width=spec.contentWidth(),height=Math.max(40,chartHeight),fs=spec.fontScale;
+        float density=Math.min(3,Math.min(context.getResources().getDisplayMetrics().density,(float)Math.sqrt(bitmapPixels/(width*height))));
+        Bitmap bitmap=Bitmap.createBitmap(Math.max(1,Math.round(width*density)),Math.max(1,Math.round(height*density)),Bitmap.Config.ARGB_8888);
+        Canvas canvas=new Canvas(bitmap);canvas.scale(density,density);Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);
+        double max=0;for(int i=0;i<4;i++){JSONObject row=rows.optJSONObject(i);if(row!=null&&row.optBoolean("available")){double v=value(context,row);if(Double.isFinite(v))max=Math.max(max,v);}}
+        double ceiling=scale(max);float slot=height/4,text=12*fs;
+        for(int i=0;i<4;i++){
+            JSONObject row=rows.optJSONObject(i);if(row==null)continue;double v=value(context,row);boolean available=row.optBoolean("available")&&Double.isFinite(v);
+            boolean current=kwh(context)?row.optBoolean("partial"):"forecast".equals(row.optString("status"));
+            String label=label(row)+" "+years(row,true)+(row.optBoolean("partial")?"*":"");
+            String amount=available?String.format(Locale.ITALY,kwh(context)?"%.1f":"%.2f",v):"—";
+            paint.setTypeface(Typeface.create("sans-serif",Typeface.NORMAL));paint.setTextSize(text);
+            // Very narrow hosts use two lines rather than overlapping the real value and period.
+            boolean separate=paint.measureText(label)+paint.measureText(amount)+10>width;
+            if(paint.measureText(label)>width)label=row.optInt("month")+(row.has("endMonth")?"–"+row.optInt("endMonth"):"")+" "+years(row,true)+(row.optBoolean("partial")?"*":"");
+            float top=i*slot;paint.setTextAlign(Paint.Align.LEFT);paint.setColor(Color.rgb(210,226,247));canvas.drawText(label,0,top+text,paint);
+            paint.setTypeface(Typeface.create("sans-serif",Typeface.BOLD));paint.setTextAlign(Paint.Align.RIGHT);paint.setColor(Color.WHITE);
+            if(paint.measureText(amount)>width)amount=compactValue(v);
+            canvas.drawText(amount,width,top+text+(separate?text+2:0),paint);
+            float bottom=top+slot-6,barHeight=Math.min(10,Math.max(3,slot-(separate?text*2+8:text+10)));
+            paint.setColor(Color.rgb(26,57,93));canvas.drawRoundRect(0,bottom-barHeight,width,bottom,barHeight/2,barHeight/2,paint);
+            if(available&&v>0){int start=current?Color.rgb(115,240,212):Color.rgb(65,166,255),end=current?Color.rgb(28,188,170):Color.rgb(7,91,239);paint.setShader(new LinearGradient(0,0,width,0,start,end,Shader.TileMode.CLAMP));canvas.drawRoundRect(0,bottom-barHeight,(float)(width*v/ceiling),bottom,barHeight/2,barHeight/2,paint);paint.setShader(null);}
         }
         return bitmap;
     }

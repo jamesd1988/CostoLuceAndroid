@@ -2,40 +2,31 @@ package com.costoluce.importatore;
 import org.junit.Test;
 import static org.junit.Assert.*;
 public class WidgetLayoutSpecTest {
-    @Test public void detailsRequireSpaceOnBothAxes(){
-        assertEquals(0,new WidgetLayoutSpec(280,260).level);
-        assertEquals(1,new WidgetLayoutSpec(340,300).level);
-        assertEquals(2,new WidgetLayoutSpec(400,350).level);
-        assertEquals(0,new WidgetLayoutSpec(280,600).level);
-        assertEquals(0,new WidgetLayoutSpec(600,260).level);
-        assertEquals(1,new WidgetLayoutSpec(400,300).level);
+    @Test public void shapesUseBothAxesAndRespectFontScale(){
+        assertTrue(new WidgetLayoutSpec(130,64).statsOnly());
+        assertTrue(new WidgetLayoutSpec(180,180).smallSummary());
+        assertTrue(new WidgetLayoutSpec(130,500).fullPages());
+        assertTrue(new WidgetLayoutSpec(190,420).horizontalChart());
+        assertTrue(new WidgetLayoutSpec(260,252).fullPages());
+        assertTrue(new WidgetLayoutSpec(410,210).shortWide());
+        assertTrue(new WidgetLayoutSpec(420,450).unified());
+        assertFalse(new WidgetLayoutSpec(420,450,1.3f).unified());
+        assertFalse(new WidgetLayoutSpec(280,260,1.3f).fullPages());
+        assertTrue(new WidgetLayoutSpec(180,180).smallRefresh());
+        assertFalse(new WidgetLayoutSpec(96,48).statsRefreshPossible());
+        assertTrue(new WidgetLayoutSpec(150,80).statsRefreshPossible());
     }
-    @Test public void chartUsesAvailableHeightAndReservesControls(){
-        WidgetLayoutSpec compact=new WidgetLayoutSpec(280,260),tall=new WidgetLayoutSpec(280,500);
+    @Test public void plotsReserveControlsAndDoNotStretchInTallHosts(){
+        WidgetLayoutSpec compact=new WidgetLayoutSpec(280,260),tall=new WidgetLayoutSpec(280,800);
         assertEquals(256,compact.contentWidth());
-        assertEquals(121,compact.chartHeight(1,false));
-        assertEquals(106,compact.chartHeight(1,true));
-        assertEquals(240,tall.chartHeight(1,true)-compact.chartHeight(1,true));
+        assertTrue(compact.chartHeight(1,true)>=80);
+        assertTrue(tall.chartHeight(1,false)<250);
         assertTrue(compact.chartHeight(1.3f,true)<compact.chartHeight(1,true));
+        assertTrue(new WidgetLayoutSpec(190,420).chartHeight(1,false)>=4*44);
     }
     @Test public void invalidLauncherBoundsAreLimited(){
         WidgetLayoutSpec small=new WidgetLayoutSpec(-100,0),large=new WidgetLayoutSpec(9000,9000);
         assertEquals(64,small.width);assertEquals(32,small.height);
         assertEquals(1600,large.width);assertEquals(1600,large.height);
-    }
-    @Test public void smallestLayoutsDropWholeSectionsInsteadOfShrinkingFullPages(){
-        assertTrue(new WidgetLayoutSpec(96,48).statsOnly());
-        assertTrue(new WidgetLayoutSpec(130,96).statsOnly());
-        assertTrue(new WidgetLayoutSpec(300,64).wideStats());
-        assertTrue(new WidgetLayoutSpec(130,160).smallSummary());
-        assertTrue(new WidgetLayoutSpec(240,220).smallSummary());
-        assertTrue(new WidgetLayoutSpec(130,500).smallSummary());
-        assertTrue(new WidgetLayoutSpec(280,260).fullPages());
-        assertFalse(new WidgetLayoutSpec(180,180).smallRefresh());
-        assertTrue(new WidgetLayoutSpec(240,180).smallRefresh());
-        assertFalse(new WidgetLayoutSpec(180,130).smallDate());
-        assertFalse(new WidgetLayoutSpec(96,48).statsRefreshPossible());
-        assertTrue(new WidgetLayoutSpec(130,64).statsRefreshPossible());
-        assertTrue(new WidgetLayoutSpec(150,80).statsRefreshPossible());
     }
 }
