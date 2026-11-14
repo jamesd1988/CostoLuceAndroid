@@ -6,8 +6,18 @@ function setBillProjection(enabled){
   try{localStorage.setItem('costoluce_bill_projection_v1',billProjectionEnabled?'1':'0')}catch(e){}
   renderHistory();
 }
+function calculateCurrentBillProjection(today){
+  return window.BillProjection.calculate({rows:historyRows,period:selectedPeriod(months,today),today,price:k=>calculateCosts(k,1,byId('resident').checked?taxableMonthly(k):k,1)});
+}
+function renderSummaryProjection(today=new Date()){
+  const result=calculateCurrentBillProjection(today);
+  byId('summaryProjection').textContent=result.available?'≈ '+euro(result.value):'—';
+  byId('summaryProjectionHint').textContent=result.available?'Proiezione al '+projectionDate(result.to)+' · media di '+result.sampleDays+' giorni completi.':'Proiezione non disponibile: '+result.reason;
+  byId('summaryProjection').setAttribute('title',result.available?'Bolletta prevista a fine periodo, canone TV separato.':result.reason);
+  return result;
+}
 function projectedBillingRows(rows,today){
-  lastBillProjection=window.BillProjection.calculate({rows:historyRows,period:selectedPeriod(months,today),today,price:k=>calculateCosts(k,1,byId('resident').checked?taxableMonthly(k):k,1)});
+  lastBillProjection=calculateCurrentBillProjection(today);
   if(!billProjectionEnabled)return rows;
   return rows.map((row,i)=>i===rows.length-1?{...row,...lastBillProjection,projection:true,status:'forecast',partial:true}:row);
 }

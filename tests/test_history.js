@@ -34,7 +34,10 @@ assert.strictEqual(columns[0].children[0].children.length,1,'Missing month has n
 assert.strictEqual(columns[1].children[0].children[0].textContent,'0,0');
 assert.strictEqual(columns[1].children[2].textContent,'Completo','Measured zero remains available');
 assert.strictEqual(columns[3].children[2].textContent,'Parziale');
-assert.strictEqual(getId('total').textContent,'479,0 kWh');
+assert.match(getId('total').textContent,/119,71/);
+assert.strictEqual(getId('summaryOther').textContent,'479,0 kWh');
+assert(!html.includes('id="unitEur"')&&!html.includes('id="unitKwh"'));
+assert(html.indexOf('id="summaryOther"')<html.indexOf('id="total"')&&html.indexOf('id="total"')<html.indexOf('id="summaryProjection"'));
 assert.strictEqual(saved.get('costoluce_display_unit_v1'),'kwh');
 assert.strictEqual(ctx.window.location.href,'costoluce://display-unit?unit=kwh');
 ctx.setDisplayUnit('eur');

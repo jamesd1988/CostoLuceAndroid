@@ -51,3 +51,17 @@ const source=ctx.billingHistory(today),pricesBefore=vm.runInContext('JSON.string
 ctx.setBillProjection(true);const projected=ctx.projectedBillingRows(source,today);assert.equal(projected.at(-1).projection,true);assert.equal(projected.at(-1).value,result.value);assert.equal(projected[0],source[0]);assert.equal(store.get('costoluce_bill_projection_v1'),'1');assert.equal(vm.runInContext('JSON.stringify(serializedRates())',ctx),pricesBefore);
 ctx.setBillProjection(false);assert.equal(ctx.projectedBillingRows(source,today),source);assert.equal(store.get('costoluce_bill_projection_v1'),'0');
 console.log('PASS: 5/7 complete-day threshold, stale/missing/partial/zero data, monthly/bimonthly/quarterly forecasts, actual preservation, fixed fees/excise/VAT, exclusive graph and persistence');
+
+// The Home forecast is always visible and independent of both chart mode and its projection toggle.
+ctx.recalc();
+const overviewCost=get('total').textContent,overviewUsage=get('summaryOther').textContent;
+for(const mode of ['bill','kwh','eur'])for(const enabled of [true,false]){
+  ctx.setChartMode(mode);ctx.setBillProjection(enabled);
+  const summary=ctx.renderSummaryProjection(today);
+  assert(summary.available);assert.equal(get('summaryProjection').textContent,'≈ '+vm.runInContext('euro('+summary.value+')',ctx));
+  assert.equal(get('total').textContent,overviewCost);assert.equal(get('summaryOther').textContent,overviewUsage);
+}
+ctx.historyFixture=[october,row(2026,11,daily([10,11,12,13]))];vm.runInContext('historyRows=historyFixture',ctx);
+assert(!ctx.renderSummaryProjection(today).available);assert.equal(get('summaryProjection').textContent,'—');
+assert.match(get('summaryProjectionHint').textContent,/Proiezione non disponibile/);
+console.log('PASS: fixed Home metrics and always-visible projection across all chart modes, toggles and insufficient readings');

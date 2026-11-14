@@ -1,9 +1,9 @@
-# Costo Luce 6.14.1 — Grafico costi anche nel widget 2 × 2
+# Costo Luce 6.15.0 — Riepilogo Home fisso
 
-- Nei formati piccoli, da 120 × 150 dp con caratteri standard, è disponibile anche il grafico a quattro barre.
-- Il selettore compatto passa fra riepilogo, Bolletta, € mensili e kWh. Aggiorna rimane accanto e lavora in background.
-- Importi preceduti da ≈ arrotondati solo nell’etichetta del grafico per motivi di spazio; valori esatti conservati nella descrizione accessibile e nell’app. Periodo corrente parziale marcato con *.
-- Nei formati più grandi rimane il layout adattivo della 6.14.0. La pagina e le tariffe sono conservate.
-- Dati Enel e fatture originali, costi fissi e variabili, imposte e credenziali non cambiano. Nessun dato inventato nell’app.
+- Rimossa dalla Home la barra Visualizza € / kWh.
+- Periodo di fatturazione con tre valori sempre nello stesso ordine: Consumo kWh, costo stimato sui consumi disponibili, proiezione della bolletta a fine periodo.
+- Il riepilogo conserva ordine, importi e posizione passando fra gli istogrammi Bolletta, kWh e € mensili.
+- La proiezione del riepilogo resta visibile anche quando l’interruttore del grafico è disattivato. Con dati insufficienti viene mostrato — con il motivo; resta il requisito di cinque giorni completi recenti.
+- Nessuna modifica all’algoritmo, alle tariffe, alle fatture storiche, al canone TV separato o alle credenziali. Conservati i widget adattivi e il grafico 2×2.
 
-Verifica con test JVM, JavaScript e RemoteViews Android, inclusi caratteri ingranditi e passaggi fra dimensioni. Anteprime popolate marcate come dati di test e confinate nell’APK di strumentazione. Celle effettive dipendenti dal launcher; installabile sopra la versione precedente con la stessa firma.
+Test: calcoli e proiezione, indipendenza dai modi del grafico, assenza di dati e stabilità del layout su viewport 320/390/600 px; test Android e screenshot nativi. Stessa firma delle versioni precedenti: aggiornamento senza disinstallare.
