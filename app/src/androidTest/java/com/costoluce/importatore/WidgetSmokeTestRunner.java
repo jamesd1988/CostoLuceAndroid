@@ -57,8 +57,8 @@ public class WidgetSmokeTestRunner extends Instrumentation {
     private void assertScript(android.webkit.WebView web,String body)throws Exception{
         java.util.concurrent.CountDownLatch done=new java.util.concurrent.CountDownLatch(1);
         java.util.concurrent.atomic.AtomicReference<String> answer=new java.util.concurrent.atomic.AtomicReference<>();
-        checkedOnMainSync(()->web.evaluateJavascript("(function(){"+body+";return 'PASS';})()",v->{answer.set(v);done.countDown();}));
-        if(!done.await(12,java.util.concurrent.TimeUnit.SECONDS)||!"\"PASS\"".equals(answer.get()))throw new AssertionError("Tariff UI assertion failed: "+answer.get());
+        checkedOnMainSync(()->web.evaluateJavascript("(function(){try{"+body+";return 'PASS';}catch(error){return 'FAIL: '+String(error&&error.stack||error);}})()",v->{answer.set(v);done.countDown();}));
+        if(!done.await(12,java.util.concurrent.TimeUnit.SECONDS)||!"\"PASS\"".equals(answer.get()))throw new AssertionError("UI assertion failed: "+answer.get()+" in "+body.substring(0,Math.min(160,body.length())));
     }
     private void assertBounds(View view){
         if(view.getVisibility()!=View.VISIBLE)return;
