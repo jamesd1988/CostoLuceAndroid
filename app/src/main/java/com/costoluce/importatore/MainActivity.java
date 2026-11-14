@@ -167,6 +167,20 @@ public final class MainActivity extends Activity {
             catch(Exception unavailable){enelStatus("Credenziali salvate non disponibili: configura Enel per recuperare lo storico annuale.",true);}
             return true;
         }
+        if ("enel-month".equals(action)) {
+            try {
+                int year=Integer.parseInt(uri.getQueryParameter("year")),month=Integer.parseInt(uri.getQueryParameter("month"));
+                if(year==0||month==0)throw new IllegalArgumentException("Mese non valido");
+                EnelConnector.requestedMonthRange(year,month,java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("Europe/Rome")));
+                if(enelBusy){enelStatus("Una sincronizzazione è già in corso. Attendi il completamento e riprova.",false);return true;}
+                CostoLuceWidgetProvider.WidgetConfiguration config=CostoLuceWidgetProvider.readConfiguration(this);
+                if(config!=null){preferredMonths=config.months;preferredAnchor=config.anchor;}
+                EnelConnector.Credentials credentials=new EnelCredentialStore(this).read();
+                if(credentials==null){enelStatus("Configura Enel e salva le credenziali, poi ripremi Aggiorna questo mese.",false);showEnelConfiguration();}
+                else downloadEnel(credentials,false,year,month);
+            }catch(Exception error){enelStatus("Impossibile recuperare il mese: verifica la selezione e la configurazione Enel.",true);}
+            return true;
+        }
         if ("enel-sync".equals(action)) {
             preferredMonths = "1".equals(uri.getQueryParameter("months")) ? 1 : "3".equals(uri.getQueryParameter("months")) ? 3 : 2;
             preferredAnchor=requestAnchor(uri);
@@ -363,6 +377,9 @@ public final class MainActivity extends Activity {
     }
 
     private void downloadEnel(EnelConnector.Credentials credentials, boolean persistIfValid) {
+        downloadEnel(credentials,persistIfValid,0,0);
+    }
+    private void downloadEnel(EnelConnector.Credentials credentials, boolean persistIfValid,int detailYear,int detailMonth) {
         if (enelBusy) return;
         enelBusy=true;
         final int requestId = ++enelRequestId;
@@ -382,13 +399,13 @@ public final class MainActivity extends Activity {
                     if (!isFinishing()) runOnUiThread(() -> {
                         if (enelRequestId == requestId && enelBusy) enelStatus(phase, false);
                     });
-                }, pdf->InvoiceDocuments.read(this,pdf),InvoiceStore.forPod(this,credentials.pod));
+                }, pdf->InvoiceDocuments.read(this,pdf),InvoiceStore.forPod(this,credentials.pod),detailYear,detailMonth);
                 if(persistIfValid&&(result.consumptionAvailable||(result.invoiceOutcome!=null&&result.invoiceOutcome.checked)))new EnelCredentialStore(this).save(credentials);
                 String invoiceMessage=InvoiceStore.accept(this,result.invoiceOutcome);
-                if(!result.consumptionAvailable){
-                    if(!isFinishing())runOnUiThread(()->{if(enelRequestId!=requestId)return;enelBusy=false;deliverInvoices(invoiceMessage);enelStatus(invoiceMessage+" Consumi correnti non disponibili: letture precedenti conservate.",false);});return;
-                }
                 CostoLuceWidgetProvider.saveHistory(this,result);
+                if(!result.consumptionAvailable){
+                    if(!isFinishing())runOnUiThread(()->{if(enelRequestId!=requestId)return;enelBusy=false;deliverInvoices(invoiceMessage);if(web!=null)web.evaluateJavascript("window.onHistoryNative("+CostoLuceWidgetProvider.archive(this).toString()+","+CostoLuceWidgetProvider.prefs(this).getLong("history_at",0L)+");",null);enelStatus(invoiceMessage+" Consumi correnti non disponibili: letture precedenti conservate.",false);});return;
+                }
                 // Keep the Home widget and the in-app consumption summary in sync
                 // when the user already configured the widget with tariff data.
                 if (CostoLuceWidgetProvider.readConfiguration(this) != null) {

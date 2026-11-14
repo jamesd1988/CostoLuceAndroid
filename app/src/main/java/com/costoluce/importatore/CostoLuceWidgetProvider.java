@@ -553,7 +553,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
             float fontScale=context.getResources().getConfiguration().fontScale;
             views.setImageViewBitmap(R.id.widget_chart,MonthlyChart.draw(context,history,spec,spec.chartHeight(fontScale,showStatus),bitmapPixels));
         }else{
-            views.setTextViewText(R.id.widget_brand,spec.compact()?"Costo Luce":"Costo Luce · v6.12.1");
+            views.setTextViewText(R.id.widget_brand,spec.compact()?"Costo Luce":"Costo Luce · v6.13.0");
             views.setViewVisibility(R.id.widget_chart_note,android.view.View.GONE);
             if("enel".equals(p.getString(KEY_SOURCE,"")))try{org.json.JSONArray rows=new org.json.JSONArray(p.getString(KEY_MONTHLY,"[]"));if(rows.length()>0)views.setTextViewText(R.id.widget_period,compactPeriod(rows));}catch(Exception ignored){}
         }
@@ -710,7 +710,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         views.setOnClickPendingIntent(R.id.widget_refresh, refreshPending);
         views.setOnClickPendingIntent(R.id.widget_status, refreshPending);
         boolean chart = p.getInt("page_"+widgetId,0)==1;
-        views.setTextViewText(R.id.widget_brand,chart?"Consumi ultimi 4 mesi":"COSTO LUCE · v6.12.1");
+        views.setTextViewText(R.id.widget_brand,chart?"Consumi ultimi 4 mesi":"COSTO LUCE · v6.13.0");
         views.setViewVisibility(R.id.widget_units,chart?android.view.View.VISIBLE:android.view.View.GONE);
         views.setViewVisibility(R.id.widget_refresh,chart?android.view.View.GONE:android.view.View.VISIBLE);
         String selectedMode=chartMode(context);

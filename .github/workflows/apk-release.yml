@@ -1,4 +1,4 @@
-name: Costo Luce - APK 6.12.1
+name: Costo Luce - APK 6.13.0
 
 on:
   push:
@@ -61,6 +61,7 @@ jobs:
             tests/test_monthly.js \
             tests/test_history.js \
             tests/test_projection.js \
+            tests/test_daily.js \
             tests/test_tariffs.js \
             tests/test_rate_rows.js \
             tests/test_arera.js \
@@ -120,22 +121,24 @@ jobs:
             grep -q 'PASS: WebView launch' instrumentation.txt
             if grep -q 'FAIL:' instrumentation.txt; then exit 1; fi
             mkdir -p dist
-            adb exec-out run-as com.costoluce.cloud cat files/screenshots/app-6.12.1.png > dist/app-6.12.1.png
+            adb exec-out run-as com.costoluce.cloud cat files/screenshots/app-6.13.0.png > dist/app-6.13.0.png
             adb logcat -d -s CostoLuceARERA:W '*:S'
-            adb exec-out run-as com.costoluce.cloud cat files/screenshots/tariffe-6.12.1.png > dist/tariffe-6.12.1.png
-            adb exec-out run-as com.costoluce.cloud cat files/screenshots/tariffe-arera-6.12.1.png > dist/tariffe-arera-6.12.1.png
-            adb exec-out run-as com.costoluce.cloud cat files/screenshots/tariffe-arera-anteprima-6.12.1.png > dist/tariffe-arera-anteprima-6.12.1.png
-            adb exec-out run-as com.costoluce.cloud cat files/screenshots/tariffe-offerta-6.12.1.png > dist/tariffe-offerta-6.12.1.png
-            adb exec-out run-as com.costoluce.cloud cat files/screenshots/tariffe-periodo-6.12.1.png > dist/tariffe-periodo-6.12.1.png
-            adb exec-out run-as com.costoluce.cloud cat files/screenshots/bollette-6.12.1.png > dist/bollette-6.12.1.png
-            adb exec-out run-as com.costoluce.cloud cat files/screenshots/bolletta-proiezione-6.12.1.png > dist/bolletta-proiezione-6.12.1.png
-            adb exec-out run-as com.costoluce.cloud cat files/screenshots/bolletta-attuale-6.12.1.png > dist/bolletta-attuale-6.12.1.png
-            adb exec-out run-as com.costoluce.cloud cat files/screenshots/tariffe-editor-6.12.1.png > dist/tariffe-editor-6.12.1.png
-            for size in compact medium large; do for page in summary history; do adb exec-out run-as com.costoluce.cloud cat "files/screenshots/widget-$page-$size-6.12.1.png" > "dist/widget-$page-$size-6.12.1.png"; done; done
-            for variant in 2x1 wide-row intermediate; do adb exec-out run-as com.costoluce.cloud cat "files/screenshots/widget-$variant-6.12.1.png" > "dist/widget-$variant-6.12.1.png"; done
-            adb exec-out run-as com.costoluce.cloud cat files/screenshots/widget-compact-refresh-6.12.1.png > dist/widget-compact-refresh-6.12.1.png
-            for size in compact medium large; do adb exec-out run-as com.costoluce.cloud cat "files/screenshots/widget-bill-$size-6.12.1.png" > "dist/widget-bill-$size-6.12.1.png"; done
-            test "$(file dist/*.png | grep -c 'PNG image data')" -eq 23
+            adb exec-out run-as com.costoluce.cloud cat files/screenshots/tariffe-6.13.0.png > dist/tariffe-6.13.0.png
+            adb exec-out run-as com.costoluce.cloud cat files/screenshots/tariffe-arera-6.13.0.png > dist/tariffe-arera-6.13.0.png
+            adb exec-out run-as com.costoluce.cloud cat files/screenshots/tariffe-arera-anteprima-6.13.0.png > dist/tariffe-arera-anteprima-6.13.0.png
+            adb exec-out run-as com.costoluce.cloud cat files/screenshots/tariffe-offerta-6.13.0.png > dist/tariffe-offerta-6.13.0.png
+            adb exec-out run-as com.costoluce.cloud cat files/screenshots/tariffe-periodo-6.13.0.png > dist/tariffe-periodo-6.13.0.png
+            adb exec-out run-as com.costoluce.cloud cat files/screenshots/bollette-6.13.0.png > dist/bollette-6.13.0.png
+            adb exec-out run-as com.costoluce.cloud cat files/screenshots/consumi-giornalieri-6.13.0.png > dist/consumi-giornalieri-6.13.0.png
+            adb exec-out run-as com.costoluce.cloud cat files/screenshots/consumi-giornalieri-assenti-6.13.0.png > dist/consumi-giornalieri-assenti-6.13.0.png
+            adb exec-out run-as com.costoluce.cloud cat files/screenshots/bolletta-proiezione-6.13.0.png > dist/bolletta-proiezione-6.13.0.png
+            adb exec-out run-as com.costoluce.cloud cat files/screenshots/bolletta-attuale-6.13.0.png > dist/bolletta-attuale-6.13.0.png
+            adb exec-out run-as com.costoluce.cloud cat files/screenshots/tariffe-editor-6.13.0.png > dist/tariffe-editor-6.13.0.png
+            for size in compact medium large; do for page in summary history; do adb exec-out run-as com.costoluce.cloud cat "files/screenshots/widget-$page-$size-6.13.0.png" > "dist/widget-$page-$size-6.13.0.png"; done; done
+            for variant in 2x1 wide-row intermediate; do adb exec-out run-as com.costoluce.cloud cat "files/screenshots/widget-$variant-6.13.0.png" > "dist/widget-$variant-6.13.0.png"; done
+            adb exec-out run-as com.costoluce.cloud cat files/screenshots/widget-compact-refresh-6.13.0.png > dist/widget-compact-refresh-6.13.0.png
+            for size in compact medium large; do adb exec-out run-as com.costoluce.cloud cat "files/screenshots/widget-bill-$size-6.13.0.png" > "dist/widget-bill-$size-6.13.0.png"; done
+            test "$(file dist/*.png | grep -c 'PNG image data')" -eq 25
       - name: Controllo APK e widget Android
         shell: bash
         run: |
@@ -154,8 +157,8 @@ jobs:
           grep -q "android.permission.ACCESS_NETWORK_STATE" permissions-compiled.txt
           grep -q "android.permission.INTERNET" permissions-compiled.txt
           mkdir -p dist
-          cp "$APK" dist/CostoLuce_v6.12.1_ProiezioneBolletta.apk
-          sha256sum dist/CostoLuce_v6.12.1_ProiezioneBolletta.apk
+          cp "$APK" dist/CostoLuce_v6.13.0_ConsumiGiornalieri.apk
+          sha256sum dist/CostoLuce_v6.13.0_ConsumiGiornalieri.apk
 
       # Publish only after JVM, build and emulator checks have passed.
       - name: Pubblica APK su GitHub Release
@@ -164,8 +167,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          TAG="v6.12.1"
-          APK="dist/CostoLuce_v6.12.1_ProiezioneBolletta.apk"
+          TAG="v6.13.0"
+          APK="dist/CostoLuce_v6.13.0_ConsumiGiornalieri.apk"
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" "$APK" dist/*.png --clobber
             gh api --method PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/$TAG" -f sha="$GITHUB_SHA" -F force=true
@@ -173,9 +176,9 @@ jobs:
           else
             gh release create "$TAG" "$APK" dist/*.png \
               --target "$GITHUB_SHA" \
-              --title "Costo Luce v6.12.1 - Proiezione bolletta con almeno 5 giorni" \
+              --title "Costo Luce v6.13.0 - Consumi giornalieri dal grafico mensile" \
               --notes-file RELEASE_NOTES.md \
               --prerelease
           fi
           echo "### APK pubblicato" >> "$GITHUB_STEP_SUMMARY"
-          echo "https://github.com/$GITHUB_REPOSITORY/releases/download/v6.12.1/CostoLuce_v6.12.1_ProiezioneBolletta.apk" >> "$GITHUB_STEP_SUMMARY"
+          echo "https://github.com/$GITHUB_REPOSITORY/releases/download/v6.13.0/CostoLuce_v6.13.0_ConsumiGiornalieri.apk" >> "$GITHUB_STEP_SUMMARY"

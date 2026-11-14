@@ -136,7 +136,11 @@ public final class EnelConnector {
     static Result fetch(Credentials credentials,int months,int anchor,boolean extended,Progress progress) throws IOException,JSONException {
         return fetch(credentials,months,anchor,extended,progress,null,new JSONArray());
     }
-    static synchronized Result fetch(Credentials credentials,int months,int anchor,boolean extended,Progress progress,EnelInvoices.DocumentReader documents,JSONArray cachedInvoices) throws IOException,JSONException {
+    static Result fetch(Credentials credentials,int months,int anchor,boolean extended,Progress progress,EnelInvoices.DocumentReader documents,JSONArray cachedInvoices) throws IOException,JSONException {
+        return fetch(credentials,months,anchor,extended,progress,documents,cachedInvoices,0,0);
+    }
+    static synchronized Result fetch(Credentials credentials,int months,int anchor,boolean extended,Progress progress,EnelInvoices.DocumentReader documents,JSONArray cachedInvoices,int detailYear,int detailMonth) throws IOException,JSONException {
+        String[] requested=requestedMonthRange(detailYear,detailMonth,Calendar.getInstance(TimeZone.getTimeZone("Europe/Rome")));
         final long deadline = System.nanoTime() + MAX_SYNC_MS * 1_000_000L;
         credentials.validate();
         if (months < 1 || months > 3) throw new IOException("Periodo non supportato.");
@@ -167,10 +171,15 @@ public final class EnelConnector {
             try{billing=readRange(credentials,window.from,to,deadline);}
             catch(IOException|JSONException unavailable){if(documents==null)throw unavailable;billing=new Result(0,"",0,java.util.Collections.emptyList());billing.consumptionAvailable=false;}
 
-            EnelInvoices.Outcome invoiceOutcome=documents==null?null:EnelInvoices.fetch(credentials,
-                (address,form,limit)->requestBytes(address,form,deadline,limit),documents,cachedInvoices,deadline,progress);
             java.util.TreeMap<Integer,MonthUsage> archive=new java.util.TreeMap<>();
             for(MonthUsage month:billing.monthly)archive.put(month.year*100+month.month,month);
+            if(requested!=null&&(!archive.containsKey(detailYear*100+detailMonth)||archive.get(detailYear*100+detailMonth).daily.isEmpty())){
+                report(progress,"Recupero consumi giornalieri del mese selezionato...");
+                Result detail=readRange(credentials,requested[0],requested[1],deadline);
+                for(MonthUsage month:detail.monthly)archive.put(month.year*100+month.month,month);
+            }
+            EnelInvoices.Outcome invoiceOutcome=documents==null?null:EnelInvoices.fetch(credentials,
+                (address,form,limit)->requestBytes(address,form,deadline,limit),documents,cachedInvoices,deadline,progress);
             if(extended&&billing.consumptionAvailable){
                 final TimeZone zone=TimeZone.getTimeZone("Europe/Rome");
                 SimpleDateFormat format=new SimpleDateFormat("ddMMyyyy",Locale.ITALY);format.setTimeZone(zone);
@@ -183,7 +192,7 @@ public final class EnelConnector {
                     report(progress,"Storico Enel: "+format.format(start.getTime())+" – "+format.format(end.getTime()));
                     try{
                         Result chunk=readRange(credentials,format.format(start.getTime()),format.format(end.getTime()),deadline);
-                        for(MonthUsage month:chunk.monthly)archive.put(month.year*100+month.month,month);
+                        for(MonthUsage month:chunk.monthly)if(month.hourSamples>0||!archive.containsKey(month.year*100+month.month))archive.put(month.year*100+month.month,month);
                         for(MonthUsage missing:chunk.monthly)if(missing.hourSamples==0&&deadline-System.nanoTime()>8_000_000_000L){
                             Calendar single=Calendar.getInstance(zone);single.clear();single.set(missing.year,missing.month-1,1);
                             String singleFrom=format.format(single.getTime());single.set(Calendar.DAY_OF_MONTH,single.getActualMaximum(Calendar.DAY_OF_MONTH));
@@ -212,6 +221,15 @@ public final class EnelConnector {
             jar.getCookieStore().removeAll();
             CookieHandler.setDefault(previous);
         }
+    }
+
+    static String[] requestedMonthRange(int year,int month,Calendar reference)throws IOException {
+        if(year==0&&month==0)return null;
+        int current=reference.get(Calendar.YEAR)*12+reference.get(Calendar.MONTH),index=year*12+month-1;
+        if(year<2000||year>2100||month<1||month>12||index>current||index<current-23)throw new IOException("Il mese deve essere compreso negli ultimi 24 mesi disponibili.");
+        Calendar start=Calendar.getInstance(TimeZone.getTimeZone("Europe/Rome"));start.clear();start.set(year,month-1,1);
+        Calendar end=(Calendar)start.clone();end.set(Calendar.DAY_OF_MONTH,index==current?reference.get(Calendar.DAY_OF_MONTH):end.getActualMaximum(Calendar.DAY_OF_MONTH));
+        SimpleDateFormat format=new SimpleDateFormat("ddMMyyyy",Locale.ITALY);format.setTimeZone(start.getTimeZone());return new String[]{format.format(start.getTime()),format.format(end.getTime())};
     }
 
     private static Result readRange(Credentials credentials,String from,String to,long deadline)throws IOException,JSONException{

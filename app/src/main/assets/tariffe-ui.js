@@ -50,7 +50,8 @@ function cancelAreraPreview(){areraDraft=null;byId('areraPreview').hidden=true;o
 
 function closeTopTariffDialog(){
   if(!byId('rateEditor').hidden){closeRateEditor();if(window.tariffActivePanel)document.body.style.overflow='hidden';return true;}
-  return closeTariffPanel();
+  if(closeTariffPanel())return true;
+  return typeof closeMonthDaily==='function'?closeMonthDaily():false;
 }
 
 (()=>{

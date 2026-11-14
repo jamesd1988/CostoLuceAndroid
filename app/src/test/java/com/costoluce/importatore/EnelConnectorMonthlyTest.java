@@ -96,4 +96,13 @@ public final class EnelConnectorMonthlyTest {
         assertTrue(spring.monthly.get(0).daily.get(0).complete);assertTrue(autumn.monthly.get(0).daily.get(0).complete);
         EnelConnector.Result incomplete=EnelConnector.parseTotal(payload(fullDay("25102026",24)),"25102026","25102026");assertFalse(incomplete.monthly.get(0).daily.get(0).complete);
     }
+    @Test public void requestedMonthUsesCalendarBoundariesAndStopsAtToday()throws Exception {
+        java.util.Calendar now=java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("Europe/Rome"));now.clear();now.set(2026,10,14);
+        assertArrayEquals(new String[]{"01102026","31102026"},EnelConnector.requestedMonthRange(2026,10,now));
+        assertArrayEquals(new String[]{"01112026","14112026"},EnelConnector.requestedMonthRange(2026,11,now));
+        assertArrayEquals(new String[]{"01122024","31122024"},EnelConnector.requestedMonthRange(2024,12,now));
+        assertNull(EnelConnector.requestedMonthRange(0,0,now));
+        for(int[] invalid:new int[][]{{2026,12},{2024,11},{2026,0},{2026,13}}){try{EnelConnector.requestedMonthRange(invalid[0],invalid[1],now);fail("Invalid month accepted");}catch(java.io.IOException expected){}}
+        now.set(2028,2,1);assertArrayEquals(new String[]{"01022028","29022028"},EnelConnector.requestedMonthRange(2028,2,now));
+    }
 }

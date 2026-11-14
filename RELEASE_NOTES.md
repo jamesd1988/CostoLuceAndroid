@@ -1,9 +1,9 @@
-Costo Luce 6.12.1 - Correzione proiezione bimestrale
+Costo Luce 6.13.0 - Consumi giornalieri dal grafico mensile
 
-- Risolto il blocco «Un mese concluso contiene giornate incomplete» quando il mese ha un totale mensile valido e tutte le giornate presenti, ma una giornata non è idonea alla media settimanale oraria.
-- I mesi conclusi conservano il totale reale Enel senza proiezione né integrazioni inventate. Rimangono i controlli sulla copertura mensile e sulla corrispondenza delle somme giornaliere.
-- La media per i giorni restanti richiede sempre almeno 5 giornate complete nella settimana di riferimento. Non cambiano il metodo di previsione e il calcolo di fissi, variabili, accisa e IVA; canone TV separato.
-- Messaggio coerente quando una proiezione non è disponibile. Test aggiunto sul caso ottobre–novembre con una giornata storica esclusa dalla media.
-- Aggiornamento installabile sulla 6.12.0 con la stessa firma, conservando credenziali, tariffe, periodo e dati salvati.
+- Tocca una colonna del grafico mensile nelle modalità kWh oppure € per aprire i consumi giornalieri del mese selezionato. Anche partendo dagli euro, il dettaglio mostra i kWh realmente rilevati.
+- Grafico giornaliero scorrevole, selezione di un giorno con valore preciso e stato della lettura, tabella espandibile di tutte le giornate e navigazione fra i mesi. Il ritorno ripristina modalità e posizione nello storico mensile; supportato il tasto Indietro Android.
+- Zero misurato, dato assente, giorno futuro e lettura parziale restano distinti. I totali mensili storici non vengono divisi per inventare consumi giornalieri; nessuna proiezione o ripartizione di costi nel nuovo dettaglio.
+- Aggiorna questo mese richiede a Enel il range esatto del mese selezionato, entro gli ultimi 24 mesi, usando la sessione e le credenziali cifrate già configurate. Il mese corrente è richiesto solo fino a oggi. Il periodo di fatturazione e il riepilogo corrente rimangono quelli impostati in Tariffe.
+- Conservati prezzi, credenziali, storico fatturato, widget e proiezione della bolletta. Aggiornamento installabile sopra la versione precedente con la stessa firma.
 
-Verifiche: suite JavaScript, test JVM e test Android su emulatore, inclusi il bimestre con giornata storica parziale e la soglia di 4/5/7 giorni recenti.
+Verifiche: suite JavaScript e test JVM per calendario, anni bisestili, range mensili, zero/mancanti/parziali e dati non validi; prove Android per apertura da entrambe le modalità, ritorno, valori giornalieri reali di test e assenza di dati senza valori inventati.
