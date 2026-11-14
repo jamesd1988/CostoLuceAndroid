@@ -680,6 +680,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         SharedPreferences p=prefs(context);boolean chart=p.getInt("page_"+widgetId,0)==1;String mode=chartMode(context);
         String next=!chart?"bill":"bill".equals(mode)?"eur":"eur".equals(mode)?"kwh":"summary";
         String label=!chart?"Grafici ›":"bill".equals(mode)?"Bolletta € ›":"eur".equals(mode)?"€ mensili ›":"kWh ›";
+        if(spec.width<180&&chart)label="bill".equals(mode)?"Boll. € ›":"eur".equals(mode)?"€ mese ›":"kWh ›";
         views.setTextViewText(R.id.widget_pocket_cycle,label);
         views.setTextViewTextSize(R.id.widget_pocket_cycle,android.util.TypedValue.COMPLEX_UNIT_PX,fitSmallValue(context,label,spec.width-16-48,42,12,false));
         views.setContentDescription(R.id.widget_pocket_cycle,"Vista "+(!chart?"riepilogo":"bill".equals(mode)?"Bolletta":"eur".equals(mode)?"euro mensili":"kWh")+". Tocca per "+("summary".equals(next)?"tornare al riepilogo":"bill".equals(next)?"vedere il grafico Bolletta":"eur".equals(next)?"vedere gli euro mensili":"vedere i kWh"));
