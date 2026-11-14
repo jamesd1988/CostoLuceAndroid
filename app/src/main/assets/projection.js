@@ -37,7 +37,13 @@
       if(!item||!Number.isInteger(item.year)||!Number.isInteger(item.month)||item.month<1||item.month>12||item.year<2000||item.year>2100||(i&&item.year*12+item.month!==period[i-1].year*12+period[i-1].month+1))return unavailable('Periodo di fatturazione non valido.');
       const first=ordinal(item.year,item.month,1),days=monthDays(item.year,item.month),end=first+days-1,row=monthly.get(item.year*12+item.month);
       let actual=0,projected=0,estimatedDays=0;
-      if(end<now&&row?.available&&!row.partial&&Number.isFinite(row.kwh)&&row.kwh>=0){actual=projected=row.kwh;}
+      if(end<now&&row?.available&&!row.partial&&Number.isFinite(row.kwh)&&row.kwh>=0){
+        if(Array.isArray(row.daily)&&row.daily.length){
+          let verified=0;for(let d=0;d<days;d++){const day=daily.get(first+d);if(!day?.complete)return unavailable('Un mese concluso contiene giornate incomplete. Aggiorna Enel prima di calcolare la proiezione.');verified+=day.kwh;}
+          if(Math.abs(verified-row.kwh)>.02)return unavailable('Totale mensile e dettaglio giornaliero non coincidono. Aggiorna Enel.');
+        }
+        actual=projected=row.kwh;
+      }
       else if(end<now)return unavailable('Manca un mese concluso completo nel periodo. Aggiorna Enel prima di calcolare la proiezione.');
       else{
         if(row?.available&&(!Array.isArray(row.daily)||!row.daily.length))return unavailable('Premi Aggiorna: i consumi salvati non contengono ancora il dettaglio giornaliero.');
