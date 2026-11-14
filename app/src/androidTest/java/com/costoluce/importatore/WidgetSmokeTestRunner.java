@@ -15,6 +15,7 @@ public class WidgetSmokeTestRunner extends Instrumentation {
     }
     private android.webkit.WebView previewWeb;
     private String resizeEvidence="";
+    private boolean populatedPreview;
     private void clearSystemDialog()throws Exception{
         for(int attempt=0;attempt<3;attempt++){
             android.view.accessibility.AccessibilityNodeInfo root=getUiAutomation().getRootInActiveWindow();
@@ -29,6 +30,7 @@ public class WidgetSmokeTestRunner extends Instrumentation {
         }
     }
     private void capture(String name) throws Exception {
+        if(name.startsWith("widget-")&&!populatedPreview)return;
         clearSystemDialog();waitForIdleSync();
         if(previewWeb!=null&&previewWeb.isAttachedToWindow()){
             java.util.concurrent.CountDownLatch rendered=new java.util.concurrent.CountDownLatch(1);
@@ -45,6 +47,7 @@ public class WidgetSmokeTestRunner extends Instrumentation {
         clearSystemDialog();Thread.sleep(500);
         Bitmap b=getUiAutomation().takeScreenshot();
         if(b==null)throw new AssertionError("Missing screenshot");
+        if(populatedPreview){Bitmap labelled=b.copy(Bitmap.Config.ARGB_8888,true);b.recycle();b=labelled;android.graphics.Canvas canvas=new android.graphics.Canvas(b);android.graphics.Paint label=new android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG);label.setColor(android.graphics.Color.WHITE);label.setTextSize(16*getTargetContext().getResources().getDisplayMetrics().density);canvas.drawText("ANTEPRIMA · DATI DI TEST",32,120,label);}
         File dir=new File(getTargetContext().getFilesDir(),"screenshots");dir.mkdirs();
         try(FileOutputStream out=new FileOutputStream(new File(dir,name+".png"))){b.compress(Bitmap.CompressFormat.PNG,100,out);}
         b.recycle();
@@ -77,7 +80,7 @@ public class WidgetSmokeTestRunner extends Instrumentation {
         if(!actual.fullPages()){checkSmallWidget(activity,c,width,height,page,fontScale);return;}
         c.getSharedPreferences(CostoLuceWidgetProvider.PREFS,Context.MODE_PRIVATE).edit().putInt("page_4242",page).commit();
         android.content.res.Configuration config=new android.content.res.Configuration(c.getResources().getConfiguration());config.fontScale=fontScale;
-        Context sizedContext=activity.createConfigurationContext(config);
+        Context sizedContext=new android.content.ContextWrapper(activity.createConfigurationContext(config)){@Override public SharedPreferences getSharedPreferences(String name,int mode){return c.getSharedPreferences(name,mode);}};
         java.util.concurrent.atomic.AtomicReference<View> applied=new java.util.concurrent.atomic.AtomicReference<>();
         checkedOnMainSync(()->{
             android.widget.RemoteViews remote=CostoLuceWidgetProvider.createViewsForSize(sizedContext,4242,width,height);
@@ -97,6 +100,7 @@ public class WidgetSmokeTestRunner extends Instrumentation {
             float density=c.getResources().getDisplayMetrics().density;
             int[] targets={R.id.widget_refresh,R.id.widget_prev,R.id.widget_next,R.id.widget_dots,R.id.widget_unit_bill,R.id.widget_unit_kwh,R.id.widget_unit_eur,R.id.widget_mode_cycle};
             for(int id:targets){View target=view.findViewById(id);if(target.getVisibility()!=View.VISIBLE||target.getParent() instanceof View&&((View)target.getParent()).getVisibility()!=View.VISIBLE)continue;if(target.getWidth()<48*density-1||target.getHeight()<48*density-1||!target.hasOnClickListeners())throw new AssertionError("Small or inactive touch target "+id+" at "+width+"x"+height);}
+            for(int id:new int[]{R.id.widget_unit_bill,R.id.widget_unit_kwh,R.id.widget_unit_eur,R.id.widget_mode_cycle}){android.widget.TextView label=view.findViewById(id);if(label.getVisibility()!=View.VISIBLE||((View)label.getParent()).getVisibility()!=View.VISIBLE)continue;if(label.getLayout()==null||label.getLayout().getLineWidth(0)>label.getWidth()-label.getCompoundPaddingLeft()-label.getCompoundPaddingRight()+1)throw new AssertionError("Clipped mode label at "+width+"x"+height);}
             if(actual.unified()&&view.findViewById(R.id.widget_navigation).getVisibility()!=View.GONE)throw new AssertionError("Unified layout retained redundant pages");
             if(page==1||actual.unified()){android.widget.ImageView chart=view.findViewById(R.id.widget_chart);if(chart.getHeight()<40*density)throw new AssertionError("Chart collapsed");}
 
@@ -160,7 +164,7 @@ public class WidgetSmokeTestRunner extends Instrumentation {
         SharedPreferences prefs=c.getSharedPreferences(CostoLuceWidgetProvider.PREFS,Context.MODE_PRIVATE);
         prefs.edit().putInt("page_4242",savedPage).putString("display_unit","eur").commit();
         android.content.res.Configuration configuration=new android.content.res.Configuration(c.getResources().getConfiguration());configuration.fontScale=fontScale;
-        Context sized=activity.createConfigurationContext(configuration);WidgetLayoutSpec spec=new WidgetLayoutSpec(width,height,fontScale);
+        Context sized=new android.content.ContextWrapper(activity.createConfigurationContext(configuration)){@Override public SharedPreferences getSharedPreferences(String name,int mode){return c.getSharedPreferences(name,mode);}};WidgetLayoutSpec spec=new WidgetLayoutSpec(width,height,fontScale);
         java.util.concurrent.atomic.AtomicReference<View> rendered=new java.util.concurrent.atomic.AtomicReference<>();
         checkedOnMainSync(()->{
             android.widget.RemoteViews remote=CostoLuceWidgetProvider.createViewsForSize(sized,4242,width,height);
@@ -231,10 +235,31 @@ public class WidgetSmokeTestRunner extends Instrumentation {
                 fixture.getSharedPreferences(CostoLuceWidgetProvider.PREFS,Context.MODE_PRIVATE).edit().clear().putLong("saved_at",1700000000000L).putString("kwh","398.7").putString("estimated_euro","141.45").putString("period","Dic 2026 + Gen 2027 + Feb 2027").putInt("page_4242",page).putBoolean("refresh_busy",busy).putString("refresh_status",busy?"Aggiornamento in corso":"").commit();
                 View view=CostoLuceWidgetProvider.createViewsForSize(fixture,4242,size[0],size[1]).apply(sized,null);float d=c.getResources().getDisplayMetrics().density;
                 for(int settle=0;settle<2;settle++){view.measure(View.MeasureSpec.makeMeasureSpec(Math.round(size[0]*d),View.MeasureSpec.EXACTLY),View.MeasureSpec.makeMeasureSpec(Math.round(size[1]*d),View.MeasureSpec.EXACTLY));view.layout(0,0,view.getMeasuredWidth(),view.getMeasuredHeight());}
-                try{assertBounds(view);}catch(AssertionError e){throw new AssertionError("Adaptive edge "+size[0]+"x"+size[1]+" font="+fs+" page="+page+" busy="+busy,e);}
+                try{assertBounds(view);}catch(AssertionError e){throw new AssertionError("Adaptive edge "+size[0]+"x"+size[1]+" font="+fs+" page="+page+" busy="+busy+": "+e.getMessage(),e);}
                 if(fixture.getSharedPreferences(CostoLuceWidgetProvider.PREFS,Context.MODE_PRIVATE).getInt("page_4242",-1)!=page)throw new AssertionError("Adaptive rendering reset the saved page");
             }
         });
+    }
+
+    /** Test APK only: isolated, explicitly labelled populated previews; no synthetic production snapshot. */
+    private void capturePopulatedWidgets(Activity activity,Context context)throws Exception{
+        Context fixture=new android.content.ContextWrapper(context){@Override public SharedPreferences getSharedPreferences(String name,int mode){return super.getSharedPreferences("widget_visual_fixture_"+name,mode);}};
+        org.json.JSONObject rates=new org.json.JSONObject("{\"energy\":0.135,\"losses\":10,\"dispatch\":0.021115752,\"balancing\":0.000786979,\"transport\":0.0119,\"equalization\":0.00283,\"asos\":0.031515,\"arim\":0.001638,\"excise\":0.0227,\"vat\":10}");
+        org.json.JSONArray fees=new org.json.JSONArray();String[] ids={"commercialization","dispbt","rete_fissa","rete_potenza","qualita_potenza"},names={"Commercializzazione","DispBT","Rete quota fissa","Rete quota potenza","Rete qualita quota potenza"};double[] fixed={10.5,1.3,1.92,5.88,.0497};
+        for(int i=0;i<ids.length;i++)fees.put(new org.json.JSONObject().put("id","custom_offer_"+ids[i]).put("name",names[i]).put("type","fixed").put("value",fixed[i]));rates.put("_custom",fees);
+        java.time.LocalDate current=java.time.LocalDate.now(java.time.ZoneId.of("Europe/Rome")).withDayOfMonth(1),start=current.minusMonths(1);
+        org.json.JSONArray history=new org.json.JSONArray(),monthly=new org.json.JSONArray(),invoices=new org.json.JSONArray();double[] readings={170,158,225,193,177.9,160.2,218.1,180.6};
+        for(int i=0;i<8;i++){java.time.LocalDate date=current.minusMonths(7-i);org.json.JSONObject row=new org.json.JSONObject().put("year",date.getYear()).put("month",date.getMonthValue()).put("kwh",readings[i]).put("days",i==7?13:date.lengthOfMonth()).put("hourSamples",24*(i==7?13:date.lengthOfMonth())).put("lastMeasuredDay",i==7?13:date.lengthOfMonth()).put("available",true).put("partial",i==7);history.put(row);if(i>=6)monthly.put(row);}
+        long[] totals={11520,16361,12756};for(int i=0;i<3;i++){java.time.LocalDate from=start.minusMonths(6-i*2),to=from.plusMonths(1);to=to.withDayOfMonth(to.lengthOfMonth());invoices.put(new org.json.JSONObject().put("id","TEST-"+i).put("from",from.toString()).put("to",to.toString()).put("electricityCents",totals[i]).put("fixedGrossCents",4800));}
+        WidgetPricing pricing=WidgetPricing.parse(rates.toString(),true);double euro=pricing.estimatedCost(218.1,1)+pricing.estimatedCost(180.6,1);
+        fixture.getSharedPreferences("issued_invoices_v1",Context.MODE_PRIVATE).edit().clear().putString("active","preview").putString("preview",invoices.toString()).commit();
+        SharedPreferences p=CostoLuceWidgetProvider.prefs(fixture);p.edit().clear().putLong("saved_at",System.currentTimeMillis()).putString("kwh","398.7").putString("estimated_euro",Double.toString(euro)).putString("source","enel").putString("rates_json",rates.toString()).putBoolean("resident",true).putInt("months",2).putInt("configured_months",2).putInt("billing_anchor",start.getMonthValue()).putString("monthly_json",monthly.toString()).putString("history_json",history.toString()).commit();
+        populatedPreview=true;
+        for(int[] size:new int[][]{{130,64},{150,80},{300,64},{180,180}})checkSmallWidget(activity,fixture,size[0],size[1],0,1);
+        p.edit().putString("widget_chart_mode","kwh").putString("display_unit","kwh").commit();
+        for(int[] size:new int[][]{{280,260},{340,300},{400,350},{130,500},{190,420},{260,252},{410,210},{420,450}})for(int page=0;page<2;page++)checkWidget(activity,fixture,size[0],size[1],page,1);
+        p.edit().putString("widget_chart_mode","bill").commit();for(int[] size:new int[][]{{280,260},{340,300},{400,350}})checkWidget(activity,fixture,size[0],size[1],1,1);
+        populatedPreview=false;
     }
 
     @Override public void onCreate(Bundle arguments){super.onCreate(arguments);start();}
@@ -342,6 +367,7 @@ public class WidgetSmokeTestRunner extends Instrumentation {
             if(android.graphics.Color.blue(historicalPixel)<=android.graphics.Color.green(historicalPixel))throw new AssertionError("Allocated history not blue");
             for(int index:new int[]{2,3}){int pixel=allocationBitmap.getPixel(Math.round((28+allocationStep*(index+.5f))*allocationScale),Math.round((allocationBottom-4)*allocationScale));if(android.graphics.Color.green(pixel)<=android.graphics.Color.blue(pixel))throw new AssertionError("Both forecast months must be teal");}
             allocationBitmap.recycle();
+            capturePopulatedWidgets(activity,c);
 
             android.os.Bundle options=new android.os.Bundle();
             options.putInt(android.appwidget.AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH,280);options.putInt(android.appwidget.AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT,260);

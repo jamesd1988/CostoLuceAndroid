@@ -564,14 +564,18 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
             if(detail.length()>0){views.setTextViewText(R.id.widget_breakdown,detail.toString());views.setViewVisibility(R.id.widget_breakdown,android.view.View.VISIBLE);}
         }catch(Exception ignored){}
         views.setViewVisibility(R.id.widget_chart_note,graph?android.view.View.VISIBLE:android.view.View.GONE);
-        views.setViewVisibility(R.id.widget_units,graph&&spec.width>=360?android.view.View.VISIBLE:android.view.View.GONE);
-        views.setViewVisibility(R.id.widget_mode_cycle,graph&&spec.width<360?android.view.View.VISIBLE:android.view.View.GONE);
-        views.setViewVisibility(R.id.widget_brand,graph&&spec.width<360?android.view.View.GONE:android.view.View.VISIBLE);
+        boolean separateUnits=spec.width>=360&&spec.fontScale<=1.5f;
+        views.setViewVisibility(R.id.widget_units,graph&&separateUnits?android.view.View.VISIBLE:android.view.View.GONE);
+        views.setViewVisibility(R.id.widget_mode_cycle,graph&&!separateUnits?android.view.View.VISIBLE:android.view.View.GONE);
+        views.setViewVisibility(R.id.widget_brand,graph&&!separateUnits?android.view.View.GONE:android.view.View.VISIBLE);
         if(chart&&spec.width>=360)views.setTextViewText(R.id.widget_brand,"bill".equals(chartMode(context))?"Bollette":"Ultimi 4 mesi");
         views.setViewVisibility(R.id.widget_logo,spec.width<200||graph&&spec.width<280?android.view.View.GONE:android.view.View.VISIBLE);
         if(graph){
             String mode=chartMode(context),next="bill".equals(mode)?"kwh":"kwh".equals(mode)?"eur":"bill";
-            views.setTextViewText(R.id.widget_mode_cycle,"bill".equals(mode)?"Bolletta · €":"kwh".equals(mode)?"Consumi · kWh":"Mensile · €");
+            String modeLabel="bill".equals(mode)?"Bolletta · €":"kwh".equals(mode)?"Consumi · kWh":"Mensile · €";
+            if(spec.width<200)modeLabel="bill".equals(mode)?"Boll. €":"kwh".equals(mode)?"kWh":"Mese €";
+            views.setTextViewText(R.id.widget_mode_cycle,modeLabel);
+            views.setTextViewTextSize(R.id.widget_mode_cycle,android.util.TypedValue.COMPLEX_UNIT_PX,fitSmallValue(context,modeLabel,spec.contentWidth()-48-(spec.width>=280?28:0),42,12,false));
             views.setContentDescription(R.id.widget_mode_cycle,"Vista "+mode+". Tocca per passare a "+("bill".equals(next)?"Bolletta":"kwh".equals(next)?"kWh":"euro mensili"));
             Intent unit=new Intent(context,CostoLuceWidgetProvider.class).setAction(ACTION_UNIT).putExtra("unit",next).setData(android.net.Uri.parse("costoluce://widget-unit/"+next));
             views.setOnClickPendingIntent(R.id.widget_mode_cycle,PendingIntent.getBroadcast(context,2200,unit,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE));

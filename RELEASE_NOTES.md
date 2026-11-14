@@ -6,4 +6,4 @@
 - Aggiorna anche nella pagina grafico. Selettore ciclico Bolletta/kWh/€ nei formati stretti, tre pulsanti nei formati larghi. Frecce e dot per le due pagine; nessuno zoom o swipe orizzontale simulato.
 - Conservati dati reali Enel, fatture, calcoli, credenziali e scelta delle unità. Aggiornamento installabile sopra la versione precedente con la stessa firma.
 
-Build di prova: test JavaScript, JVM e strumentazione Android su emulatore pulito; screenshot nativi allegati. Le celle e il ridimensionamento finale dipendono dal launcher.
+Build di prova: test JavaScript, JVM e strumentazione Android su emulatore pulito; screenshot nativi allegati con dati di test dichiarati, isolati nell’APK di strumentazione. Le celle e il ridimensionamento finale dipendono dal launcher.
