@@ -229,6 +229,7 @@ public final class MainActivity extends Activity {
         web.evaluateJavascript("window.onWidgetNativeState("
                 + (config == null ? "null" : config.toString()) + ","
                 + (snapshot == null ? "null" : snapshot.toString()) + ");", null);
+        if (enelBusy) enelStatus("Sincronizzazione Enel in corso…", false);
     }
 
     private void showInvoiceProfile(){
@@ -302,7 +303,7 @@ public final class MainActivity extends Activity {
 
     private void enelStatus(String message, boolean error) {
         if (web == null || web.getUrl() == null || !web.getUrl().startsWith(HOME)) return;
-        web.evaluateJavascript("window.onEnelStatus(" + JSONObject.quote(message) + ", " + (error ? "true" : "false") + ");", null);
+        web.evaluateJavascript("window.onEnelStatus(" + JSONObject.quote(message) + ", " + (error ? "true" : "false") + "," + enelBusy + ");", null);
     }
 
     private void startEnelSync() {
@@ -313,6 +314,7 @@ public final class MainActivity extends Activity {
         } catch (Exception e) {
             enelStatus("Credenziali cifrate non più leggibili. Configura nuovamente Enel Energia.", true);
         }
+        enelStatus("Collega il tuo account Enel per aggiornare i dati.", false);
         showEnelConfiguration();
     }
 
@@ -422,6 +424,8 @@ public final class MainActivity extends Activity {
                     if(web != null && web.getUrl() != null && web.getUrl().startsWith(HOME)) {
                         try {
                             org.json.JSONObject detail=new org.json.JSONObject();
+                            detail.put("syncResult",true);
+                            detail.put("syncedAt",System.currentTimeMillis());
                             detail.put("kwh",result.kwh);
                             detail.put("months",selectedMonths);
                             detail.put("anchor",selectedAnchor);
