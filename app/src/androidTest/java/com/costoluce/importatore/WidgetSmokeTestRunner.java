@@ -332,7 +332,7 @@ public class WidgetSmokeTestRunner extends Instrumentation {
             android.webkit.WebView web=findWeb(activity.findViewById(android.R.id.content));
             if(web==null)throw new AssertionError("Missing WebView");
             assertScript(web,"showView('settings');setCompactWidgetCost('projection');if(byId('compactWidgetCost').value!=='projection'||localStorage.getItem('costoluce_compact_widget_cost_v1')!=='projection')throw Error('Widget cost choice not persisted')");
-            Thread.sleep(500);if(!"projection".equals(CostoLuceWidgetProvider.compactCostMode(c)))throw new AssertionError("Widget preference bridge failed");capture("widget-settings-6.16.0");
+            Thread.sleep(500);if(!"projection".equals(CostoLuceWidgetProvider.compactCostMode(c)))throw new AssertionError("Widget preference bridge failed");capture("settings-widget-6.16.0");
             assertScript(web,"setCompactWidgetCost('current');showView('home')");Thread.sleep(500);
 
             assertScript(web,"showView('rates');if(document.querySelectorAll('.bottom-nav button').length!==4||byId('page-period')||byId('nav-period'))throw Error('Period navigation remains');if(document.querySelectorAll('.rate-card:not([hidden])').length!==4)throw Error('Compact rows');openTariffPanel('billing');byId('billingFrequency').value='1';billingDraftChanged(true);closeTariffPanel();if(months!==2||byId('billingFrequency').value!=='2')throw Error('Cancel changed billing');if(document.querySelectorAll('.rate-card').length!==10)throw Error('Default rows');openRateEditor('energy');if(!document.getElementById('rateName').disabled)throw Error('Energy lock');closeRateEditor()");

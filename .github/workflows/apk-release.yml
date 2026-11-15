@@ -142,7 +142,8 @@ jobs:
             for shape in 130x500 190x420 260x252 410x210 420x450; do for page in 0 1; do adb exec-out run-as com.costoluce.cloud cat "files/screenshots/widget-adaptive-$shape-$page-6.16.0.png" > "dist/widget-adaptive-$shape-$page-6.16.0.png"; done; done
             for mode in summary bill eur kwh; do adb exec-out run-as com.costoluce.cloud cat "files/screenshots/widget-2x2-$mode-6.16.0.png" > "dist/widget-2x2-$mode-6.16.0.png"; done
             for mode in kwh eur; do adb exec-out run-as com.costoluce.cloud cat "files/screenshots/home-$mode-6.16.0.png" > "dist/home-$mode-6.16.0.png"; done
-            for name in widget-settings widget-projection-mini widget-projection-refresh widget-projection-unavailable; do adb exec-out run-as com.costoluce.cloud cat "files/screenshots/$name-6.16.0.png" > "dist/$name-6.16.0.png"; done
+            for name in settings-widget widget-projection-mini widget-projection-refresh widget-projection-unavailable; do adb exec-out run-as com.costoluce.cloud cat "files/screenshots/$name-6.16.0.png" > "dist/$name-6.16.0.png"; done
+            file dist/*.png
             test "$(file dist/*.png | grep -c 'PNG image data')" -eq 46
       - name: Controllo APK e widget Android
         shell: bash
