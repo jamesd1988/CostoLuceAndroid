@@ -329,7 +329,7 @@ public class WidgetSmokeTestRunner extends Instrumentation {
             if(Math.abs(areraFixture.getJSONObject("2026-08").getJSONObject("resident").getDouble("asos")-.031515)>1e-10)throw new AssertionError("ARERA parser on Android");
             Activity activity=startActivitySync(new Intent(c,MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             Thread.sleep(2500);previewWeb=findWeb(activity.findViewById(android.R.id.content));capture("app-6.18.0");
-            final WebView syncWeb=previewWeb;
+            final android.webkit.WebView syncWeb=previewWeb;
             assertScript(syncWeb,"showView('home');window.scrollTo(0,0);if(byId('homeSync').getBoundingClientRect().bottom>document.querySelector('#page-home .result').getBoundingClientRect().top)throw Error('Sync placement');if(document.querySelectorAll('#homeRefresh').length!==1)throw Error('Duplicate refresh')");capture("sync-ready-6.18.0");
             assertScript(syncWeb,"window.onEnelStatus('Recupero consumi Enel…',false,true);if(!byId('homeRefresh').disabled||byId('syncButtonLabel').textContent!=='Aggiornamento…')throw Error('Sync busy');window.syncPreviousTime=byId('historyUpdated').textContent");capture("sync-loading-6.18.0");
             assertScript(syncWeb,"window.onEnelStatus('Connessione non disponibile. I dati precedenti sono conservati.',true,false);if(byId('homeRefresh').disabled||byId('syncButtonLabel').textContent!=='Riprova'||byId('historyUpdated').textContent!==window.syncPreviousTime)throw Error('Sync failure retention')");capture("sync-error-6.18.0");
