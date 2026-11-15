@@ -99,6 +99,10 @@ public final class MainActivity extends Activity {
             if (web != null && HOME.equals(web.getUrl())) checkArera(true);
             return true;
         }
+        if("widget-cost".equals(action)){
+            if(web!=null&&HOME.equals(web.getUrl()))CostoLuceWidgetProvider.saveCompactCostMode(this,uri.getQueryParameter("mode"));
+            return true;
+        }
         if ("display-unit".equals(action)) {
             if (web != null && HOME.equals(web.getUrl())) CostoLuceWidgetProvider.saveUnit(this,uri.getQueryParameter("unit"));
             return true;

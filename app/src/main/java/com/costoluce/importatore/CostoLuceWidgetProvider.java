@@ -323,6 +323,26 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
     }
 
     /** Current settings are separate from the period of the last actual measurement. */
+    static String compactCostMode(Context context){return "projection".equals(prefs(context).getString("compact_cost_mode","current"))?"projection":"current";}
+    static boolean saveCompactCostMode(Context context,String mode){
+        if(!"current".equals(mode)&&!"projection".equals(mode))return false;
+        prefs(context).edit().putString("compact_cost_mode",mode).apply();refresh(context);return true;
+    }
+    static WidgetProjection.Result compactProjection(Context context){
+        SharedPreferences p=prefs(context);WidgetConfiguration config=readConfiguration(context);
+        if(config==null||!"enel".equals(p.getString(KEY_SOURCE,""))||p.getLong(KEY_TIMESTAMP,0)<=0)return new WidgetProjection.Result("Aggiorna Enel per acquisire i consumi del periodo corrente.");
+        try{
+            java.time.LocalDate today=java.time.LocalDate.now(java.time.ZoneId.of("Europe/Rome"));
+            java.time.LocalDate start=today.withDayOfMonth(1).minusMonths(Math.floorMod(today.getMonthValue()-config.anchor,config.months));
+            org.json.JSONArray monthly=new org.json.JSONArray(p.getString(KEY_MONTHLY,"[]"));
+            if(monthly.length()!=config.months)return new WidgetProjection.Result("Aggiorna Enel: il riepilogo appartiene a un altro periodo.");
+            for(int i=0;i<config.months;i++){JSONObject row=monthly.optJSONObject(i);java.time.LocalDate date=start.plusMonths(i);if(row==null||row.optInt("year")!=date.getYear()||row.optInt("month")!=date.getMonthValue())return new WidgetProjection.Result("Aggiorna Enel: il riepilogo appartiene a un altro periodo.");}
+            WidgetProjection.Result result=WidgetProjection.calculate(archive(context),config.months,config.anchor,today,WidgetPricing.parse(config.ratesJson,config.resident));
+            if(result.available&&Math.abs(result.observedKwh-Double.parseDouble(p.getString(KEY_KWH,"")))>.02)return new WidgetProjection.Result("Aggiorna Enel: riepilogo e letture giornaliere non coincidono.");
+            return result;
+        }catch(Exception invalid){return new WidgetProjection.Result("Dati di proiezione non disponibili: aggiorna Enel.");}
+    }
+
     static JSONObject getWidgetConfiguration(Context context) {
         SharedPreferences p = prefs(context);
         if (p.getString(KEY_RATES, null) == null) return null;
@@ -330,6 +350,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
             JSONObject state = new JSONObject();
             state.put("rates", new JSONObject(p.getString(KEY_RATES,"{}")));
             state.put("unit", p.getString("display_unit", "eur"));
+            state.put("compactCost",compactCostMode(context));
             state.put("anchor",p.getInt("billing_anchor",10));
             state.put("months", p.getInt(KEY_CONFIG_MONTHS, p.getInt(KEY_MONTHS, 2)));
             state.put("resident", p.getBoolean(KEY_RESIDENT, false));
@@ -611,6 +632,8 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
             NumberFormat usage=NumberFormat.getNumberInstance(IT);usage.setMaximumFractionDigits(1);
             energy=usage.format(kwh)+" kWh";cost=NumberFormat.getCurrencyInstance(IT).format(eur);
         }catch(RuntimeException ignored){}
+        boolean projected=spec.statsOnly()&&"projection".equals(compactCostMode(context));String projectionReason="";
+        if(projected){WidgetProjection.Result result=compactProjection(context);cost=result.available?"≈ "+NumberFormat.getCurrencyInstance(IT).format(result.value):"— €";projectionReason=result.available?"Proiezione al "+result.to+", media di "+result.sampleDays+" giorni completi. Canone TV separato.":result.reason;}
         views.setTextViewText(R.id.widget_small_kwh,energy);views.setTextViewText(R.id.widget_small_cost,cost);
         boolean refreshShown=spec.smallRefresh();
         if(spec.statsRefreshPossible()){
@@ -623,7 +646,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         if("enel".equals(p.getString(KEY_SOURCE,"")))try{org.json.JSONArray rows=new org.json.JSONArray(p.getString(KEY_MONTHLY,"[]"));if(rows.length()>0)period=compactPeriod(rows);}catch(Exception ignored){}
         String date=savedAt>0?new SimpleDateFormat("dd/MM · HH:mm",IT).format(new Date(savedAt)):"In attesa di dati";
         String status=p.getString(KEY_STATUS,"");
-        String description="Consumi: "+energy+". Costo stimato: "+cost+". "+period+". Ultimo aggiornamento: "+date+(status==null||status.isEmpty()?"":". "+status);
+        String description="Consumi misurati: "+energy+". "+(projected?"Proiezione bolletta: ":"Costo corrente stimato: ")+cost+". "+projectionReason+". "+period+". Ultimo aggiornamento: "+date+(status==null||status.isEmpty()?"":". "+status);
         views.setContentDescription(R.id.widget_small_root,description+". Tocca i valori per aprire Costo Luce.");
         Intent open=new Intent(context,MainActivity.class).setAction("com.costoluce.cloud.action.OPEN_WIDGET").addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP|Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent openPending=PendingIntent.getActivity(context,0,open,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
@@ -645,6 +668,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         Intent refresh=new Intent(context,CostoLuceWidgetProvider.class).setAction(ACTION_REFRESH).addFlags(Intent.FLAG_RECEIVER_FOREGROUND);
         views.setOnClickPendingIntent(R.id.widget_small_refresh,PendingIntent.getBroadcast(context,1002,refresh,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE));
         setRefreshAppearance(views,R.id.widget_small_refresh,p.getBoolean(KEY_BUSY,false));
+        if(projected)views.setContentDescription(R.id.widget_small_refresh,"Aggiorna Enel in background. "+projectionReason);
         float fontScale=context.getResources().getConfiguration().fontScale;
         float available=spec.height-(spec.statsOnly()?8:16);
         if(spec.smallSummary())available-=(spec.smallRefresh()?48:Math.max(20,14*fontScale))+(spec.smallDate()?14*fontScale+4:0);
@@ -796,7 +820,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         views.setOnClickPendingIntent(R.id.widget_refresh, refreshPending);
         views.setOnClickPendingIntent(R.id.widget_status, refreshPending);
         boolean chart = !spec.unified() && p.getInt("page_"+widgetId,0)==1;
-        views.setTextViewText(R.id.widget_brand,chart?"Consumi ultimi 4 mesi":"COSTO LUCE · v6.15.1");
+        views.setTextViewText(R.id.widget_brand,chart?"Consumi ultimi 4 mesi":"COSTO LUCE · v6.16.0");
         views.setViewVisibility(R.id.widget_units,chart?android.view.View.VISIBLE:android.view.View.GONE);
         views.setViewVisibility(R.id.widget_refresh,chart?android.view.View.GONE:android.view.View.VISIBLE);
         String selectedMode=chartMode(context);
