@@ -616,8 +616,8 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         if(spec.statsRefreshPossible()){
             float candidateWidth=spec.width-16-52;if(spec.wideStats())candidateWidth/=2;
             float usableHeight=spec.height-8,density=context.getResources().getDisplayMetrics().density;
-            refreshShown=fitSmallValue(context,energy,candidateWidth,spec.wideStats()?usableHeight:usableHeight*.56f,22,true)>=12*density
-                    &&fitSmallValue(context,cost,candidateWidth,spec.wideStats()?usableHeight:usableHeight*.44f,18,false)>=12*density;
+            refreshShown=fitSmallValue(context,energy,candidateWidth,spec.wideStats()?usableHeight:usableHeight*.5f,22,true)>=12*density
+                    &&fitSmallValue(context,cost,candidateWidth,spec.wideStats()?usableHeight:usableHeight*.5f,22,false)>=12*density;
         }
         String period=p.getString(KEY_PERIOD,"");if(period==null||period.trim().isEmpty())period="Periodo corrente";
         if("enel".equals(p.getString(KEY_SOURCE,"")))try{org.json.JSONArray rows=new org.json.JSONArray(p.getString(KEY_MONTHLY,"[]"));if(rows.length()>0)period=compactPeriod(rows);}catch(Exception ignored){}
@@ -650,9 +650,13 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         if(spec.smallSummary())available-=(spec.smallRefresh()?48:Math.max(20,14*fontScale))+(spec.smallDate()?14*fontScale+4:0);
         float width=spec.width-(spec.statsOnly()?16:20)-(spec.statsOnly()&&refreshShown?52:0);
         if(spec.wideStats())width/=2;
-        float primaryHeight=spec.wideStats()?available:available*.56f,secondaryHeight=spec.wideStats()?available:available*.44f;
-        views.setTextViewTextSize(R.id.widget_small_kwh,android.util.TypedValue.COMPLEX_UNIT_PX,fitSmallValue(context,energy,width,primaryHeight,spec.statsOnly()?22:26,true));
-        views.setTextViewTextSize(R.id.widget_small_cost,android.util.TypedValue.COMPLEX_UNIT_PX,fitSmallValue(context,cost,width,secondaryHeight,spec.statsOnly()?18:20,false));
+        float primaryHeight=spec.wideStats()?available:available*(spec.statsOnly()?.5f:.56f),secondaryHeight=spec.wideStats()?available:available*(spec.statsOnly()?.5f:.44f);
+        float energySize=fitSmallValue(context,energy,width,primaryHeight,spec.statsOnly()?22:26,true);
+        float costSize=fitSmallValue(context,cost,width,secondaryHeight,spec.statsOnly()?22:20,false);
+        // One shared size in the minimal widgets; independent TextView autosizing would undo it.
+        if(spec.statsOnly())energySize=costSize=Math.min(energySize,costSize);
+        views.setTextViewTextSize(R.id.widget_small_kwh,android.util.TypedValue.COMPLEX_UNIT_PX,energySize);
+        views.setTextViewTextSize(R.id.widget_small_cost,android.util.TypedValue.COMPLEX_UNIT_PX,costSize);
         return views;
     }
     private static void setRefreshAppearance(RemoteViews views,int id,boolean busy){
@@ -792,7 +796,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         views.setOnClickPendingIntent(R.id.widget_refresh, refreshPending);
         views.setOnClickPendingIntent(R.id.widget_status, refreshPending);
         boolean chart = !spec.unified() && p.getInt("page_"+widgetId,0)==1;
-        views.setTextViewText(R.id.widget_brand,chart?"Consumi ultimi 4 mesi":"COSTO LUCE · v6.15.0");
+        views.setTextViewText(R.id.widget_brand,chart?"Consumi ultimi 4 mesi":"COSTO LUCE · v6.15.1");
         views.setViewVisibility(R.id.widget_units,chart?android.view.View.VISIBLE:android.view.View.GONE);
         views.setViewVisibility(R.id.widget_refresh,chart?android.view.View.GONE:android.view.View.VISIBLE);
         String selectedMode=chartMode(context);
