@@ -15,6 +15,8 @@ add('quarter',{months:3,anchor:9,rows:[{year:2026,month:9,kwh:177.9,available:tr
 add('quarter-year-crossing',{today:'2027-01-14',months:3,anchor:12,rows:[{year:2026,month:12,kwh:200,available:true,partial:false},row(2027,1,records(range(1,13)))]});
 add('leap-February',{today:'2028-02-14',months:1,rows:[row(2028,2,records(range(1,13)))]});
 add('first-day-previous-week',{today:'2026-10-01',rows:[row(2026,9,records(range(24,30)),true)]});
+add('five-days',{rows:[october,row(2026,11,records(range(9,13)))]});
+add('six-days',{rows:[october,row(2026,11,records(range(8,13)))]});
 add('four-days',{rows:[october,row(2026,11,records(range(10,13)))]});
 add('no-daily-detail',{rows:[october,{...november,daily:[]}]});
 add('stale',{rows:[october,row(2026,11,records(range(1,5)))]});

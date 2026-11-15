@@ -52,6 +52,6 @@ ctx.billingHistory=()=>[{year:2026,month:4,label:'apr–mag',years:'2026',availa
 ctx.renderHistory();assert.match(byId('historyTotal').textContent,/210,83/,'Total must equal 99.40 + 111.43 displayed, not 210.82 from unrounded values');
 assert.match(byId('historyChart').children[2].children[0].children[0].textContent,/99,40/);assert.match(byId('historyChart').children[3].children[0].children[0].textContent,/111,43/);
 ctx.billingHistory=originalBills;
-const htmlSource=fs.readFileSync(__dirname+'/../app/src/main/assets/index.html','utf8');assert.match(htmlSource,/overflow-x:auto/);assert.match(htmlSource,/id="historyViewport"/);assert(htmlSource.includes('scrollHistory(-1)'));
+const htmlSource=fs.readFileSync(__dirname+'/../app/src/main/assets/index.html','utf8');assert.match(htmlSource,/overflow-x:auto/);assert.match(htmlSource,/id="historyViewport"/);assert(!htmlSource.includes('class="history-nav"'));assert(!htmlSource.includes('id="historyRange"'));
 console.log('PASS: annual history request throttling, cost completeness notice, two-year bound, scroll controls and displayed-cent total regression');
 

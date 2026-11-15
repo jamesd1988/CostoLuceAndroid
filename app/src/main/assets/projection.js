@@ -5,7 +5,7 @@
   const iso=index=>new Date(index*DAY).toISOString().slice(0,10);
   const monthDays=(y,m)=>new Date(Date.UTC(y,m,0)).getUTCDate();
   function calculate({rows,period,today=new Date(),price}){
-    const unavailable=reason=>({available:false,reason});
+    const unavailable=(reason,code='invalid_data')=>({available:false,reason,code});
     if(!Array.isArray(rows)||!Array.isArray(period)||period.length<1||period.length>3||typeof price!=='function')return unavailable('Dati di proiezione non disponibili.');
     const now=ordinal(today.getFullYear(),today.getMonth()+1,today.getDate());
     if(!Number.isFinite(now))return unavailable('Data di riferimento non valida.');
@@ -25,10 +25,10 @@
       }
     }
     const complete=Array.from(daily.keys()).filter(date=>date<now&&daily.get(date).complete).sort((a,b)=>b-a),last=complete[0];
-    if(last===undefined)return unavailable('Servono almeno 5 giorni completi registrati. Premi Aggiorna per acquisire le letture giornaliere Enel.');
+    if(last===undefined)return unavailable('Servono almeno 7 giorni completi registrati. Premi Aggiorna per acquisire le letture giornaliere Enel.','recent_days');
     if(now-last>7)return unavailable('Le letture giornaliere sono ferme da oltre 7 giorni. Aggiorna Enel per una proiezione recente.');
     const sample=complete.filter(date=>date>=last-6);
-    if(sample.length<5)return unavailable('Servono almeno 5 giorni completi registrati nella settimana di riferimento ('+sample.length+' disponibili).');
+    if(sample.length<7)return unavailable('Servono almeno 7 giorni completi registrati nella settimana di riferimento ('+sample.length+' disponibili).','recent_days');
     const average=sample.reduce((sum,date)=>sum+daily.get(date).kwh,0)/sample.length;
     let value=0,kwh=0,variable=0,fixed=0,observed=0,remainingDays=0;
     const output=[];

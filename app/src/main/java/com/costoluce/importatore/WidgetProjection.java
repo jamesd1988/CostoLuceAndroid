@@ -34,10 +34,10 @@ final class WidgetProjection {
             }
         }
         LocalDate last=null;for(Map.Entry<LocalDate,Day> day:daily.entrySet())if(day.getKey().isBefore(today)&&day.getValue().complete)last=day.getKey();
-        if(last==null)return missing("Servono almeno 5 giorni completi registrati. Aggiorna Enel per acquisire le letture giornaliere.");
+        if(last==null)return missing("Servono almeno 7 giorni completi registrati. Aggiorna Enel per acquisire le letture giornaliere.");
         if(java.time.temporal.ChronoUnit.DAYS.between(last,today)>7)return missing("Le letture giornaliere sono ferme da oltre 7 giorni. Aggiorna Enel.");
         double average=0;int samples=0;for(Map.Entry<LocalDate,Day> day:daily.descendingMap().entrySet())if(!day.getKey().isBefore(last.minusDays(6))&&!day.getKey().isAfter(last)&&day.getValue().complete){average+=day.getValue().kwh;samples++;}
-        if(samples<5)return missing("Servono almeno 5 giorni completi nella settimana di riferimento ("+samples+" disponibili).");average/=samples;
+        if(samples<7)return missing("Servono almeno 7 giorni completi nella settimana di riferimento ("+samples+" disponibili).");average/=samples;
         LocalDate start=today.withDayOfMonth(1).minusMonths(Math.floorMod(today.getMonthValue()-anchor,months)),end=start.plusMonths(months).minusDays(1);
         double total=0,kwh=0,observed=0;
         for(int i=0;i<months;i++){

@@ -22,22 +22,28 @@ function projectedBillingRows(rows,today){
   return rows.map((row,i)=>i===rows.length-1?{...row,...lastBillProjection,projection:true,status:'forecast',partial:true}:row);
 }
 function projectionDate(iso){return new Intl.DateTimeFormat('it-IT',{day:'numeric',month:'short'}).format(new Date(iso+'T12:00:00'));}
+function latestRecordedConsumptionDate(today=new Date()){
+  const keys=new Set(selectedPeriod(months,today).map(row=>row.year*12+row.month));let latest=null;
+  const candidate=(row,day)=>{
+    const limit=new Date(row.year,row.month,0).getDate();if(!Number.isInteger(day)||day<1||day>limit)return;
+    const date=new Date(row.year,row.month-1,day);if(date>today)return;if(!latest||date>latest)latest=date;
+  };
+  for(const row of historyRows){
+    if(!row||!row.available||!Number.isInteger(row.year)||!Number.isInteger(row.month)||row.month<1||row.month>12||!keys.has(row.year*12+row.month))continue;
+    candidate(row,row.lastMeasuredDay);
+    if(Array.isArray(row.daily))for(const day of row.daily)if(day&&Number.isFinite(day.kwh)&&day.kwh>=0)candidate(row,day.day);
+  }
+  return latest;
+}
 function renderProjectionControls(bill,rows){
-  byId('billProjectionControls').hidden=!bill;byId('billProjectionAmount').hidden=!bill;byId('billProjectionDetails').hidden=!bill;
-  byId('billProjectionToggle').checked=billProjectionEnabled;
+  byId('billProjectionControls').hidden=!bill;byId('billProjectionToggle').checked=billProjectionEnabled;
   if(!bill)return;
-  const current=rows[rows.length-1],result=lastBillProjection,projected=billProjectionEnabled;
-  byId('billProjectionState').textContent=projected?'Fine periodo':'Periodo corrente';
-  const recent=historyRows.filter(r=>Number.isInteger(r.lastMeasuredDay)&&r.lastMeasuredDay>0&&r.available).sort((a,b)=>b.year*12+b.month-(a.year*12+a.month))[0];
-  const last=recent?new Date(recent.year,recent.month-1,recent.lastMeasuredDay):null;
-  byId('billProjectionHint').textContent=projected?(result.available?'Al '+projectionDate(result.to)+' · media di '+result.sampleDays+' giorni':result.reason):(last?'Letture fino al '+new Intl.DateTimeFormat('it-IT',{day:'numeric',month:'short'}).format(last):'Consumi disponibili · premi Aggiorna per acquisire Enel');
-  byId('billProjectionLabel').textContent=current.label+' · '+(projected?'fine periodo':'stima attuale');
-  byId('billProjectionValue').textContent=current.available?(projected?'≈ ':'')+euro(current.value):'—';
-  byId('billProjectionDetailsTitle').textContent=projected?'Come viene calcolata':'Dettagli della stima';
-  byId('billProjectionExplanation').textContent=projected?(result.available?'Media '+decimal(result.average,2)+' kWh/giorno su '+result.sampleDays+' giorni completi tra '+projectionDate(result.sampleFrom)+' e '+projectionDate(result.sampleTo)+'. Consumi disponibili '+decimal(result.observedKwh,1)+' kWh; aggiunta prevista '+decimal(result.extraKwh,1)+' kWh, totale '+decimal(result.kwh,1)+' kWh. Il calcolo include le quote fisse di tutti i '+months+' mesi, componenti variabili, accisa mese per mese e IVA configurati. Le giornate mancanti o incomplete sono stimate con la stessa media; i consumi già misurati vengono conservati. Canone TV separato. È una proiezione al ritmo recente, soggetta ai consumi futuri e alle tariffe.':result.reason):'Stima sui consumi disponibili: costi variabili, quote fisse dei mesi iniziati, accisa e IVA configurati. Il grafico mostra un solo importo per il periodo corrente. Le fatture emesse non vengono ricalcolate. Canone TV separato.';
+  const result=lastBillProjection,projected=billProjectionEnabled,last=latestRecordedConsumptionDate();
+  const missingDays=projected&&!result.available&&result.code==='recent_days';
+  byId('billProjectionState').textContent=projected?(result.available?'Proiezione fattura completa basata sugli ultimi 7 giorni rilevati':missingDays?'Proiezione non disponibile: aspettare 7 giorni rilevati':'Proiezione non disponibile'):'Stima bolletta al '+(last?new Intl.DateTimeFormat('it-IT',{day:'2-digit',month:'2-digit',year:'numeric'}).format(last):'—');
+  const hint=byId('billProjectionHint');hint.hidden=projected?(result.available||missingDays):Boolean(last);
+  hint.textContent=projected?(result.available?'':result.reason):(last?'':'Aggiorna Enel per acquisire l’ultimo giorno rilevato.');
+  byId('billProjectionState').setAttribute('title',projected&&result.available?'Proiezione al '+projectionDate(result.to)+'. Riferimento: '+projectionDate(result.sampleFrom)+' – '+projectionDate(result.sampleTo)+'. Canone TV separato.':'');
   byId('historyBadge').textContent=projected?(result.available?'Proiezione fine periodo':'Proiezione non disponibile'):'Periodo in corso';
-  if(projected&&byId('billPricingNotice').hidden)byId('historyCostScope').textContent=result.available?'Storico: fatture emesse. Periodo corrente: proiezione completa con le tariffe configurate. Canone TV separato.':'Proiezione non disponibile. Lo storico mantiene gli importi delle fatture emesse. Canone TV separato.';
-  if(projected)byId('historyTotal').textContent=byId('historyTotal').textContent.replace(' · include il periodo parziale',' · include una proiezione');
-  byId('historyTotal').textContent=byId('historyTotal').textContent.replace('Somma fatturate e stima corrente:','Somma fatturate e '+(projected?'proiezione finale:':'stima corrente:'));
 }
 renderHistory();

@@ -105,8 +105,8 @@ public class WidgetSmokeTestRunner extends Instrumentation {
             if(page==1||actual.unified()){android.widget.ImageView chart=view.findViewById(R.id.widget_chart);if(chart.getHeight()<40*density)throw new AssertionError("Chart collapsed");}
 
         });
-        if(fontScale==1&&((width==280&&height==260)||(width==340&&height==300)||(width==400&&height==350)))capture("widget-"+(page==0?"summary":"bill".equals(CostoLuceWidgetProvider.chartMode(c))?"bill":"history")+"-"+(width==280?"compact":width==340?"medium":"large")+"-6.16.0");
-        if(fontScale==1&&((width==130&&height==500)||(width==190&&height==420)||(width==260&&height==252)||(width==410&&height==210)||(width==420&&height==450)))capture("widget-adaptive-"+width+"x"+height+"-"+page+"-6.16.0");
+        if(fontScale==1&&((width==280&&height==260)||(width==340&&height==300)||(width==400&&height==350)))capture("widget-"+(page==0?"summary":"bill".equals(CostoLuceWidgetProvider.chartMode(c))?"bill":"history")+"-"+(width==280?"compact":width==340?"medium":"large")+"-6.17.0");
+        if(fontScale==1&&((width==130&&height==500)||(width==190&&height==420)||(width==260&&height==252)||(width==410&&height==210)||(width==420&&height==450)))capture("widget-adaptive-"+width+"x"+height+"-"+page+"-6.17.0");
         // Measurement fixtures stay in detached views: never saved or published as Enel data.
         checkedOnMainSync(()->{
             if(page==0){
@@ -173,8 +173,8 @@ public class WidgetSmokeTestRunner extends Instrumentation {
             if(savedPage==1&&view.findViewById(R.id.widget_chart).getHeight()<70*d)throw new AssertionError("Pocket chart too short");
         });
         waitForIdleSync();
-        if(fontScale==1&&savedPage==0&&width==180&&height==180)capture("widget-intermediate-6.16.0");
-        if(populatedPreview&&width==130&&height==160)capture("widget-2x2-"+(savedPage==0?"summary":CostoLuceWidgetProvider.chartMode(c))+"-6.16.0");
+        if(fontScale==1&&savedPage==0&&width==180&&height==180)capture("widget-intermediate-6.17.0");
+        if(populatedPreview&&width==130&&height==160)capture("widget-2x2-"+(savedPage==0?"summary":CostoLuceWidgetProvider.chartMode(c))+"-6.17.0");
         if(CostoLuceWidgetProvider.prefs(c).getInt("page_4242",-1)!=savedPage)throw new AssertionError("Pocket rendering reset page");
     }
 
@@ -218,11 +218,11 @@ public class WidgetSmokeTestRunner extends Instrumentation {
         });
         if(prefs.getInt("page_4242",-1)!=savedPage||!"eur".equals(prefs.getString("display_unit","")))throw new AssertionError("Collapsing widget lost the saved page or unit");
         if(fontScale==1&&savedPage==0){
-            if(width==96&&height==48)capture("widget-mini-6.16.0");
-            if(width==130&&height==64)capture("widget-2x1-6.16.0");
-            if(width==300&&height==64)capture("widget-wide-row-6.16.0");
-            if(width==180&&height==180)capture("widget-intermediate-6.16.0");
-            if(width==150&&height==80)capture("widget-compact-refresh-6.16.0");
+            if(width==96&&height==48)capture("widget-mini-6.17.0");
+            if(width==130&&height==64)capture("widget-2x1-6.17.0");
+            if(width==300&&height==64)capture("widget-wide-row-6.17.0");
+            if(width==180&&height==180)capture("widget-intermediate-6.17.0");
+            if(width==150&&height==80)capture("widget-compact-refresh-6.17.0");
         }
         // Isolated measurement fixtures, never stored in the real widget preferences or exported screenshots.
         checkedOnMainSync(()->{
@@ -272,16 +272,16 @@ public class WidgetSmokeTestRunner extends Instrumentation {
         String actual=p.getString("estimated_euro","");
         if(!CostoLuceWidgetProvider.saveCompactCostMode(fixture,"projection")||!"projection".equals(CostoLuceWidgetProvider.compactCostMode(fixture)))throw new AssertionError("Projection choice not saved");
         WidgetProjection.Result expected=CostoLuceWidgetProvider.compactProjection(fixture);
-        if(java.time.LocalDate.now(java.time.ZoneId.of("Europe/Rome")).getDayOfMonth()>=6&&!expected.available)throw new AssertionError("Native widget projection missing: "+expected.reason);
+        if(java.time.LocalDate.now(java.time.ZoneId.of("Europe/Rome")).getDayOfMonth()>=8&&!expected.available)throw new AssertionError("Native widget projection missing: "+expected.reason);
         for(int[] size:new int[][]{{96,48},{150,80}}){
             populatedPreview=false;checkSmallWidget(activity,fixture,size[0],size[1],0,1);populatedPreview=true;
-            capture("widget-projection-"+(size[0]==96?"mini":"refresh")+"-6.16.0");
+            capture("widget-projection-"+(size[0]==96?"mini":"refresh")+"-6.17.0");
             checkedOnMainSync(()->{View view=CostoLuceWidgetProvider.createViewsForSize(fixture,4242,size[0],size[1]).apply(fixture,null);String text=((android.widget.TextView)view.findViewById(R.id.widget_small_cost)).getText().toString();if(expected.available&&!text.startsWith("≈"))throw new AssertionError("Projection not identified");if(!((android.widget.TextView)view.findViewById(R.id.widget_small_kwh)).getText().toString().contains("398,7"))throw new AssertionError("Measured consumption replaced by forecast");});
         }
         checkedOnMainSync(()->{View bigger=CostoLuceWidgetProvider.createViewsForSize(fixture,4242,130,160).apply(fixture,null);if(((android.widget.TextView)bigger.findViewById(R.id.widget_small_cost)).getText().toString().startsWith("≈"))throw new AssertionError("Preference affected non-minimal widgets");});
         org.json.JSONArray noDays=new org.json.JSONArray(history);for(int i=0;i<noDays.length();i++)noDays.getJSONObject(i).remove("daily");p.edit().putString("history_json",noDays.toString()).commit();
         if(CostoLuceWidgetProvider.compactProjection(fixture).available)throw new AssertionError("Projection invented without daily readings");
-        populatedPreview=false;checkSmallWidget(activity,fixture,150,80,0,1);populatedPreview=true;capture("widget-projection-unavailable-6.16.0");
+        populatedPreview=false;checkSmallWidget(activity,fixture,150,80,0,1);populatedPreview=true;capture("widget-projection-unavailable-6.17.0");
         checkedOnMainSync(()->{View view=CostoLuceWidgetProvider.createViewsForSize(fixture,4242,150,80).apply(fixture,null);if(!"— €".equals(((android.widget.TextView)view.findViewById(R.id.widget_small_cost)).getText().toString()))throw new AssertionError("Missing forecast silently fell back to current cost");});
         p.edit().putString("history_json",history).commit();CostoLuceWidgetProvider.saveCompactCostMode(fixture,"current");
         if(CostoLuceWidgetProvider.saveCompactCostMode(fixture,"invalid")||!"current".equals(CostoLuceWidgetProvider.compactCostMode(fixture)))throw new AssertionError("Invalid compact mode accepted");
@@ -328,17 +328,17 @@ public class WidgetSmokeTestRunner extends Instrumentation {
             }
             if(Math.abs(areraFixture.getJSONObject("2026-08").getJSONObject("resident").getDouble("asos")-.031515)>1e-10)throw new AssertionError("ARERA parser on Android");
             Activity activity=startActivitySync(new Intent(c,MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
-            Thread.sleep(2500);previewWeb=findWeb(activity.findViewById(android.R.id.content));capture("app-6.16.0");
+            Thread.sleep(2500);previewWeb=findWeb(activity.findViewById(android.R.id.content));capture("app-6.17.0");
             android.webkit.WebView web=findWeb(activity.findViewById(android.R.id.content));
             if(web==null)throw new AssertionError("Missing WebView");
             assertScript(web,"showView('settings');setCompactWidgetCost('projection');if(byId('compactWidgetCost').value!=='projection'||localStorage.getItem('costoluce_compact_widget_cost_v1')!=='projection')throw Error('Widget cost choice not persisted')");
-            Thread.sleep(500);if(!"projection".equals(CostoLuceWidgetProvider.compactCostMode(c)))throw new AssertionError("Widget preference bridge failed");capture("settings-widget-6.16.0");
+            Thread.sleep(500);if(!"projection".equals(CostoLuceWidgetProvider.compactCostMode(c)))throw new AssertionError("Widget preference bridge failed");capture("settings-widget-6.17.0");
             assertScript(web,"setCompactWidgetCost('current');showView('home')");Thread.sleep(500);
 
             assertScript(web,"showView('rates');if(document.querySelectorAll('.bottom-nav button').length!==4||byId('page-period')||byId('nav-period'))throw Error('Period navigation remains');if(document.querySelectorAll('.rate-card:not([hidden])').length!==4)throw Error('Compact rows');openTariffPanel('billing');byId('billingFrequency').value='1';billingDraftChanged(true);closeTariffPanel();if(months!==2||byId('billingFrequency').value!=='2')throw Error('Cancel changed billing');if(document.querySelectorAll('.rate-card').length!==10)throw Error('Default rows');openRateEditor('energy');if(!document.getElementById('rateName').disabled)throw Error('Energy lock');closeRateEditor()");
-            capture("tariffe-6.16.0");
+            capture("tariffe-6.17.0");
             assertScript(web,"openRateEditor('transport','fixed');if(document.getElementById('rateAmount').value!=='')throw Error('Automatic conversion');document.getElementById('rateName').value='Quota fissa mensile';document.getElementById('rateAmount').value='8,00'");
-            capture("tariffe-editor-6.16.0");
+            capture("tariffe-editor-6.17.0");
             assertScript(web,"if(!saveRateEditor())throw Error('Save');setRateFilter('fixed');if(document.querySelectorAll('.rate-card').length!==1)throw Error('Filter');if(JSON.parse(localStorage.getItem('costoluce_rates_v1'))._meta.transport.name!=='Quota fissa mensile')throw Error('Persistence')");
             Thread.sleep(1200);waitForIdleSync();
             CostoLuceWidgetProvider.WidgetConfiguration saved=CostoLuceWidgetProvider.readConfiguration(c);
@@ -353,25 +353,25 @@ public class WidgetSmokeTestRunner extends Instrumentation {
             assertScript(web,"if(Math.abs(calculateCosts(479,2,218,2).total-"+nativeCost+")>0.000001)throw Error('App/widget pricing mismatch');if(!undoRateDeletion()||!rateMeta.dispatch.enabled)throw Error('Restore default');openRateEditor(customKeys[0]);requestDeleteRate();if(!confirmDeleteRate()||customKeys.length!==0)throw Error('Delete custom');if(!undoRateDeletion()||customKeys.length!==1)throw Error('Restore custom');openRateEditor('energy');if(!document.getElementById('rateDeleteButton').hidden||requestDeleteRate())throw Error('Protected Energy');closeRateEditor()");
             assertScript(web,"resetRates();setRateFilter('all');showView('home')");Thread.sleep(1000);
             String areraPayload="{\"months\":"+areraFixture+",\"checkedAt\":0,\"error\":\"\"}";
-            assertScript(web,"showView('rates');window.onAreraCatalog("+areraPayload+");byId('areraMonth').value='2026-08';byId('areraResident').value='resident';byId('areraPower').value='3';openTariffPanel('arera')");capture("tariffe-arera-6.16.0");
-            assertScript(web,"previewArera();if(!areraDraft||byId('areraPreview').hidden||window.tariffActivePanel!=='arera-preview')throw Error('ARERA preview')");capture("tariffe-arera-anteprima-6.16.0");
+            assertScript(web,"showView('rates');window.onAreraCatalog("+areraPayload+");byId('areraMonth').value='2026-08';byId('areraResident').value='resident';byId('areraPower').value='3';openTariffPanel('arera')");capture("tariffe-arera-6.17.0");
+            assertScript(web,"previewArera();if(!areraDraft||byId('areraPreview').hidden||window.tariffActivePanel!=='arera-preview')throw Error('ARERA preview')");capture("tariffe-arera-anteprima-6.17.0");
             assertScript(web,"if(!applyArera()||customKeys.length!==3)throw Error('ARERA import');openRateEditor('asos');byId('rateAmount').value='0.04';if(!saveRateEditor())throw Error('ARERA pencil');window.onAreraCatalog("+areraPayload+");if(tariffs.asos!==.04)throw Error('ARERA check overwrites manual edit')");
             Thread.sleep(1200);waitForIdleSync();saved=CostoLuceWidgetProvider.readConfiguration(c);
             if(saved==null||new org.json.JSONObject(saved.ratesJson).getJSONArray("_custom").length()!=3)throw new AssertionError("ARERA fixed network rows did not reach widget");
             double areraNativeCost=WidgetPricing.parse(saved.ratesJson,saved.resident).estimatedCost(338,2,38,2);
             assertScript(web,"if(Math.abs(calculateCosts(338,2,38,2).total-"+areraNativeCost+")>0.000001)throw Error('ARERA app/widget mismatch');if(!completeBillOffer()||customKeys.length!==5)throw Error('Offer fixed costs');if(!completeBillOffer()||customKeys.length!==5)throw Error('Offer duplicate');showView('rates');openTariffPanel('offer')");
-            capture("tariffe-offerta-6.16.0");Thread.sleep(1200);waitForIdleSync();saved=CostoLuceWidgetProvider.readConfiguration(c);
+            capture("tariffe-offerta-6.17.0");Thread.sleep(1200);waitForIdleSync();saved=CostoLuceWidgetProvider.readConfiguration(c);
             if(saved==null||new org.json.JSONObject(saved.ratesJson).getJSONArray("_custom").length()!=5)throw new AssertionError("Offer fixed costs did not reach widget");
             double offerNativeCost=WidgetPricing.parse(saved.ratesJson,saved.resident).estimatedCost(338,2,38,2);
             assertScript(web,"if(Math.abs(calculateCosts(338,2,38,2).total-"+offerNativeCost+")>0.000001)throw Error('Offer app/widget mismatch');resetRates();setRateFilter('all');showView('home')");Thread.sleep(1000);
             assertScript(web,"showView('rates');byId('billingFrequency').value='3';billingDraftChanged(true);if(saveBillingSetup())throw Error('Missing grouping example accepted');byId('billingAnchor').value='8';billingDraftChanged();if(!saveBillingSetup())throw Error('Quarter grouping rejected');openTariffPanel('billing')");
-            capture("tariffe-periodo-6.16.0");Thread.sleep(1200);waitForIdleSync();saved=CostoLuceWidgetProvider.readConfiguration(c);
+            capture("tariffe-periodo-6.17.0");Thread.sleep(1200);waitForIdleSync();saved=CostoLuceWidgetProvider.readConfiguration(c);
             if(saved==null||saved.months!=3||saved.anchor!=8)throw new AssertionError("Quarter and example did not reach widget");
             CostoLuceWidgetProvider.createViewsForSize(c,4242,280,260);
             assertScript(web,"showView('home');window.onHistoryNative([]);setChartMode('bill');if(document.querySelectorAll('#historyChart .history-col').length<5||!byId('historyTotal').textContent.includes('non disponibile'))throw Error('Missing bill data fabricated')");
             assertScript(web,"const v=byId('historyViewport');if(v.scrollWidth<=v.clientWidth)throw Error('Annual chart does not scroll');v.scrollLeft=0;rememberHistoryScroll();recalc()");Thread.sleep(250);
             assertScript(web,"const v=byId('historyViewport');if(v.scrollLeft>1)throw Error('Recalculation lost historical position');v.scrollLeft=v.scrollWidth-v.clientWidth;rememberHistoryScroll();if(byId('billPricingNotice').hidden)throw Error('Missing fixed costs warning absent')");
-            capture("bollette-6.16.0");
+            capture("bollette-6.17.0");
             assertScript(web,"setMonths(2,10);setChartMode('eur');showView('home')");Thread.sleep(1000);
             com.tom_roush.pdfbox.android.PDFBoxResourceLoader.init(c);
             byte[] pdfFixture;
@@ -390,18 +390,21 @@ public class WidgetSmokeTestRunner extends Instrumentation {
             assertScript(web,"if(billingHistory().slice(0,-1).some(r=>r.available))throw Error('Historical consumption shown as issued invoices')");
             // Isolated forecast fixtures on the clean CI emulator only.
             assertScript(web,"window.projectionSmokeBackup={rows:historyRows,invoices:issuedInvoices,months,anchor:billingAnchor};setMonths(2,(new Date().getMonth()+11)%12+1);setChartMode('bill');const now=new Date(),fixtures=[];for(let offset=-1;offset<=0;offset++){const date=new Date(now.getFullYear(),now.getMonth()+offset,1),limit=offset===0?now.getDate()-1:new Date(now.getFullYear(),now.getMonth(),0).getDate(),daily=[];for(let day=1;day<=limit;day++)daily.push({day,kwh:8,hourSamples:24,complete:true});fixtures.push({year:date.getFullYear(),month:date.getMonth()+1,kwh:daily.length*8,daily,available:daily.length>0,partial:offset===0,lastMeasuredDay:limit});}fixtures[0].daily[0].complete=false;window.onHistoryNative(fixtures);setBillProjection(false);if(byId('billProjectionControls').hidden)throw Error('Projection toggle hidden');const tariffsBefore=JSON.stringify(serializedRates());setBillProjection(true);if(!lastBillProjection.available||lastBillProjection.sampleDays!==7||document.querySelectorAll('#historyChart .history-bar.projected').length!==1)throw Error('Projection did not replace current bar');if(JSON.stringify(serializedRates())!==tariffsBefore)throw Error('Projection changed tariffs');if(localStorage.getItem('costoluce_bill_projection_v1')!=='1')throw Error('Projection preference');byId('billPricingNotice').hidden=true;byId('historyCostScope').hidden=true;byId('historyChart').scrollIntoView({block:'center'})");
-            Thread.sleep(300);capture("bolletta-proiezione-6.16.0");
+            assertScript(web,"const home=byId('page-home');if(home.querySelector('#billProjectionAmount, #billProjectionDetails, #historyRange, .history-nav, #historyTotal, #billBreakdown, #invoiceTools, #historyCostScope'))throw Error('Removed chart clutter remains in Home');if(!byId('billProjectionState').textContent.includes('Proiezione fattura completa basata sugli ultimi 7 giorni rilevati'))throw Error('Wrong full forecast caption')");
+            Thread.sleep(300);capture("bolletta-proiezione-6.17.0");
             assertScript(web,"window.homeSummarySnapshot=JSON.stringify(['summaryOther','total','summaryProjection'].map(id=>{const e=byId(id),r=e.getBoundingClientRect();return [e.textContent,r.x,r.y,r.width,r.height]}));if(document.querySelector('.unit-toggle'))throw Error('Obsolete Home unit selector');if(!byId('summaryProjection').textContent.startsWith('≈'))throw Error('Home projection missing');for(const mode of ['kwh','eur','bill']){setChartMode(mode);if(JSON.stringify(['summaryOther','total','summaryProjection'].map(id=>{const e=byId(id),r=e.getBoundingClientRect();return [e.textContent,r.x,r.y,r.width,r.height]}))!==window.homeSummarySnapshot)throw Error('Home summary moved with chart '+mode)}setChartMode('kwh');window.scrollTo(0,0)");
-            capture("home-kwh-6.16.0");
-            assertScript(web,"setChartMode('eur');window.scrollTo(0,0)");capture("home-eur-6.16.0");
+            capture("home-kwh-6.17.0");
+            assertScript(web,"setChartMode('eur');window.scrollTo(0,0)");capture("home-eur-6.17.0");
             assertScript(web,"setChartMode('bill');delete window.homeSummarySnapshot");
 
-            assertScript(web,"const all=historyRows.flatMap(row=>row.daily.map(day=>({row,day,date:new Date(row.year,row.month-1,day.day)}))).sort((a,b)=>b.date-a.date);all.forEach((entry,index)=>entry.day.complete=index<4);renderHistory();if(lastBillProjection.available||document.querySelectorAll('#historyChart .history-bar.projected').length)throw Error('Four days fabricated projection');all[4].day.complete=true;renderHistory();if(!lastBillProjection.available||lastBillProjection.sampleDays!==5)throw Error('Five day threshold');setChartMode('kwh');if(!byId('billProjectionControls').hidden)throw Error('Projection leaked into kWh');setChartMode('bill');if(!billProjectionEnabled)throw Error('Projection preference lost');all.forEach(entry=>entry.day.complete=true);setBillProjection(false);if(document.querySelectorAll('#historyChart .history-bar.projected').length)throw Error('Actual and projection both visible');byId('billPricingNotice').hidden=true;byId('historyCostScope').hidden=true;byId('historyChart').scrollIntoView({block:'center'})");
-            Thread.sleep(300);capture("bolletta-attuale-6.16.0");
+            assertScript(web,"const all=historyRows.flatMap(row=>row.daily.map(day=>({row,day,date:new Date(row.year,row.month-1,day.day)}))).sort((a,b)=>b.date-a.date);all.forEach((entry,index)=>entry.day.complete=index<6);renderHistory();if(lastBillProjection.available||document.querySelectorAll('#historyChart .history-bar.projected').length)throw Error('Six days fabricated projection');if(byId('billProjectionState').textContent!=='Proiezione non disponibile: aspettare 7 giorni rilevati')throw Error('Missing seven-day message');window.projectionWeekDays=all;byId('historyChart').scrollIntoView({block:'center'})");
+            capture("bolletta-proiezione-assente-6.17.0");
+            assertScript(web,"const all=window.projectionWeekDays;delete window.projectionWeekDays;all[6].day.complete=true;renderHistory();if(!lastBillProjection.available||lastBillProjection.sampleDays!==7)throw Error('Seven day threshold');setChartMode('kwh');if(!byId('billProjectionControls').hidden)throw Error('Projection leaked into kWh');setChartMode('bill');if(!billProjectionEnabled)throw Error('Projection preference lost');all.forEach(entry=>entry.day.complete=true);setBillProjection(false);if(document.querySelectorAll('#historyChart .history-bar.projected').length)throw Error('Actual and projection both visible');byId('billPricingNotice').hidden=true;byId('historyCostScope').hidden=true;byId('historyChart').scrollIntoView({block:'center'})");
+            Thread.sleep(300);capture("bolletta-attuale-6.17.0");
             assertScript(web,"historyRows[0].daily[0].complete=false;setChartMode('kwh');const columns=document.querySelectorAll('#historyChart button');if(columns.length<13)throw Error('Monthly bars not accessible buttons');columns[columns.length-2].click();if(byId('page-daily').hidden||!byId('page-home').hidden)throw Error('Daily drilldown navigation');if(!byId('dailyTitle').textContent.toLowerCase().includes(italianMonth(historyRows[0].year,historyRows[0].month)))throw Error('Wrong selected month');if(document.querySelectorAll('#dailyChart .daily-day').length!==new Date(historyRows[0].year,historyRows[0].month,0).getDate())throw Error('Wrong calendar days');selectDailyDay(1);if(!byId('dailySelectedValue').textContent.includes('8,00'))throw Error('Actual daily value');if(!byId('dailySelectedStatus').textContent.includes('parziale'))throw Error('Partial daily status');if(!byId('dailyRefresh').getAttribute('href').includes('year='+historyRows[0].year+'&month='+historyRows[0].month))throw Error('Wrong targeted month');byId('dailyChart').scrollIntoView({block:'center'})");
-            capture("consumi-giornalieri-6.16.0");
+            capture("consumi-giornalieri-6.17.0");
             assertScript(web,"if(!closeTopTariffDialog()||!byId('page-daily').hidden||chartMode!=='kwh')throw Error('Back did not restore monthly view');setChartMode('eur');const columns=document.querySelectorAll('#historyChart button');columns[columns.length-2].click();selectDailyDay(1);if(!byId('dailySelectedValue').textContent.includes('8,00'))throw Error('Euro did not open actual daily kWh');moveDailyMonth(-1);if(document.querySelectorAll('#dailyChart .daily-bar').length||byId('dailyWarning').hidden||byId('dailySelectedValue').textContent!=='—')throw Error('Missing daily readings fabricated');byId('dailyChart').scrollIntoView({block:'center'})");
-            capture("consumi-giornalieri-assenti-6.16.0");
+            capture("consumi-giornalieri-assenti-6.17.0");
             assertScript(web,"closeMonthDaily()");
             assertScript(web,"const backup=window.projectionSmokeBackup;setMonths(backup.months,backup.anchor);window.onHistoryNative(backup.rows);window.onInvoicesNative(backup.invoices);delete window.projectionSmokeBackup;showView('home')");
 

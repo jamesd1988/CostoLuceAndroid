@@ -1,9 +1,10 @@
-# Costo Luce 6.16.0 — Costo corrente o proiezione nel widget compatto
+# Costo Luce 6.17.0 — Grafici essenziali e proiezione con sette giorni
 
-- In Altro → Widget Home puoi scegliere Costo corrente oppure Proiezione bolletta. La preferenza viene salvata e vale per i widget che mostrano soltanto kWh e costo.
-- I kWh rimangono sempre quelli misurati. La proiezione in € è preceduta da ≈; i due testi mantengono la stessa dimensione.
-- Il widget calcola la proiezione in background dai giorni reali salvati, anche con l’app chiusa: media degli ultimi 7 giorni, con almeno 5 giorni completi, stessi costi fissi/variabili, accisa mensile e IVA della Home. Canone TV separato.
-- Con letture mancanti, ferme o incoerenti viene mostrato — €, senza sostituire di nascosto la proiezione con il costo attuale. Aggiorna recupera i dati da Enel.
-- I widget più grandi e i tre valori fissi della Home non cambiano. Preservati tariffe, credenziali e fatture storiche.
+- Rimossi dalla Home i pulsanti Precedenti/Recenti, il range e le spiegazioni sotto i grafici, il doppio importo di fine periodo e i dettagli/somme delle fatture.
+- L’archivio e i dati delle fatture rimangono accessibili in Altro → Account Enel → Archivio e dettagli delle fatture. Lo storico continua a scorrere orizzontalmente.
+- Bolletta, proiezione disattivata: “Stima bolletta al” con l’ultima data di consumo rilevato del periodo, distinta dalla data di sincronizzazione.
+- Bolletta, proiezione attivata: “Proiezione fattura completa basata sugli ultimi 7 giorni rilevati”. Se la settimana è incompleta: “Proiezione non disponibile: aspettare 7 giorni rilevati”; nessuna barra di proiezione.
+- Il requisito diventa di sette giorni completi della settimana di riferimento, anche nella Home e nei widget. Nessun importo inventato o sostituito con la stima attuale.
+- Mantenuti aggiornamento Enel, tariffe, credenziali, fatture emesse e i tre valori fissi del riepilogo Home.
 
-Verifica: 20 casi di confronto fra algoritmo nativo e quello reale della Home, test JVM/JavaScript, preferenza persistente e test Android con anteprime marcate come dati di test. Stessa firma: installazione sopra la versione precedente senza disinstallare.
+Verifica dei calcoli JavaScript/Java con 22 casi di confronto, soglia sei/sette giorni, assenza di proiezione, testi e layout Android. Aggiornamento con la stessa firma, senza disinstallare.
