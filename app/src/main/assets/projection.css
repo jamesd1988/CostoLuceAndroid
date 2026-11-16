@@ -9,7 +9,10 @@
 .bill-projection-toggle input:checked+.bill-projection-switch:after{transform:translateX(12px);background:#64e3c6}
 .bill-projection-toggle input:focus-visible+.bill-projection-switch{outline:2px solid #f0f7ff;outline-offset:4px}
 #billProjectionHint{font-size:11px;line-height:1.5;color:#b9cde2;margin:0}
-.history-col.current .history-bar.projected{background:repeating-linear-gradient(-45deg,#67dfc977 0px,#67dfc977 3px,#27778766 3px,#27778766 7px)}
+.history-col.current .history-bar.projected{position:relative;overflow:hidden;background:transparent}
+.history-projection-actual,.history-projection-extra{position:absolute;left:0;right:0;pointer-events:none}
+.history-projection-actual{bottom:0;background:linear-gradient(#78edd4,#20bbaa)}
+.history-projection-extra{top:0;background:repeating-linear-gradient(-45deg,#67dfc977 0px,#67dfc977 3px,#27778766 3px,#27778766 7px)}
 #billProjectionControls[hidden],#billProjectionHint[hidden]{display:none!important}
 @media(prefers-reduced-motion:reduce){.bill-projection-switch,.bill-projection-switch:after{transition:none}}
 

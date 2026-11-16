@@ -19,7 +19,7 @@ function renderSummaryProjection(today=new Date()){
 function projectedBillingRows(rows,today){
   lastBillProjection=calculateCurrentBillProjection(today);
   if(!billProjectionEnabled)return rows;
-  return rows.map((row,i)=>i===rows.length-1?{...row,...lastBillProjection,projection:true,status:'forecast',partial:true}:row);
+  return rows.map((row,i)=>i===rows.length-1?{...row,...lastBillProjection,actualValue:row.available&&Number.isFinite(row.value)?row.value:null,projection:true,status:'forecast',partial:true}:row);
 }
 function projectionDate(iso){return new Intl.DateTimeFormat('it-IT',{day:'numeric',month:'short'}).format(new Date(iso+'T12:00:00'));}
 function latestRecordedConsumptionDate(today=new Date()){

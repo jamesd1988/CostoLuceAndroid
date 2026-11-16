@@ -1,9 +1,8 @@
-# Costo Luce 6.20.0 — Grafici allineati
+# Costo Luce 6.20.1 — Proiezione sovrapposta
 
-- Interruttore Proiezione nella testata del grafico Bolletta, a sinistra del selettore Bolletta / kWh / €, come controllo separato.
-- Descrizione della stima o della proiezione nella stessa fascia delle etichette Corrente parziale e Stima periodo corrente.
-- Eliminata la riga aggiuntiva che abbassava Bolletta: area del grafico, asse e base delle barre alla stessa altezza cambiando modalità o attivando/disattivando la proiezione.
-- Impaginazione compatta sulle larghezze minori, senza aumentare l’altezza dei grafici mensili. Avvisi sulle tariffe e motivi di proiezione non disponibile dopo il grafico.
-- Calcoli, consumi, credenziali e sincronizzazione invariati.
+- Nel grafico Bolletta con Proiezione attiva, parte piena in basso pari alla stima sui consumi già rilevati; parte tratteggiata sopra soltanto per la differenza prevista fino a fine periodo.
+- Altezza complessiva e importo in cima restano quelli della proiezione completa. Quote proporzionali agli importi in euro, inclusi fissi, variabili, accisa e IVA configurate; canone TV separato.
+- Descrizione accessibile con importo rilevato, quota aggiuntiva prevista e totale. Nessuna parte rilevata inventata quando il relativo importo è assente.
+- Invariati allineamento dei grafici, interruttore, calcoli, credenziali e dati del widget.
 
-Controllo visivo e geometrico a 320, 360, 390, 430, 600 e 800 px; verifiche di allineamento anche sulla WebView Android in GitHub Actions. Stessa firma APK: aggiornamento senza disinstallare.
+Verifica a inizio, metà e fine periodo su 320/390/600 px, più controllo delle proporzioni sulla WebView Android in GitHub Actions. Stessa firma: aggiornamento senza disinstallazione.
