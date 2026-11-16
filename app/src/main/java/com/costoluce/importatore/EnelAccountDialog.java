@@ -66,7 +66,7 @@ final class EnelAccountDialog extends Dialog {
     private EditText field(LinearLayout parent,String label,String hint,int type,String tag){
         add(parent,text(label,13,MUTED),14);
         EditText input=new EditText(getContext());input.setTag(tag);input.setContentDescription(label);
-        input.setInputType(type);input.setSingleLine(true);input.setTextSize(16);input.setTextColor(TEXT);input.setHintTextColor(0xff829cb7);
+        input.setSingleLine(true);input.setInputType(type);input.setTextSize(16);input.setTextColor(TEXT);input.setHintTextColor(0xff829cb7);
         input.setHint(hint);input.setPadding(dp(12),dp(10),dp(12),dp(10));input.setMinHeight(dp(50));input.setBackground(background(FIELD,12));
         input.setSaveEnabled(false);input.setFreezesText(false);add(parent,input,6);return input;
     }
@@ -101,6 +101,7 @@ final class EnelAccountDialog extends Dialog {
         LinearLayout account=card(content);account.setTag("account-card");TextView heading=text("Account Enel e dati della fornitura",15,TEXT);heading.setTypeface(null,Typeface.BOLD);add(account,heading,0);
         user=field(account,"Email account Enel","nome@esempio.it",InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS,"account-user");
         password=field(account,"Password","Password del tuo account",InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_PASSWORD,"account-password");
+        password.setTransformationMethod(PasswordTransformationMethod.getInstance());
         TextView reveal=text("Mostra password",12,TEAL);reveal.setTag("account-reveal");reveal.setGravity(Gravity.END|Gravity.CENTER_VERTICAL);reveal.setMinHeight(dp(44));reveal.setContentDescription("Mostra password");
         reveal.setOnClickListener(v->{boolean masked=password.getTransformationMethod() instanceof PasswordTransformationMethod;password.setTransformationMethod(masked?null:PasswordTransformationMethod.getInstance());reveal.setText(masked?"Nascondi password":"Mostra password");reveal.setContentDescription(reveal.getText());password.setSelection(password.length());});add(account,reveal,0);
         pod=field(account,"POD","IT… · dalla bolletta",InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS,"account-pod");
