@@ -86,6 +86,13 @@ final class EnelAccountDialog extends Dialog {
         TextView title=text("Account e fornitura",20,TEXT);title.setTypeface(null,Typeface.BOLD);toolbar.addView(title,new LinearLayout.LayoutParams(0,ViewGroup.LayoutParams.WRAP_CONTENT,1));root.addView(toolbar);
         ScrollView scroll=new ScrollView(getContext());scroll.setFillViewport(true);scroll.setClipToPadding(false);scroll.setTag("account-scroll");root.addView(scroll,new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,0,1));
         LinearLayout content=new LinearLayout(getContext());content.setOrientation(LinearLayout.VERTICAL);content.setPadding(dp(20),0,dp(20),dp(26));scroll.addView(content);
+        // With edge-to-edge insets, the keyboard changes this viewport after focus.
+        // Keep the focused native field visible after the new bounds are committed.
+        scroll.addOnLayoutChangeListener((view,left,top,right,bottom,oldLeft,oldTop,oldRight,oldBottom)->{
+            if(bottom-top==oldBottom-oldTop)return;
+            View focused=scroll.findFocus();
+            if(focused instanceof EditText)focused.post(()->focused.requestRectangleOnScreen(new android.graphics.Rect(0,0,focused.getWidth(),focused.getHeight()),true));
+        });
 
         LinearLayout providerCard=card(content);providerCard.setTag("provider-card");
         TextView providerLabel=text("Gestore",15,TEXT);providerLabel.setTypeface(null,Typeface.BOLD);add(providerCard,providerLabel,0);
@@ -124,7 +131,7 @@ final class EnelAccountDialog extends Dialog {
         Button submit=new Button(getContext());submit.setTag("account-connect");submit.setText("Collega e aggiorna");submit.setTextSize(15);submit.setTextColor(TEXT);submit.setAllCaps(false);submit.setMinHeight(dp(52));submit.setBackground(background(0xff0875ff,15));add(content,submit,18);
         submit.setOnClickListener(v->{
             EnelConnector.Credentials credentials=new EnelConnector.Credentials(user.getText().toString(),password.getText().toString(),pod.getText().toString(),number.getText().toString(),fiscal.getText().toString());
-            try{credentials.validate();}catch(Exception invalid){error.setText(invalid.getMessage());error.setVisibility(View.VISIBLE);scroll.post(()->scroll.smoothScrollTo(0,error.getTop()));return;}
+            try{credentials.validate();}catch(Exception invalid){error.setText(invalid.getMessage());error.setVisibility(View.VISIBLE);return;}
             boolean persist=remember.isChecked();dismiss();connect.run(credentials,persist);
         });
         TextView disclosure=text("Come funziona il collegamento  ⌄",13,MUTED);disclosure.setMinHeight(dp(48));disclosure.setGravity(Gravity.CENTER_VERTICAL);add(content,disclosure,10);
