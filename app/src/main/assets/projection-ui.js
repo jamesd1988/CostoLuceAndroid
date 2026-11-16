@@ -37,6 +37,7 @@ function latestRecordedConsumptionDate(today=new Date()){
 }
 function renderProjectionControls(bill,rows){
   byId('billProjectionControls').hidden=!bill;byId('billProjectionToggle').checked=billProjectionEnabled;
+  byId('billProjectionState').hidden=!bill;byId('historyBadge').hidden=bill;
   if(!bill)return;
   const result=lastBillProjection,projected=billProjectionEnabled,last=latestRecordedConsumptionDate();
   const missingDays=projected&&!result.available&&result.code==='recent_days';
