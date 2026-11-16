@@ -1,5 +1,5 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm');
-const elements={};for(const id of ['syncStatusIcon','homeSync','homeRefresh','syncButtonLabel','historyUpdated','homeStatus','importStatus'])elements[id]={dataset:{},hidden:true,textContent:'',setAttribute(k,v){this[k]=v},addEventListener(k,v){this[k]=v}};
+const elements={};for(const id of ['settingsEnelStatus','syncStatusIcon','homeSync','homeRefresh','syncButtonLabel','historyUpdated','homeStatus','importStatus'])elements[id]={dataset:{},hidden:true,textContent:'',setAttribute(k,v){this[k]=v},addEventListener(k,v){this[k]=v}};
 let imports=0,history=[];const context={document:{getElementById:id=>elements[id]},Date,Intl,Number,String,months:2,billingAnchor:10,window:{location:{href:''},onEnelStatus(){},onHistoryNative(rows){history=rows},onEnelConsumption(data){imports++;return data.valid}}};
 vm.runInNewContext(fs.readFileSync('app/src/main/assets/sync-ui.js','utf8'),context);
 const w=context.window,b=elements.homeRefresh,r=elements.homeSync;
@@ -8,7 +8,7 @@ b.click();assert.equal(b.disabled,true);assert.equal(elements.syncButtonLabel.te
 w.location.href='guard';b.click();assert.equal(w.location.href,'guard');
 w.onEnelStatus('Scarico consumi',false,true);assert.equal(r.dataset.state,'loading');
 w.onHistoryNative([{kwh:11}],1800000000000);assert.equal(elements.historyUpdated.textContent,previous);
-w.onEnelStatus('Rete non disponibile',true,false);assert.equal(b.disabled,false);assert.equal(elements.syncButtonLabel.textContent,'Riprova');assert.equal(elements.historyUpdated.textContent,previous);assert.equal(history[0].kwh,11);
+w.onEnelStatus('Rete non disponibile',true,false);assert.equal(b.disabled,false);assert.equal(elements.syncButtonLabel.textContent,'Riprova');assert.equal(elements.settingsEnelStatus.hidden,false);assert.equal(elements.settingsEnelStatus.textContent,'Rete non disponibile');assert.equal(elements.historyUpdated.textContent,previous);assert.equal(history[0].kwh,11);
 w.onEnelStatus('Timeout, richiesta ancora attiva',true,true);assert.equal(b.disabled,true);
 w.onEnelStatus('Terminata',true,false);b.click();w.onEnelConsumption({syncResult:true,valid:true,syncedAt:1800000000000});assert.equal(r.dataset.state,'success');assert.equal(b.disabled,false);assert.notEqual(elements.historyUpdated.textContent,previous);const success=elements.historyUpdated.textContent;
 w.onEnelConsumption({valid:true});assert.equal(elements.historyUpdated.textContent,success);

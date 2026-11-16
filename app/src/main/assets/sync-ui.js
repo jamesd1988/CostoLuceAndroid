@@ -16,6 +16,7 @@
     button.disabled=busy;label.textContent=busy?'Aggiornamento…':kind==='error'?'Riprova':'Aggiorna';
     el('historyUpdated').textContent=lastAt?timestamp(lastAt):'Nessuna sincronizzazione';
     const status=el('homeStatus');status.hidden=!message;status.textContent=message||'';
+    const settings=el('settingsEnelStatus');if(settings){settings.hidden=!message;settings.textContent=message||'';settings.className='settings-enel-status'+(kind==='error'?' err':'');}
   }
   const oldStatus=window.onEnelStatus;
   window.onEnelStatus=function(message,error,nativeBusy){

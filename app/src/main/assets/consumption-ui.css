@@ -2,3 +2,5 @@
 @media(max-width:360px){.consumption-totals strong{font-size:19px}.consumption-projection .bill-projection-row{gap:8px}.consumption-projection #consumptionScope{font-size:12px}}
 
 #consumptionProjectionHint{font-size:12px;line-height:1.6;color:#b6cadd;margin:12px 0 0}
+
+.settings-enel-status{font-size:12px;line-height:1.6;color:#b6cadd;overflow-wrap:anywhere}.settings-enel-status.err{color:#ffb5ad}
