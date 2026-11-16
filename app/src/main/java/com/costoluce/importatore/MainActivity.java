@@ -33,6 +33,7 @@ public final class MainActivity extends Activity {
     private static final int PICK_INVOICE = 412;
     private static final int MAX_FILE_BYTES = 1_500_000;
     private WebView web;
+    private EnelAccountDialog accountDialog;
     private int preferredMonths = 2;
     private int preferredAnchor = 10;
     private final ExecutorService background = Executors.newSingleThreadExecutor();
@@ -343,43 +344,21 @@ public final class MainActivity extends Activity {
     }
 
     private void showEnelConfiguration() {
-        if (enelBusy) return;
-        ScrollView scroller = new ScrollView(this);
-        LinearLayout content = new LinearLayout(this);
-        content.setOrientation(LinearLayout.VERTICAL);
-        int inset=(int)(18*getResources().getDisplayMetrics().density);
-        content.setPadding(inset, inset, inset, inset);
-        TextView intro = new TextView(this);
-        intro.setText("Connessione sperimentale a Enel Energia (non ufficiale). Inserisci i dati del TUO account: la password è trasmessa solo ai server HTTPS Enel. Nessuna credenziale viene inviata a ChatGPT o GitHub. L'accesso può richiedere verifiche aggiuntive non automatizzabili.");
-        content.addView(intro);
-        EditText user=formField(content,"Email account Enel Energia",InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
-        EditText pwd=formField(content,"Password Enel Energia",InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_VARIATION_PASSWORD);
-        EditText pod=formField(content,"POD (IT..., dalla bolletta)",InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS);
-        EditText number=formField(content,"Numero utente Enel (Area Clienti)",InputType.TYPE_CLASS_TEXT);
-        EditText fiscal=formField(content,"Codice fiscale intestatario (opzionale, per archivio bollette)",InputType.TYPE_CLASS_TEXT|InputType.TYPE_TEXT_FLAG_CAP_CHARACTERS);
-        CheckBox remember = new CheckBox(this);
-        remember.setText("Salva cifrato sul telefono per sincronizzare con un solo tocco");
-        remember.setChecked(false); // Explicit opt-in to durable credential storage.
-        content.addView(remember);
-        TextView note = new TextView(this);
-        note.setText("Periodo importato: ciclo configurato di 1, 2 o 3 mesi e storico esteso, quando disponibile, incluso il mese corrente. Il riepilogo con i nomi dei mesi è mostrato nella schermata principale. Non è un'API pubblica ufficiale e potrebbe non funzionare.");
-        content.addView(note);
-        scroller.addView(content);
-        AlertDialog dialog=new AlertDialog.Builder(this)
-                .setTitle("Collega Enel Energia")
-                .setView(scroller)
-                .setNegativeButton("Annulla", (d, which) -> { })
-                .setPositiveButton("Collega e aggiorna", null)
-                .create();
-        dialog.setOnShowListener(ignored -> dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
-            EnelConnector.Credentials credentials=new EnelConnector.Credentials(
-                    user.getText().toString(),pwd.getText().toString(),pod.getText().toString(),number.getText().toString(),fiscal.getText().toString());
-            try { credentials.validate(); }
-            catch(Exception e) { number.setError(e.getMessage()); return; }
-            dialog.dismiss();
-            downloadEnel(credentials, remember.isChecked());
-        }));
-        dialog.show();
+        if(enelBusy || (accountDialog!=null&&accountDialog.isShowing()))return;
+        EnelConnector.Credentials savedCredentials=null;
+        EnelCredentialStore store=new EnelCredentialStore(this);
+        String warning=null;
+        try{savedCredentials=store.read();}
+        catch(Exception unavailable){warning="Credenziali salvate non leggibili: inseriscile nuovamente. Nessun dato è stato cancellato.";}
+        accountDialog=new EnelAccountDialog(this,savedCredentials,store.hasSaved(),warning,
+                (credentials,remember)->{
+                    if(web!=null)web.evaluateJavascript("showView('home')",null);
+                    downloadEnel(credentials,remember);
+                },()->{
+                    if(web!=null)web.evaluateJavascript("showView('settings');openSettingsPanel('account')",null);
+                });
+        accountDialog.setOnDismissListener(ignored->accountDialog=null);
+        accountDialog.show();
     }
 
     private void downloadEnel(EnelConnector.Credentials credentials, boolean persistIfValid) {
@@ -532,6 +511,7 @@ public final class MainActivity extends Activity {
     }
 
     @Override protected void onDestroy() {
+        if(accountDialog!=null)accountDialog.dismiss();
         background.shutdownNow();
         if (web != null) { web.destroy(); web = null; }
         super.onDestroy();

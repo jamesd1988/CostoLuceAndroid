@@ -1,8 +1,11 @@
-# Costo Luce 6.20.1 — Proiezione sovrapposta
+# Costo Luce 6.21.0 — Account e widget
 
-- Nel grafico Bolletta con Proiezione attiva, parte piena in basso pari alla stima sui consumi già rilevati; parte tratteggiata sopra soltanto per la differenza prevista fino a fine periodo.
-- Altezza complessiva e importo in cima restano quelli della proiezione completa. Quote proporzionali agli importi in euro, inclusi fissi, variabili, accisa e IVA configurate; canone TV separato.
-- Descrizione accessibile con importo rilevato, quota aggiuntiva prevista e totale. Nessuna parte rilevata inventata quando il relativo importo è assente.
-- Invariati allineamento dei grafici, interruttore, calcoli, credenziali e dati del widget.
+- Impostazioni divisa in due voci: Configurazione account e fornitura; Impostazioni widget.
+- Nuova schermata nativa navy per configurare l’account, con Gestore in una scheda dedicata e un elenco che contiene soltanto Enel.
+- Credenziali e dati della fornitura in una scheda separata: email, password mascherata con Mostra/Nascondi, POD, numero utente e codice fiscale facoltativo.
+- Scudo verde e indicazioni esplicite: password inviata soltanto ai server HTTPS Enel, nessuna credenziale a ChatGPT o GitHub, salvataggio cifrato facoltativo sul telefono per l’aggiornamento del widget.
+- Le credenziali già salvate vengono ripristinate nativamente; aprire o annullare il modulo non le modifica. Password e account non transitano nella WebView.
+- Impostazioni widget conserva le opzioni esistenti, inclusa la scelta costo corrente/proiezione nei widget compatti.
+- Diagnostica, archivio e importazione manuale rimangono negli strumenti dell’account, accessibili dal modulo. Navigazione indietro e gestione tastiera dedicate.
 
-Verifica a inizio, metà e fine periodo su 320/390/600 px, più controllo delle proporzioni sulla WebView Android in GitHub Actions. Stessa firma: aggiornamento senza disinstallazione.
+Verifiche JavaScript di navigazione e persistenza, layout 320/390/600 px e test Android del modulo nativo, selettore Gestore, validazione, valori salvati, password e tastiera. Screenshot su emulatore pulito in GitHub Actions. Firma invariata: aggiornamento senza disinstallare.

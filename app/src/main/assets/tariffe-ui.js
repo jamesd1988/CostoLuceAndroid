@@ -51,6 +51,7 @@ function cancelAreraPreview(){areraDraft=null;byId('areraPreview').hidden=true;o
 function closeTopTariffDialog(){
   if(!byId('rateEditor').hidden){closeRateEditor();if(window.tariffActivePanel)document.body.style.overflow='hidden';return true;}
   if(closeTariffPanel())return true;
+  if(typeof closeSettingsPanel==='function'&&closeSettingsPanel())return true;
   return typeof closeMonthDaily==='function'?closeMonthDaily():false;
 }
 
