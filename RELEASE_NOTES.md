@@ -1,3 +1,3 @@
-# Costo Luce 6.24.1
+# Costo Luce 6.24.2
 
-Nuovo logo Costo Luce nell’app, nei widget e nel launcher Android. L’icona adattiva include una variante monocromatica per i launcher che supportano le icone a tema.
+La testata mostra “Costo” e “Luce” su due righe accanto al logo. Il numero di versione è stato tolto dalla testata e l’icona delle impostazioni ha un contorno più netto.
