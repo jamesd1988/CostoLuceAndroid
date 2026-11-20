@@ -1,3 +1,4 @@
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .mast>.logo,.mast>.gear{flex-shrink:0}.mast>div:not(.logo){min-width:0}.mast h1{overflow-wrap:anywhere}
 .sync-copy,.sync-line{min-width:0}.sync-line b{min-width:0;overflow-wrap:anywhere}.sync-bar.sync-stacked{grid-template-columns:minmax(0,1fr)}.sync-bar.sync-stacked .sync-refresh{justify-self:start}
 .bottom-nav{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));align-items:stretch}.bottom-nav button{min-width:0;width:100%;padding-left:4px;padding-right:4px}.bottom-nav button>span:not(.more-icon){max-width:100%;white-space:normal;overflow-wrap:anywhere;text-align:center}
