@@ -19,7 +19,7 @@ final class WidgetSummaryViews {
         float density=c.getResources().getDisplayMetrics().density;
         Paint p=new Paint(Paint.ANTI_ALIAS_FLAG);p.setTypeface(bold?android.graphics.Typeface.DEFAULT_BOLD:android.graphics.Typeface.DEFAULT);
         float size=Math.max(1,target*density);p.setTextSize(size);
-        float ratio=Math.min(1,Math.min(width*density/Math.max(1,p.measureText(text)),height*density/Math.max(1,p.descent()-p.ascent())));
+        float ratio=Math.min(1,Math.min(Math.max(1,(width-2)*density)/Math.max(1,p.measureText(text)),Math.max(1,(height-1)*density)/Math.max(1,p.descent()-p.ascent())));
         return size*ratio;
     }
     private static void cell(Context c,RemoteViews row,boolean right,String label,String value,boolean forecast,float width,float height,float scale){

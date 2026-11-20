@@ -11,8 +11,8 @@ android {
         applicationId 'com.costoluce.cloud'
         minSdk 24
         targetSdk 35
-        versionCode 52
-        versionName '6.23.0'
+        versionCode 53
+        versionName '6.23.1'
         testInstrumentationRunner 'com.costoluce.importatore.WidgetSmokeTestRunner'
     }
 
