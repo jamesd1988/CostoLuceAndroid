@@ -11,7 +11,8 @@ function sizeHistoryLayout(){
   const oldWidth=chart.scrollWidth,oldLeft=viewport.scrollLeft,keepEnd=typeof historyScrollAtEnd==='undefined'||historyScrollAtEnd;
   const visible=parseFloat(getComputedStyle(labels[0]||chart).fontSize)>18?2:4;
   chart.style.width='calc('+(columns.length/visible*100)+'% + '+(10/visible*columns.length-10)+'px)';
-  const valueHeight=Math.max(0,...labels.map(e=>e.getBoundingClientRect().height));
+  // Reserve the same two value lines in all modes, including the forecast prefix and euro unit.
+  const valueStyle=getComputedStyle(labels[0]||chart),valueHeight=2*(parseFloat(valueStyle.lineHeight)||parseFloat(valueStyle.fontSize)*1.2);
   const first=columns[0],name=first.children[1],status=first.children[2],track=first.children[0];
   const probe=name.cloneNode(false),year=name.children[0]?name.children[0].cloneNode(false):document.createElement('span');probe.textContent='mag–mag';year.textContent='2025–2026';probe.appendChild(year);
   Object.assign(probe.style,{position:'absolute',visibility:'hidden',pointerEvents:'none',width:track.getBoundingClientRect().width+'px'});first.appendChild(probe);

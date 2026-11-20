@@ -259,6 +259,8 @@
     if(mode==='bill'){renderHistory();ensureAnnualHistory()}else setDisplayUnit(mode);
   }
   function ensureAnnualHistory(){
+    // A native URL navigation during parsing can cancel remaining scripts on older WebViews.
+    if(document.readyState==='loading'&&typeof document.addEventListener==='function'){document.addEventListener('DOMContentLoaded',ensureAnnualHistory,{once:true});return;}
     if(typeof setTimeout!=='function')return;
     const key=months+':'+billingAnchor;if(annualRequestKey===key)return;annualRequestKey=key;
     setTimeout(()=>{if(chartMode!=='bill'||key!==months+':'+billingAnchor){if(annualRequestKey===key)annualRequestKey=null;return}window.location.href='costoluce://enel-history'},850);
@@ -869,6 +871,8 @@
       '&'+common;
   }
   function scheduleWidgetSync(){
+    // A native URL navigation during parsing can cancel remaining scripts on older WebViews.
+    if(document.readyState==='loading'&&typeof document.addEventListener==='function'){document.addEventListener('DOMContentLoaded',scheduleWidgetSync,{once:true});return;}
     if(typeof setTimeout!=='function')return;
     if(widgetSyncTimer!==null)clearTimeout(widgetSyncTimer);
     // Debounce edits to avoid sending intermediate prices or partial kWh.
