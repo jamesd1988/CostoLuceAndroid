@@ -733,6 +733,8 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
             Intent open=new Intent(context,MainActivity.class).setAction("com.costoluce.cloud.action.OPEN_WIDGET").addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP|Intent.FLAG_ACTIVITY_SINGLE_TOP);
             PendingIntent pending=PendingIntent.getActivity(context,0,open,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
             for(int id:new int[]{R.id.widget_small_period,R.id.widget_small_kwh,R.id.widget_small_cost})views.setOnClickPendingIntent(id,pending);
+            views.setViewVisibility(R.id.widget_small_kwh,android.view.View.GONE);views.setViewVisibility(R.id.widget_small_cost,android.view.View.GONE);
+            views.removeAllViews(R.id.widget_summary_extra);views.addView(R.id.widget_summary_extra,WidgetSummaryViews.create(context,spec,spec.width-16,Math.max(24,spec.height-64-Math.round(14*spec.fontScale))));
         }
         return views;
     }
@@ -820,7 +822,7 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
         views.setOnClickPendingIntent(R.id.widget_refresh, refreshPending);
         views.setOnClickPendingIntent(R.id.widget_status, refreshPending);
         boolean chart = !spec.unified() && p.getInt("page_"+widgetId,0)==1;
-        views.setTextViewText(R.id.widget_brand,chart?"Consumi ultimi 4 mesi":"COSTO LUCE · v6.22.0");
+        views.setTextViewText(R.id.widget_brand,chart?"Consumi ultimi 4 mesi":"COSTO LUCE · v6.23.0");
         views.setViewVisibility(R.id.widget_units,chart?android.view.View.VISIBLE:android.view.View.GONE);
         views.setViewVisibility(R.id.widget_refresh,chart?android.view.View.GONE:android.view.View.VISIBLE);
         String selectedMode=chartMode(context);
@@ -871,6 +873,14 @@ public final class CostoLuceWidgetProvider extends AppWidgetProvider {
                     PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE));
         }
         applySize(context,views,spec,chart,savedAt,bitmapPixels);
+        if(!chart||spec.unified()){
+            views.setViewVisibility(R.id.widget_euro,android.view.View.GONE);views.setViewVisibility(R.id.widget_kwh,android.view.View.GONE);
+            views.setViewVisibility(R.id.widget_caption,android.view.View.GONE);views.setViewVisibility(R.id.widget_breakdown,android.view.View.GONE);views.setViewVisibility(R.id.widget_updated,android.view.View.GONE);
+            int body=spec.unified()?spec.summaryHeight()-32:spec.height-2*spec.padding-48-52-32-18;
+            if(body<64){views.setViewVisibility(R.id.widget_period_row,android.view.View.GONE);body+=24;}
+            views.setViewPadding(R.id.widget_summary,0,0,0,0);views.setViewPadding(R.id.widget_metrics,0,0,0,0);
+            views.removeAllViews(R.id.widget_summary_extra);views.addView(R.id.widget_summary_extra,WidgetSummaryViews.create(context,spec,spec.contentWidth(),Math.max(24,body)));
+        }
         return views;
     }
 }

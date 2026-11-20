@@ -1,11 +1,9 @@
-# Costo Luce 6.22.0 — Proiezione kWh ed euro
+# Costo Luce 6.23.0 — Widget con attuale e proiezione
 
-- Nel riepilogo Home aggiunto il consumo previsto in kWh per l’intero periodo, insieme a consumi rilevati, costo corrente e bolletta prevista. Valori sempre fissi nella navigazione, disposti su due righe sugli schermi piccoli.
-- Proiezione condivisa tra Bolletta, kWh ed euro. Barre con parte piena sui dati già rilevati e parte tratteggiata soltanto per la quota aggiuntiva prevista.
-- Nei grafici mensili la previsione riguarda il mese corrente e gli eventuali mesi futuri del periodo configurato. Mesi conclusi e fatture storiche conservano i dati originali.
-- Importi mensili previsti arrotondati in modo che la somma visualizzata coincida con il totale previsto. Accisa calcolata per mese, quote fisse e IVA configurate incluse, canone TV separato.
-- Se mancano sette giorni completi, nessun valore di proiezione inventato: motivo esplicito e barra prevista assente.
-- Corretto il taglio della descrizione con caratteri ingranditi: fascia di stato adattiva e spazio uguale nelle tre modalità. Gestito lo zoom del testo secondo l’impostazione del dispositivo.
-- Prove dedicate su più versioni Android, orientamenti, dimensioni e caratteri, con evidenze della WebView, del modulo account e dei widget in GitHub Actions.
+- Nel riepilogo da 2×2 sono visibili sia consumo e costo attuali sia consumo e costo previsti, senza alternarli.
+- Formato compatto: due righe Attuale / Proiezione. Stretto e alto: quattro informazioni in verticale. Formati più larghi: griglia 2×2 con caratteri e spaziature adattati.
+- Grafici e aggiornamento in background restano accessibili. Il formato minimo 2×1 conserva la preferenza corrente/proiezione.
+- Proiezioni basate sulle letture reali e sullo stesso algoritmo dell’app, con sette giorni completi; se assenti compaiono trattini e la motivazione accessibile.
+- Controlli su ridimensionamenti, caratteri ingranditi, aggiornamenti ripetuti e quattro anteprime dedicate.
 
-Credenziali, sincronizzazione e preferenze salvate preservate. Stessa firma APK: aggiornamento senza disinstallare.
+Credenziali, consumi e tariffe salvate preservati. Stessa firma APK: aggiornamento senza disinstallare.

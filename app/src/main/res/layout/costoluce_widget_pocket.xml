@@ -8,6 +8,7 @@
     <TextView android:id="@+id/widget_small_period" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="#B6CBE6" android:textSize="10sp" android:includeFontPadding="false" android:maxLines="1" android:ellipsize="end" />
     <TextView android:id="@+id/widget_small_kwh" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="#FFFFFF" android:textStyle="bold" android:textSize="24sp" android:includeFontPadding="false" android:maxLines="1" />
     <TextView android:id="@+id/widget_small_cost" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="#64E7CF" android:textSize="20sp" android:includeFontPadding="false" android:maxLines="1" />
-  </LinearLayout>
+      <LinearLayout android:id="@+id/widget_summary_extra" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" />
+</LinearLayout>
   <ImageView android:id="@+id/widget_chart" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:visibility="gone" android:scaleType="fitStart" android:contentDescription="Grafico costi e consumi" />
 </LinearLayout>
