@@ -13,11 +13,11 @@ function sizeHistoryLayout(){
   chart.style.width='calc('+(columns.length/visible*100)+'% + '+(10/visible*columns.length-10)+'px)';
   // Reserve the same two value lines in all modes, including the forecast prefix and euro unit.
   const valueStyle=getComputedStyle(labels[0]||chart),valueHeight=2*(parseFloat(valueStyle.lineHeight)||parseFloat(valueStyle.fontSize)*1.2);
-  const first=columns[0],name=first.children[1],status=first.children[2],track=first.children[0];
+  const first=columns[0],name=first.children[1],status=first.children[2],columnWidth=Math.max(1,Math.floor((viewport.clientWidth-(visible-1)*10)/visible));
   const probe=name.cloneNode(false),year=name.children[0]?name.children[0].cloneNode(false):document.createElement('span');probe.textContent='mag–mag';year.textContent='2025–2026';probe.appendChild(year);
-  Object.assign(probe.style,{position:'absolute',visibility:'hidden',pointerEvents:'none',width:track.getBoundingClientRect().width+'px'});first.appendChild(probe);
+  Object.assign(probe.style,{position:'absolute',visibility:'hidden',pointerEvents:'none',width:columnWidth+'px'});first.appendChild(probe);
   const nameHeight=Math.max(32,Math.ceil(probe.getBoundingClientRect().height));probe.remove();
-  const small=status.cloneNode(false);small.textContent='Proiezione assente';Object.assign(small.style,{position:'absolute',visibility:'hidden',pointerEvents:'none',width:track.getBoundingClientRect().width+'px',height:'auto'});first.appendChild(small);
+  const small=status.cloneNode(false);small.textContent='Proiezione assente';Object.assign(small.style,{position:'absolute',visibility:'hidden',pointerEvents:'none',width:columnWidth+'px',height:'auto'});first.appendChild(small);
   const statusHeight=Math.max(12,Math.ceil(small.getBoundingClientRect().height));small.remove();
   chart.style.setProperty('--history-track-height',Math.max(150,Math.ceil(valueHeight+123))+'px');
   chart.style.setProperty('--history-name-height',nameHeight+'px');chart.style.setProperty('--history-status-height',statusHeight+'px');
