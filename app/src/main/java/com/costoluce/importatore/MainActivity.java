@@ -49,6 +49,7 @@ public final class MainActivity extends Activity {
             web = new WebView(this);
             web.setBackgroundColor(android.graphics.Color.rgb(10,25,40));
             WebSettings settings = web.getSettings();
+            settings.setTextZoom(Math.round(100*getResources().getConfiguration().fontScale));
             settings.setJavaScriptEnabled(true); // Necessario per il calcolatore e per il portale.
             settings.setDomStorageEnabled(true);
             settings.setAllowFileAccess(true); // Solo per asset locali del calcolatore.
