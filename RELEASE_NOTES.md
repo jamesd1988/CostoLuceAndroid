@@ -1,3 +1,3 @@
-# Costo Luce 6.24.4
+# Costo Luce 6.24.5
 
-Nei widget bassi e sufficientemente larghi, Attuale e Proiezione mostrano ciascuno consumo e costo, accanto al pulsante di aggiornamento. La preferenza per il costo singolo si applica ai widget più stretti.
+La barra inferiore usa le nuove icone vettoriali per Home, Consumi, Tariffe e Impostazioni. Ogni icona ha una variante per la scheda selezionata e una per le altre schede.
