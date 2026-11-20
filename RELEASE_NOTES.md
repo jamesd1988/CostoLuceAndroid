@@ -1,3 +1,3 @@
-# Costo Luce 6.24.2
+# Costo Luce 6.24.3
 
-La testata mostra “Costo” e “Luce” su due righe accanto al logo. Il numero di versione è stato tolto dalla testata e l’icona delle impostazioni ha un contorno più netto.
+In Tariffe, Aggiorna valori controlla il catalogo ARERA e apre il confronto con le tariffe già impostate. Verde per le corrispondenze e rosso per le differenze. I valori vengono applicati premendo Imposta valori ARERA.

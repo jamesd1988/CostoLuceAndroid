@@ -68,3 +68,14 @@
 .tariff-panel #areraMessage:empty,.tariff-panel #billingSetupStatus:empty,.tariff-panel #offerMessage:empty{display:none}
 .bottom-nav button{flex:1;max-width:120px}
 @media(max-width:350px){.tariff-panel{padding-left:16px;padding-right:16px}.tariff-panel .arera-profile{grid-template-columns:minmax(0,1fr)}.tariff-panel-header h3{font-size:19px}.rate-row-copy strong{font-size:12px}.rate-row-value{font-size:13px}}
+
+.arera-comparison{width:100%;table-layout:fixed;border-collapse:collapse;margin-top:10px;text-align:left}
+.arera-comparison th,.arera-comparison td{padding:10px 4px;border-bottom:1px solid #294b68;vertical-align:top;overflow-wrap:break-word}
+.arera-comparison thead th{color:#bccfe5;font-size:11px}
+.arera-comparison th:first-child{width:36%}
+.arera-comparison tbody th{color:#d7e8f9;font-size:12px;font-weight:600}
+.arera-comparison strong{display:block;font-size:13px;font-variant-numeric:tabular-nums}
+.arera-comparison small{display:block;font-size:10px}
+.arera-comparison .arera-value-same{color:#75e6ab}
+.arera-comparison .arera-value-different{color:#ff9b9f}
+.arera-comparison td strong{color:inherit}

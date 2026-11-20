@@ -105,7 +105,7 @@ public final class MainActivity extends Activity {
             }return true;
         }
         if ("arera-check".equals(action)) {
-            if (web != null && HOME.equals(web.getUrl())) checkArera(true);
+            if (isCalculatorPage()) checkArera(true);
             return true;
         }
         if("widget-cost".equals(action)){
@@ -230,7 +230,7 @@ public final class MainActivity extends Activity {
     void restoreWidgetSnapshot() {
         if (web == null || web.getUrl() == null || !web.getUrl().startsWith(HOME)) return;
         deliverInvoices(InvoiceStore.status(this));
-        deliverArera(AreraRepository.state(this,""));
+        deliverArera(AreraRepository.state(this,""),false);
         checkArera(false);
         web.evaluateJavascript("window.onHistoryNative("+CostoLuceWidgetProvider.archive(this).toString()+","+CostoLuceWidgetProvider.prefs(this).getLong("history_at",0L)+");",null);
         JSONObject snapshot = CostoLuceWidgetProvider.getLatestSnapshot(this);
@@ -285,8 +285,13 @@ public final class MainActivity extends Activity {
         });
     }
 
-    private void deliverArera(JSONObject data) {
-        if(web!=null&&HOME.equals(web.getUrl()))web.evaluateJavascript("window.onAreraCatalog&&window.onAreraCatalog("+data.toString()+");",null);
+    private boolean isCalculatorPage() {
+        String url=web==null?null:web.getUrl();
+        return url!=null&&(HOME.equals(url)||url.startsWith(HOME+"#"));
+    }
+
+    private void deliverArera(JSONObject data,boolean checked) {
+        if(isCalculatorPage())web.evaluateJavascript("window.onAreraCatalog&&window.onAreraCatalog("+data.toString()+","+checked+");",null);
     }
 
     private void checkArera(boolean force) {
@@ -294,7 +299,7 @@ public final class MainActivity extends Activity {
         areraBusy=true;
         background.execute(()->{
             JSONObject result=AreraRepository.refresh(this);
-            uiHandler.post(()->{areraBusy=false;deliverArera(result);});
+            uiHandler.post(()->{areraBusy=false;deliverArera(result,true);});
         });
     }
 

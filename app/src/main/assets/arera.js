@@ -11,19 +11,48 @@ function areraStatus(){
     byId('areraApplied').textContent='Importazione: '+areraMonthLabel(areraImport.period)+' · '+(areraImport.resident?'residente':'non residente')+' · '+decimal(areraImport.power,1)+' kW.'+(edits.length?' '+edits.length+' voci successivamente modificate o eliminate.':'');
   }else byId('areraApplied').textContent='Nessuna importazione effettuata.';
 }
-window.onAreraCatalog=function(payload){
-  if(!payload||typeof payload.months!=='object')return;
-  areraCatalog=payload.months;areraCheckedAt=Number(payload.checkedAt)||0;
-  const select=byId('areraMonth'),previous=select.value;select.innerHTML='';
-  const today=new Date(),current=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0');
-  const keys=Object.keys(areraCatalog).filter(k=>/^\d{4}-(0[1-9]|1[0-2])$/.test(k)&&k<=current).sort().reverse();
-  for(const key of keys){const option=document.createElement('option');option.value=key;option.textContent=areraMonthLabel(key);select.appendChild(option)}
-  select.value=keys.includes(previous)?previous:keys[0]||'';
-  byId('areraPreviewButton').disabled=!keys.length;byId('areraCheck').disabled=false;
-  byId('areraMessage').textContent=String(payload.error||'Tabelle disponibili. Scegli il mese e verifica i valori prima di importarli.');
-  areraDraft=null;byId('areraPreview').hidden=true;areraStatus();
+let areraCheckPending=false, areraSelectedMonth='';
+byId('areraMonth').addEventListener('change',()=>{
+  areraSelectedMonth=byId('areraMonth').value;
+});
+window.onAreraCatalog=function(payload,checked=false){
+  if(!payload||!payload.months||typeof payload.months!=='object')return;
+  // Restoring a cached catalogue can happen while a network request is pending.
+  if(areraCheckPending&&!checked)return;
+  const showComparison=areraCheckPending&&checked;
+  areraCheckPending=false;
+  areraCatalog=payload.months;
+  areraCheckedAt=Number(payload.checkedAt)||0;
+  const select=byId('areraMonth');
+  select.innerHTML='';
+  const today=new Date();
+  const current=today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0');
+  const keys=Object.keys(areraCatalog).filter(key=>/^\d{4}-(0[1-9]|1[0-2])$/.test(key)&&key<=current).sort().reverse();
+  for(const key of keys){
+    const option=document.createElement('option');
+    option.value=key;
+    option.textContent=areraMonthLabel(key);
+    select.appendChild(option);
+  }
+  select.value=keys.includes(areraSelectedMonth)?areraSelectedMonth:keys[0]||'';
+  const button=byId('areraPreviewButton');
+  button.disabled=false;
+  button.textContent='Aggiorna valori';
+  byId('areraMessage').textContent=String(payload.error||(!keys.length?'Nessuna tariffa ARERA disponibile.':''));
+  areraDraft=null;
+  byId('areraPreview').hidden=true;
+  areraStatus();
+  if(showComparison&&!payload.error&&keys.length&&(window.tariffActivePanel==='arera'||typeof openTariffPanel!=='function'))previewArera();
 };
-function checkAreraCatalog(){byId('areraMessage').textContent='Controllo del file ufficiale ARERA in corso…';byId('areraCheck').disabled=true;window.location.href='costoluce://arera-check'}
+function checkAreraCatalog(){
+  if(areraCheckPending)return;
+  areraCheckPending=true;
+  const button=byId('areraPreviewButton');
+  button.disabled=true;
+  button.textContent='Controllo in corso…';
+  byId('areraMessage').textContent='Controllo delle tabelle ufficiali ARERA in corso…';
+  window.location.href='costoluce://arera-check';
+}
 function areraPlan(){
   const period=byId('areraMonth').value,resident=byId('areraResident').value==='resident';
   const raw=String(byId('areraPower').value).trim();
@@ -44,18 +73,58 @@ function areraPlan(){
   if(customKeys.length+missing.length>MAX_CUSTOM_RATES)throw Error('Spazio insufficiente: elimina alcune voci personalizzate prima di importare.');
   return {period,resident,power,rows};
 }
+const areraNumber=new Intl.NumberFormat('it-IT',{maximumFractionDigits:9});
+function areraComparisonCell(amount,type,status){
+  const cell=document.createElement('td');
+  const value=document.createElement('strong');
+  if(Number.isFinite(amount)){
+    value.textContent=areraNumber.format(amount);
+    const unit=document.createElement('small');
+    unit.textContent=type==='fixed'?'€/mese':'€/kWh';
+    cell.appendChild(value);
+    cell.appendChild(unit);
+  }else{
+    value.textContent='—';
+    cell.appendChild(value);
+  }
+  if(status){
+    cell.className='arera-value-'+status;
+    const indicator=document.createElement('small');
+    indicator.textContent=status==='same'?'Coincide':'Da aggiornare';
+    cell.appendChild(indicator);
+  }
+  return cell;
+}
 function previewArera(){
   try{
-    areraDraft=areraPlan();const dest=byId('areraPreviewRows');dest.innerHTML='';
-    for(const [key,name,type,value] of areraDraft.rows){const row=document.createElement('div');row.className='tariff-preview-row';const title=document.createElement('span');title.textContent=(rateMeta[key]||{}).name||name;const amount=document.createElement('strong');amount.textContent=new Intl.NumberFormat('it-IT',{maximumFractionDigits:6}).format(value)+' '+(type==='fixed'?'€/mese':'€/kWh');row.appendChild(title);row.appendChild(amount);dest.appendChild(row)}
+    areraDraft=areraPlan();
+    const dest=byId('areraPreviewRows');
+    dest.innerHTML='';
+    for(const [key,name,type,value] of areraDraft.rows){
+      const meta=rateMeta[key];
+      const active=meta&&rateEnabled(key)&&Number.isFinite(tariffs[key]);
+      const matches=active&&meta.type===type&&areraNumber.format(tariffs[key])===areraNumber.format(value);
+      const row=document.createElement('tr');
+      const title=document.createElement('th');
+      title.setAttribute('scope','row');
+      title.textContent=meta&&meta.name?meta.name:name;
+      row.appendChild(title);
+      row.appendChild(areraComparisonCell(value,type,matches?'same':'different'));
+      row.appendChild(areraComparisonCell(active?tariffs[key]:null,meta&&meta.type));
+      dest.appendChild(row);
+    }
     byId('areraPreviewTitle').textContent='Valori di '+areraMonthLabel(areraDraft.period)+' · '+decimal(areraDraft.power,1)+' kW';
-    byId('areraPreview').hidden=false;byId('areraMessage').textContent='Il riepilogo mostra i valori che sostituiranno le corrispondenti voci, anche se personalizzate.';
-  }catch(e){areraDraft=null;byId('areraPreview').hidden=true;byId('areraMessage').textContent=e.message}
+    byId('areraPreview').hidden=false;
+  }catch(e){
+    areraDraft=null;
+    byId('areraPreview').hidden=true;
+    byId('areraMessage').textContent=e.message;
+  }
 }
 function applyArera(){
   if(!areraDraft)return false;
   // Revalidate: do not import a stale preview after changing month, power or profile.
-  let plan;try{plan=areraPlan();if(JSON.stringify(plan)!==JSON.stringify(areraDraft)){previewArera();byId('areraMessage').textContent='Impostazioni cambiate: verifica il nuovo riepilogo e premi di nuovo Importa.';return false}}catch(e){byId('areraMessage').textContent=e.message;return false}
+  let plan;try{plan=areraPlan();if(JSON.stringify(plan)!==JSON.stringify(areraDraft)){previewArera();byId('areraMessage').textContent='Impostazioni cambiate: verifica il nuovo riepilogo e premi di nuovo Imposta valori ARERA.';return false}}catch(e){byId('areraMessage').textContent=e.message;return false}
   const values={};
   for(const [key,name,type,value] of plan.rows){
     if(key.startsWith('custom_')&&!customKeys.includes(key))customKeys.push(key);

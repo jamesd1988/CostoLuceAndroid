@@ -86,15 +86,15 @@ function closeTopTariffDialog(){
   // Long explanations remain available on demand instead of preceding every tariff.
   Array.from(billing.children).filter(el=>el.tagName==='P'&&el.id!=='billingSetupStatus').forEach(el=>explanation.appendChild(el));
 
-  const preview=document.createElement('section');preview.innerHTML='<h3 id="tariffAreraPreviewTitle">Verifica prima di importare</h3>';panel(preview,'arera-preview','Verifica prima di importare');preview.appendChild(byId('areraPreview'));
+  const preview=document.createElement('section');preview.innerHTML='<h3 id="tariffAreraPreviewTitle">Confronto valori ARERA</h3>';panel(preview,'arera-preview','Confronto valori ARERA');preview.appendChild(byId('areraPreview'));
   const previewActions=document.createElement('div');previewActions.className='tariff-preview-actions';
   const actions=Array.from(byId('areraPreview').querySelectorAll(':scope > button'));
   actions[0].removeAttribute('onclick');actions[0].addEventListener('click',cancelAreraPreview);actions[0].textContent='Indietro';actions.forEach(button=>previewActions.appendChild(button));byId('areraPreview').appendChild(previewActions);
 
-  const header=arera.querySelector('.tariff-panel-header'),profile=arera.querySelector('.arera-profile'),monthLabel=arera.querySelector('label[for="areraMonth"]'),month=byId('areraMonth'),verify=byId('areraPreviewButton'),check=byId('areraCheck'),message=byId('areraMessage');
+  const header=arera.querySelector('.tariff-panel-header'),profile=arera.querySelector('.arera-profile'),monthLabel=arera.querySelector('label[for="areraMonth"]'),month=byId('areraMonth'),verify=byId('areraPreviewButton'),message=byId('areraMessage');
   const originalInfo=Array.from(arera.children).filter(el=>el.tagName==='P'&&el!==message);
   const form=document.createElement('div');const introduction=document.createElement('p');introduction.textContent='Verifica le quote di rete e gli oneri della tua fornitura.';form.appendChild(introduction);form.appendChild(profile);form.appendChild(monthLabel);form.appendChild(month);
-  verify.textContent='Verifica valori';form.appendChild(verify);check.textContent='↻ Controlla disponibilità';check.className='tariff-check';form.appendChild(check);form.appendChild(message);
+  form.appendChild(verify);form.appendChild(message);
   const info=document.createElement('details');const infoTitle=document.createElement('summary');infoTitle.textContent='Aggiornamenti, fonte e voci importate';info.appendChild(infoTitle);originalInfo.forEach(el=>info.appendChild(el));form.appendChild(info);
   const tax=document.createElement('button');tax.type='button';tax.className='tariff-check';tax.textContent='Imposte e agevolazioni accisa';tax.addEventListener('click',()=>{closeTariffPanel();byId('taxSettings').open=true;byId('taxSettings').scrollIntoView({block:'nearest'});});form.appendChild(tax);
   while(arera.firstChild)arera.removeChild(arera.firstChild);arera.appendChild(header);arera.appendChild(form);
@@ -108,8 +108,8 @@ function closeTopTariffDialog(){
   const previousDraft=billingDraftChanged;billingDraftChanged=function(reset=false){previousDraft(reset);renderBillingChoices();};
   const previousSave=saveBillingSetup;saveBillingSetup=function(){const saved=previousSave();if(saved){closeTariffPanel();byId('rateStatus').textContent='Periodo salvato e sincronizzato con il widget.';}return saved;};
   const previousAreraStatus=areraStatus;areraStatus=function(){previousAreraStatus();renderTariffSummaries();};
-  const previousCatalog=window.onAreraCatalog;window.onAreraCatalog=function(payload){previousCatalog(payload);if(window.tariffActivePanel==='arera-preview'&&!areraDraft)openTariffPanel('arera');};
-  const previousPreview=previewArera;previewArera=function(){previousPreview();if(areraDraft)openTariffPanel('arera-preview');};
+  const previousCatalog=window.onAreraCatalog;window.onAreraCatalog=function(payload,checked){previousCatalog(payload,checked);if(window.tariffActivePanel==='arera-preview'&&!areraDraft)openTariffPanel('arera');};
+  const previousPreview=previewArera;previewArera=function(){previousPreview();if(areraDraft&&window.tariffActivePanel==='arera')openTariffPanel('arera-preview');};
   const previousApply=applyArera;applyArera=function(){const applied=previousApply();if(applied){closeTariffPanel();byId('rateStatus').textContent='Valori ARERA importati e sincronizzati con il widget.';}return applied;};
   document.addEventListener('keydown',event=>{
     if(event.key==='Escape'&&closeTopTariffDialog()){event.preventDefault();return;}
