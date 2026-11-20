@@ -37,7 +37,7 @@
       if(!item||!Number.isInteger(item.year)||!Number.isInteger(item.month)||item.month<1||item.month>12||item.year<2000||item.year>2100||(i&&item.year*12+item.month!==period[i-1].year*12+period[i-1].month+1))return unavailable('Periodo di fatturazione non valido.');
       const first=ordinal(item.year,item.month,1),days=monthDays(item.year,item.month),end=first+days-1,row=monthly.get(item.year*12+item.month);
       let actual=0,projected=0,estimatedDays=0;
-      if(end<now&&row?.available&&!row.partial&&Number.isFinite(row.kwh)&&row.kwh>=0){
+      if(end<now&&row&&row.available&&!row.partial&&Number.isFinite(row.kwh)&&row.kwh>=0){
         // A concluded monthly total is not a weekly reference sample. Preserve its real sum
         // even when an hourly day is excluded from the recent complete-day average.
         if(Array.isArray(row.daily)&&row.daily.length){
@@ -48,14 +48,14 @@
       }
       else if(end<now)return unavailable('Manca un mese concluso completo nel periodo. Aggiorna Enel prima di calcolare la proiezione.');
       else{
-        if(row?.available&&(!Array.isArray(row.daily)||!row.daily.length))return unavailable('Premi Aggiorna: i consumi salvati non contengono ancora il dettaglio giornaliero.');
+        if(row&&row.available&&(!Array.isArray(row.daily)||!row.daily.length))return unavailable('Premi Aggiorna: i consumi salvati non contengono ancora il dettaglio giornaliero.');
         for(let d=0;d<days;d++){
-          const date=first+d,day=daily.get(date),measured=day?.kwh||0;
+          const date=first+d,day=daily.get(date),measured=day&&day.kwh||0;
           actual+=measured;
-          if(date<now&&day?.complete)projected+=measured;
+          if(date<now&&day&&day.complete)projected+=measured;
           else {projected+=Math.max(measured,average);estimatedDays++;}
         }
-        if(row?.available&&(!Number.isFinite(row.kwh)||row.kwh<0||Math.abs(row.kwh-actual)>.02))return unavailable('Totale mensile e dettaglio giornaliero non coincidono. Aggiorna Enel.');
+        if(row&&row.available&&(!Number.isFinite(row.kwh)||row.kwh<0||Math.abs(row.kwh-actual)>.02))return unavailable('Totale mensile e dettaglio giornaliero non coincidono. Aggiorna Enel.');
       }
       const parts=price(projected);
       if(!parts||!['total','variable','fixed'].every(key=>Number.isFinite(parts[key])&&parts[key]>=0))return unavailable('Verifica le tariffe per calcolare la proiezione.');

@@ -47,7 +47,13 @@ final class CompatibilityChecks {
     }
     private void passed(String name)throws Exception{checks.put(name);Bundle state=new Bundle();state.putString("stream","PASS: "+name);instrumentation.sendStatus(0,state);}
     private void screenshot(String name)throws Exception{
-        instrumentation.waitForIdleSync();Thread.sleep(350);Bitmap source=instrumentation.getUiAutomation().takeScreenshot();if(source==null)throw new AssertionError("Missing screenshot");
+        instrumentation.waitForIdleSync();
+        if(web!=null&&web.isAttachedToWindow()&&!name.contains("account")&&!stage.contains("native account")){
+            CountDownLatch rendered=new CountDownLatch(1);main(()->web.postVisualStateCallback(System.nanoTime(),new WebView.VisualStateCallback(){@Override public void onComplete(long id){rendered.countDown();}}));if(!rendered.await(15,TimeUnit.SECONDS))throw new AssertionError("Screenshot WebView not rendered");
+            CountDownLatch frames=new CountDownLatch(1);main(()->{web.invalidate();android.view.Choreographer.getInstance().postFrameCallback(t->android.view.Choreographer.getInstance().postFrameCallback(next->frames.countDown()));});if(!frames.await(8,TimeUnit.SECONDS))throw new AssertionError("Screenshot frames not committed");
+        }
+        for(int frame=0;frame<2;frame++){Thread.sleep(350);Bitmap stale=instrumentation.getUiAutomation().takeScreenshot();if(stale!=null)stale.recycle();}
+        Bitmap source=instrumentation.getUiAutomation().takeScreenshot();if(source==null)throw new AssertionError("Missing screenshot");
         Bitmap image=source.copy(Bitmap.Config.ARGB_8888,true);source.recycle();Canvas canvas=new Canvas(image);Paint paint=new Paint(Paint.ANTI_ALIAS_FLAG);paint.setColor(Color.rgb(6,24,45));canvas.drawRect(0,0,image.getWidth(),48,paint);paint.setColor(Color.WHITE);paint.setTextSize(24);canvas.drawText("TEST · Android "+Build.VERSION.SDK_INT+" · "+name,16,32,paint);
         try(FileOutputStream out=new FileOutputStream(new File(evidence,name+".png"))){image.compress(Bitmap.CompressFormat.PNG,100,out);}image.recycle();
     }
@@ -87,7 +93,7 @@ final class CompatibilityChecks {
             passed(stage);
             if(projected&&"kwh".equals(mode))screenshot(orientation+"-kwh-projection");
         }
-        evaluate("delete window.compatGeometry;showView('consumption');setBillProjection(true);if(byId('total2').textContent!==byId('summaryProjection').textContent)throw Error('Consumption total differs');if(document.body.scrollWidth>innerWidth+2)throw Error('Consumption overflow');showView('rates');if(document.body.scrollWidth>innerWidth+2)throw Error('Tariff overflow');showView('settings');if(document.querySelectorAll('#settingsMenu>.settings-entry').length!==2||document.body.scrollWidth>innerWidth+2)throw Error('Settings menu');openSettingsPanel('widget');if(byId('compactWidgetCost').hidden||document.body.scrollWidth>innerWidth+2)throw Error('Widget settings');closeSettingsPanel();");
+        evaluate("delete window.compatGeometry;showView('consumption');setBillProjection(true);if(byId('total2').textContent!==byId('summaryProjection').textContent)throw Error('Consumption total differs: '+byId('total2').textContent+' vs '+byId('summaryProjection').textContent+' renderer='+typeof renderConsumptionDetails+' history='+historyRows.length+' forecast='+JSON.stringify(calculateCurrentBillProjection(new Date())));if(document.body.scrollWidth>innerWidth+2)throw Error('Consumption overflow');showView('rates');if(document.body.scrollWidth>innerWidth+2)throw Error('Tariff overflow');showView('settings');if(document.querySelectorAll('#settingsMenu>.settings-entry').length!==2||document.body.scrollWidth>innerWidth+2)throw Error('Settings menu');openSettingsPanel('widget');if(byId('compactWidgetCost').hidden||document.body.scrollWidth>innerWidth+2)throw Error('Widget settings');closeSettingsPanel();");
         passed(orientation+" consumption/rates/settings/widget settings");
     }
     private void account(Activity activity,String orientation)throws Exception{
@@ -106,8 +112,12 @@ final class CompatibilityChecks {
         try{
             report.put("api",Build.VERSION.SDK_INT);report.put("fontScale",instrumentation.getTargetContext().getResources().getConfiguration().fontScale);
             if(Build.VERSION.SDK_INT>=26){android.content.pm.PackageInfo provider=WebView.getCurrentWebViewPackage();if(provider!=null)report.put("webView",provider.versionName);}
-            Activity activity=instrumentation.startActivitySync(new Intent(instrumentation.getTargetContext(),MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));Thread.sleep(2500);
+            Activity activity=instrumentation.startActivitySync(new Intent(instrumentation.getTargetContext(),MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             main(()->web=findWeb(activity.findViewById(android.R.id.content)));if(web==null)throw new AssertionError("Missing WebView");
+            boolean ready=false;Throwable last=null;
+            for(int attempt=0;attempt<40&&!ready;attempt++){try{evaluate("if(document.readyState!=='complete'||typeof setMonths!=='function'||typeof renderConsumptionDetails!=='function'||typeof openSettingsPanel!=='function'||typeof sizeAppChrome!=='function')throw Error('App not ready: '+document.readyState+' core='+typeof setMonths+' consumption='+typeof renderConsumptionDetails+' settings='+typeof openSettingsPanel)");ready=true;}catch(Throwable pending){last=pending;Thread.sleep(250);}}
+            if(!ready)throw new AssertionError("Complete app scripts did not initialize",last);
+            Thread.sleep(300);
             evaluate("if(typeof setBillProjection!=='function'||typeof projectedMonthlyRows!=='function')throw Error('WebView did not load app scripts');setMonths(2,(new Date().getMonth()+11)%12+1);completeBillOffer();const now=new Date(),fixtures=[];for(let offset=-1;offset<=0;offset++){const date=new Date(now.getFullYear(),now.getMonth()+offset,1),limit=offset===0?now.getDate()-1:new Date(now.getFullYear(),now.getMonth(),0).getDate(),daily=[];for(let day=1;day<=limit;day++)daily.push({day,kwh:8,hourSamples:24,complete:true});fixtures.push({year:date.getFullYear(),month:date.getMonth()+1,kwh:daily.length*8,daily,available:daily.length>0,partial:offset===0,lastMeasuredDay:limit});}window.onHistoryNative(fixtures);window.onEnelConsumption({kwh:fixtures.reduce((sum,row)=>sum+row.kwh,0),months,anchor:billingAnchor,monthly:fixtures.map(row=>({...row,days:row.daily.length,expectedDays:new Date(row.year,row.month,0).getDate(),hourSamples:row.daily.length*24,future:false}))});");
             Thread.sleep(1000);instrumentation.getUiAutomation().setRotation(UiAutomation.ROTATION_FREEZE_0);Thread.sleep(500);webScreens("portrait");account(activity,"portrait");
             instrumentation.getUiAutomation().setRotation(UiAutomation.ROTATION_FREEZE_90);Thread.sleep(800);webScreens("landscape");account(activity,"landscape");

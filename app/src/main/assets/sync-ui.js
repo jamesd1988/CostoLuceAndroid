@@ -14,6 +14,7 @@
     root.dataset.state=kind;root.setAttribute('aria-busy',String(busy));
     el('syncStatusIcon').innerHTML='<circle cx="12" cy="12" r="9"/>'+(kind==='error'?'<path d="M12 7v6m0 3v1"/>':'<path d="m8 12 3 3 5-6"/>');
     button.disabled=busy;label.textContent=busy?'Aggiornamento…':kind==='error'?'Riprova':'Aggiorna';
+    if(typeof sizeSyncBar==='function')sizeSyncBar();
     el('historyUpdated').textContent=lastAt?timestamp(lastAt):'Nessuna sincronizzazione';
     const status=el('homeStatus');status.hidden=!message;status.textContent=message||'';
     const settings=el('settingsEnelStatus');if(settings){settings.hidden=!message;settings.textContent=message||'';settings.className='settings-enel-status'+(kind==='error'?' err':'');}

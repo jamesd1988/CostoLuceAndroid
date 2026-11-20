@@ -29,7 +29,7 @@ function areraPlan(){
   const raw=String(byId('areraPower').value).trim();
   if(!/^\d+(?:[.,]\d+)?$/.test(raw))throw Error('Inserisci la potenza impegnata riportata nella bolletta.');
   const power=Number(raw.replace(',','.'));if(!Number.isFinite(power)||power<0.5||power>36)throw Error('La potenza deve essere tra 0,5 e 36 kW.');
-  const profile=areraCatalog[period]?.[resident?'resident':'nonresident'];
+  const profile=(areraCatalog[period]||{})[resident?'resident':'nonresident'];
   if(!profile)throw Error('Tariffe del mese non disponibili. Nessun valore è stato sostituito.');
   for(const key of ['transport','equalization','asos','arim','networkAnnual','powerAnnual','qualityPowerAnnual','oneriAnnual'])if(typeof profile[key]!=='number'||!Number.isFinite(profile[key])||profile[key]<0||profile[key]>1000)throw Error('Tabella ARERA incompleta. Nessuna tariffa modificata.');
   const rows=[
@@ -47,7 +47,7 @@ function areraPlan(){
 function previewArera(){
   try{
     areraDraft=areraPlan();const dest=byId('areraPreviewRows');dest.innerHTML='';
-    for(const [key,name,type,value] of areraDraft.rows){const row=document.createElement('div');row.className='tariff-preview-row';const title=document.createElement('span');title.textContent=rateMeta[key]?.name||name;const amount=document.createElement('strong');amount.textContent=new Intl.NumberFormat('it-IT',{maximumFractionDigits:6}).format(value)+' '+(type==='fixed'?'€/mese':'€/kWh');row.appendChild(title);row.appendChild(amount);dest.appendChild(row)}
+    for(const [key,name,type,value] of areraDraft.rows){const row=document.createElement('div');row.className='tariff-preview-row';const title=document.createElement('span');title.textContent=(rateMeta[key]||{}).name||name;const amount=document.createElement('strong');amount.textContent=new Intl.NumberFormat('it-IT',{maximumFractionDigits:6}).format(value)+' '+(type==='fixed'?'€/mese':'€/kWh');row.appendChild(title);row.appendChild(amount);dest.appendChild(row)}
     byId('areraPreviewTitle').textContent='Valori di '+areraMonthLabel(areraDraft.period)+' · '+decimal(areraDraft.power,1)+' kW';
     byId('areraPreview').hidden=false;byId('areraMessage').textContent='Il riepilogo mostra i valori che sostituiranno le corrispondenti voci, anche se personalizzate.';
   }catch(e){areraDraft=null;byId('areraPreview').hidden=true;byId('areraMessage').textContent=e.message}
@@ -59,7 +59,7 @@ function applyArera(){
   const values={};
   for(const [key,name,type,value] of plan.rows){
     if(key.startsWith('custom_')&&!customKeys.includes(key))customKeys.push(key);
-    tariffs[key]=value;rateMeta[key]={name:rateMeta[key]?.name||name,type,enabled:true};values[key]={value,type};
+    tariffs[key]=value;rateMeta[key]={name:(rateMeta[key]||{}).name||name,type,enabled:true};values[key]={value,type};
   }
   areraImport={period:plan.period,resident:plan.resident,power:plan.power,values};
   try{localStorage.setItem('costoluce_arera_import_v1',JSON.stringify(areraImport))}catch(e){}

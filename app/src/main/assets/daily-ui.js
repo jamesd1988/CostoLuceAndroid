@@ -13,7 +13,7 @@ function moveDailyMonth(direction){
   if(!dailySelection)return;const now=new Date(),current=now.getFullYear()*12+now.getMonth(),index=dailySelection.year*12+dailySelection.month-1+direction;
   if(index>current||index<current-23)return;dailySelection={year:Math.floor(index/12),month:index%12+1};dailySelectedDay=0;dailyKeepScroll=false;renderDailyMonth();
 }
-function selectDailyDay(day){const focused=byId('dailyChart').contains(document.activeElement);dailySelectedDay=day;dailyKeepScroll=true;renderDailyMonth();if(focused)byId('dailyChart').children[day-1]?.focus({preventScroll:true});}
+function selectDailyDay(day){const focused=byId('dailyChart').contains(document.activeElement);dailySelectedDay=day;dailyKeepScroll=true;renderDailyMonth();if(focused)byId('dailyChart').children[day-1]&&byId('dailyChart').children[day-1].focus({preventScroll:true});}
 function scrollDailyDays(direction){byId('dailyViewport').scrollBy({left:direction*byId('dailyViewport').clientWidth*.8,behavior:'smooth'});}
 function dailyStatus(status){return status==='complete'?'Lettura completa':status==='partial'?'Lettura parziale / copertura oraria non confermata':status==='future'?'Giorno non ancora iniziato':'Lettura mancante';}
 function renderDailyMonth(){
