@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="145 175 770 770" role="img" aria-label="Costo Luce - Logo su sfondo trasparente">
+ <title>Costo Luce — Logo su sfondo trasparente</title>
+ <defs>
+ <linearGradient id="tile" x1=".10" y1="0" x2=".92" y2="1" gradientUnits="objectBoundingBox">
+  <stop offset="0" stop-color="#0C60AD"/><stop offset=".30" stop-color="#063F79"/><stop offset=".71" stop-color="#06254C"/><stop offset="1" stop-color="#031831"/>
+ </linearGradient>
+ <radialGradient id="light" cx="25%" cy="8%" r="75%"><stop offset="0" stop-color="#2797F2" stop-opacity=".45"/><stop offset=".55" stop-color="#1182D4" stop-opacity=".05"/><stop offset="1" stop-color="#052249" stop-opacity="0"/></radialGradient>
+ <linearGradient id="homeLine" x1=".1" y1="0" x2=".95" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".5" stop-color="#F1F8FF"/><stop offset="1" stop-color="#83BAF6"/></linearGradient>
+ <linearGradient id="bars" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#77FFE2"/><stop offset=".55" stop-color="#32E4D0"/><stop offset="1" stop-color="#08BBCC"/></linearGradient>
+ <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".5" stop-color="#E1F3FF"/><stop offset="1" stop-color="#8EBFF3"/></linearGradient>
+ <linearGradient id="badgeInside" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0C427F"/><stop offset="1" stop-color="#072142"/></linearGradient>
+ <filter id="softShadow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="9"/></filter>
+ </defs>
+ <g id="house-symbol">
+ <!-- Roof, walls and foundation -->
+ <path d="M 188 472 L 497 238 Q 512 226 527 238 L 838 472" fill="none" stroke="url(#homeLine)" stroke-width="55" stroke-linecap="round" stroke-linejoin="round"/>
+ <path d="M 247 429 L 247 779 Q 247 800 268 800 L 665 800" fill="none" stroke="url(#homeLine)" stroke-width="55" stroke-linecap="round" stroke-linejoin="round"/>
+ <path d="M 779 429 L 779 553" fill="none" stroke="url(#homeLine)" stroke-width="55" stroke-linecap="round"/>
+ <!-- Center lightning bolt -->
+ <path d="M 544 353 L 451 503 L 517 503 L 489 618 L 614 455 L 540 455 Z" fill="#F7FBFF" stroke="#EAF5FF" stroke-width="3" stroke-linejoin="round"/>
+ <!-- Rising consumption bars -->
+ <rect x="301" y="698" width="68" height="82" rx="11" fill="url(#bars)"/>
+ <rect x="397" y="642" width="68" height="138" rx="11" fill="url(#bars)"/>
+ <rect x="493" y="590" width="68" height="190" rx="11" fill="url(#bars)"/>
+ <!-- Euro badge above the graph and right edge -->
+ <circle cx="730" cy="717" r="157" fill="#010F25" opacity=".32" transform="translate(0 12)" filter="url(#softShadow)"/>
+ <circle cx="730" cy="717" r="151" fill="url(#badgeInside)" stroke="url(#ring)" stroke-width="29"/>
+ <circle cx="730" cy="717" r="128" fill="none" stroke="#2D74B8" stroke-width="3" opacity=".55"/>
+ <!-- Euro glyph as geometry to remain font-independent -->
+ <path d="M 788 661 C 763 641 729 638 703 654 C 677 670 664 694 664 718 C 664 744 679 770 704 784 C 729 799 761 793 787 771" fill="none" stroke="#FFFFFF" stroke-width="24" stroke-linecap="round"/>
+ <path d="M 650 695 H 751 M 650 736 H 751" fill="none" stroke="#FFFFFF" stroke-width="22" stroke-linecap="round"/>
+ </g>
+</svg>
