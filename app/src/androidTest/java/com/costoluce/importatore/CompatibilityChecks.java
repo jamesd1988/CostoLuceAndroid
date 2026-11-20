@@ -107,10 +107,27 @@ final class CompatibilityChecks {
         }
         main(()->{View root=dialog[0].getWindow().getDecorView();((android.view.inputmethod.InputMethodManager)activity.getSystemService(Context.INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(root.getWindowToken(),0);dialog[0].dismiss();});Thread.sleep(350);passed(stage);
     }
+    private void systemBack()throws Exception{
+        if(!instrumentation.getUiAutomation().performGlobalAction(android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_BACK))throw new AssertionError("System Back injection failed");
+        Thread.sleep(700);instrumentation.waitForIdleSync();
+    }
+    private void backNavigation(Activity activity)throws Exception{
+        stage="system Back: settings and tariff panels";
+        evaluate("showView('settings');openSettingsPanel('widget')");Thread.sleep(250);systemBack();
+        evaluate("if(byId('settingsMenu').hidden||!byId('settingsWidget').hidden)throw Error('System Back did not close widget settings');showView('rates');openTariffPanel('billing')");Thread.sleep(250);systemBack();
+        evaluate("if(!byId('tariffSettings').hidden)throw Error('System Back did not close tariff panel');showView('home');openMonthDaily(new Date().getFullYear(),new Date().getMonth()+1)");Thread.sleep(250);systemBack();
+        evaluate("if(!byId('page-daily').hidden||byId('page-home').hidden)throw Error('System Back did not leave daily consumption');showView('settings');byId('openAccountSettings').click()");Thread.sleep(450);systemBack();
+        java.lang.reflect.Field field=MainActivity.class.getDeclaredField("accountDialog");field.setAccessible(true);
+        main(()->{try{EnelAccountDialog dialog=(EnelAccountDialog)field.get(activity);if(dialog!=null&&dialog.isShowing())throw new AssertionError("System Back did not close native account");}catch(IllegalAccessException e){throw new AssertionError(e);}});
+        passed("System Back closes widget settings, tariff panel, monthly detail and native account");
+        stage="system Back: launcher";evaluate("showView('home')");Thread.sleep(250);systemBack();
+        main(()->{if(activity.hasWindowFocus())throw new AssertionError("System Back did not return to launcher");});
+        passed("System Back returns root calculator to launcher");
+    }
     void run(){
         Bundle result=new Bundle();
         try{
-            report.put("api",Build.VERSION.SDK_INT);report.put("fontScale",instrumentation.getTargetContext().getResources().getConfiguration().fontScale);
+            report.put("api",Build.VERSION.SDK_INT);report.put("targetSdk",instrumentation.getTargetContext().getApplicationInfo().targetSdkVersion);if(instrumentation.getTargetContext().getApplicationInfo().targetSdkVersion!=36)throw new AssertionError("Not testing target API 36");report.put("fontScale",instrumentation.getTargetContext().getResources().getConfiguration().fontScale);
             if(Build.VERSION.SDK_INT>=26){android.content.pm.PackageInfo provider=WebView.getCurrentWebViewPackage();if(provider!=null)report.put("webView",provider.versionName);}
             Activity activity=instrumentation.startActivitySync(new Intent(instrumentation.getTargetContext(),MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             main(()->web=findWeb(activity.findViewById(android.R.id.content)));if(web==null)throw new AssertionError("Missing WebView");
@@ -123,7 +140,7 @@ final class CompatibilityChecks {
             evaluate("if(typeof setBillProjection!=='function'||typeof projectedMonthlyRows!=='function')throw Error('WebView did not load app scripts');setMonths(2,(new Date().getMonth()+11)%12+1);completeBillOffer();const now=new Date(),fixtures=[];for(let offset=-1;offset<=0;offset++){const date=new Date(now.getFullYear(),now.getMonth()+offset,1),limit=offset===0?now.getDate()-1:new Date(now.getFullYear(),now.getMonth(),0).getDate(),daily=[];for(let day=1;day<=limit;day++)daily.push({day,kwh:8,hourSamples:24,complete:true});fixtures.push({year:date.getFullYear(),month:date.getMonth()+1,kwh:daily.length*8,daily,available:daily.length>0,partial:offset===0,lastMeasuredDay:limit});}window.onHistoryNative(fixtures);window.onEnelConsumption({kwh:fixtures.reduce((sum,row)=>sum+row.kwh,0),months,anchor:billingAnchor,monthly:fixtures.map(row=>({...row,days:row.daily.length,expectedDays:new Date(row.year,row.month,0).getDate(),hourSamples:row.daily.length*24,future:false}))});");
             Thread.sleep(1000);instrumentation.getUiAutomation().setRotation(UiAutomation.ROTATION_FREEZE_0);Thread.sleep(500);webScreens("portrait");account(activity,"portrait");
             instrumentation.getUiAutomation().setRotation(UiAutomation.ROTATION_FREEZE_90);Thread.sleep(800);webScreens("landscape");account(activity,"landscape");
-            widgets(activity);report.put("passed",true);writeReport();result.putString("stream","PASS: compatibility API "+Build.VERSION.SDK_INT+" checks="+checks.length());instrumentation.finish(Activity.RESULT_OK,result);
+            widgets(activity);backNavigation(activity);report.put("passed",true);writeReport();result.putString("stream","PASS: compatibility API "+Build.VERSION.SDK_INT+" checks="+checks.length());instrumentation.finish(Activity.RESULT_OK,result);
         }catch(Throwable failure){
             try{report.put("passed",false);report.put("stage",stage);report.put("failure",failure.toString()+" cause="+failure.getCause());writeReport();screenshot("failure");}catch(Exception ignored){}
             result.putString("stream","FAIL: compatibility "+stage+": "+failure);instrumentation.finish(Activity.RESULT_CANCELED,result);

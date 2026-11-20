@@ -4,15 +4,16 @@ plugins {
 
 android {
     namespace 'com.costoluce.importatore'
-    compileSdk 35
+    compileSdk 36
+    buildToolsVersion '36.0.0'
 
     defaultConfig {
         // Nuovo ID: non va in conflitto con le APK sperimentali precedenti.
         applicationId 'com.costoluce.cloud'
         minSdk 24
-        targetSdk 35
-        versionCode 53
-        versionName '6.23.1'
+        targetSdk 36
+        versionCode 54
+        versionName '6.24.0'
         testInstrumentationRunner 'com.costoluce.importatore.WidgetSmokeTestRunner'
     }
 

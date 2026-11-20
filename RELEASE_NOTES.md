@@ -1,9 +1,9 @@
-# Costo Luce 6.23.1 — Widget con attuale e proiezione
+# Costo Luce 6.24.0 — Android 16 / API 36
 
-- Nel riepilogo da 2×2 sono visibili sia consumo e costo attuali sia consumo e costo previsti, senza alternarli.
-- Formato compatto: due righe Attuale / Proiezione. Stretto e alto: quattro informazioni in verticale. Formati più larghi: griglia 2×2 con caratteri e spaziature adattati.
-- Grafici e aggiornamento in background restano accessibili. Il formato minimo 2×1 conserva la preferenza corrente/proiezione.
-- Proiezioni basate sulle letture reali e sullo stesso algoritmo dell’app, con sette giorni completi; se assenti compaiono trattini e la motivazione accessibile.
-- Controlli su ridimensionamenti, caratteri ingranditi, aggiornamenti ripetuti e quattro anteprime dedicate.
+- compileSdk e targetSdk aggiornati a 36; compatibilità minima invariata ad Android 7 (API 24).
+- Android Gradle Plugin 8.10.1, Gradle 8.11.1 e Build Tools 36.0.0.
+- Gestione Indietro migrata a OnBackInvokedCallback su Android 13 e successivi, mantenendo il percorso legacy sui sistemi precedenti. Le schede interne e il dettaglio giornaliero si chiudono prima di lasciare l’app.
+- Prove sul target effettivo 36: Android 16 telefono e tablet, sistemi precedenti, tastiera, orientamenti, caratteri grandi, widget e azione Indietro del sistema.
+- Resta la gestione esplicita di barre di sistema e tastiera senza opt-out edge-to-edge. Aggiornamenti widget tramite JobScheduler, con fallback quando il lavoro accelerato viene rifiutato.
 
-Credenziali, consumi e tariffe salvate preservati. Stessa firma APK: aggiornamento senza disinstallare.
+Credenziali, tariffe, fatture e preferenze salvate preservate. Stessa firma APK: aggiornamento senza disinstallare.

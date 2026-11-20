@@ -41,9 +41,16 @@ public final class MainActivity extends Activity {
     private boolean areraBusy = false;
     private final Handler uiHandler = new Handler(Looper.getMainLooper());
     private int enelRequestId = 0;
+    private android.window.OnBackInvokedCallback backCallback;
+    private boolean handlingBack;
+
 
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if(android.os.Build.VERSION.SDK_INT>=33){
+            backCallback=()->handleBackNavigation(true);
+            getOnBackInvokedDispatcher().registerOnBackInvokedCallback(android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT,backCallback);
+        }
         if(android.os.Build.VERSION.SDK_INT>=30){getWindow().setDecorFitsSystemWindows(false);getWindow().setSoftInputMode(android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING);}
         try {
             web = new WebView(this);
@@ -505,13 +512,26 @@ public final class MainActivity extends Activity {
                 JSONObject.quote(message == null ? "Errore apertura file" : message) + ");", null);
     }
 
-    @Override public void onBackPressed() {
-        if (web != null && !HOME.equals(web.getUrl()) && !String.valueOf(web.getUrl()).startsWith(HOME + "#")) returnHome();
-        else if(web!=null)web.evaluateJavascript("Boolean(window.closeTopTariffDialog&&window.closeTopTariffDialog())",closed->{if(!"true".equals(closed)&&!isFinishing())MainActivity.super.onBackPressed();});
+    /** The system no longer invokes onBackPressed on Android 16 with target 36. */
+    private void handleBackNavigation(boolean modern){
+        if(handlingBack||isFinishing()||isDestroyed())return;
+        if(web!=null&&!HOME.equals(web.getUrl())&&!String.valueOf(web.getUrl()).startsWith(HOME+"#")){returnHome();return;}
+        if(web==null){leaveCalculator(modern);return;}
+        handlingBack=true;
+        web.evaluateJavascript("Boolean(window.closeTopTariffDialog&&window.closeTopTariffDialog())",closed->{
+            handlingBack=false;
+            if(!"true".equals(closed)&&!isFinishing()&&!isDestroyed())leaveCalculator(modern);
+        });
+    }
+    private void leaveCalculator(boolean modern){
+        if(modern){if(isTaskRoot())moveTaskToBack(true);else finish();}
         else super.onBackPressed();
     }
+    @Override public void onBackPressed(){handleBackNavigation(false);}
 
     @Override protected void onDestroy() {
+        if(android.os.Build.VERSION.SDK_INT>=33&&backCallback!=null){getOnBackInvokedDispatcher().unregisterOnBackInvokedCallback(backCallback);backCallback=null;}
+
         if(accountDialog!=null)accountDialog.dismiss();
         background.shutdownNow();
         if (web != null) { web.destroy(); web = null; }
