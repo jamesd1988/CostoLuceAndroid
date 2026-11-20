@@ -1,3 +1,3 @@
-# Costo Luce 6.24.3
+# Costo Luce 6.24.4
 
-In Tariffe, Aggiorna valori controlla il catalogo ARERA e apre il confronto con le tariffe già impostate. Verde per le corrispondenze e rosso per le differenze. I valori vengono applicati premendo Imposta valori ARERA.
+Nei widget bassi e sufficientemente larghi, Attuale e Proiezione mostrano ciascuno consumo e costo, accanto al pulsante di aggiornamento. La preferenza per il costo singolo si applica ai widget più stretti.

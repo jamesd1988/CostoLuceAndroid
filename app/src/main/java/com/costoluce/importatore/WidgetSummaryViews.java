@@ -31,13 +31,70 @@ final class WidgetSummaryViews {
         row.setTextViewTextSize(valueId,android.util.TypedValue.COMPLEX_UNIT_PX,fit(c,value,width-5,valueHeight,30*scale,true));
         row.setTextColor(valueId,forecast?0xff64e7cf:0xfff3f7ff);
     }
+    private static final class Values {
+        final String[] amounts;
+        final String forecastNote;
+
+        Values(Context context) {
+            NumberFormat usage=NumberFormat.getNumberInstance(Locale.ITALY);
+            usage.setMaximumFractionDigits(1);
+            NumberFormat money=NumberFormat.getCurrencyInstance(Locale.ITALY);
+            android.content.SharedPreferences preferences=CostoLuceWidgetProvider.prefs(context);
+            String kwh="— kWh", cost="— €";
+            if(preferences.getLong("saved_at",0)>0)try{
+                double measured=Double.parseDouble(preferences.getString("kwh",""));
+                double estimate=Double.parseDouble(preferences.getString("estimated_euro",""));
+                if(Double.isFinite(measured)&&measured>=0&&Double.isFinite(estimate)&&estimate>=0){
+                    kwh=usage.format(measured)+" kWh";
+                    cost=money.format(estimate);
+                }
+            }catch(NumberFormatException ignored){}
+            WidgetProjection.Result forecast=CostoLuceWidgetProvider.compactProjection(context);
+            amounts=new String[]{kwh,cost,forecast.available?usage.format(forecast.kwh)+" kWh":"— kWh",
+                    forecast.available?money.format(forecast.value):"— €"};
+            forecastNote=forecast.available?"Proiezione dell’intero periodo basata su sette giorni completi.":forecast.reason;
+        }
+
+        String description(int start){
+            return "Consumo: "+amounts[start]+". Costo: "+amounts[start+1]+".";
+        }
+    }
+    private static PendingIntent openCalculator(Context context){
+        Intent open=new Intent(context,MainActivity.class).setAction("com.costoluce.cloud.action.OPEN_WIDGET")
+                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP|Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        return PendingIntent.getActivity(context,0,open,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
+    }
+
+    static RemoteViews createShortWide(Context context,WidgetLayoutSpec spec,boolean refresh){
+        RemoteViews views=new RemoteViews(context.getPackageName(),R.layout.costoluce_widget_stats_wide);
+        Values values=new Values(context);
+        float columnWidth=(spec.width-16-8-(refresh?52:0))/2f;
+        float height=spec.height-8;
+        int[] amountIds={R.id.widget_short_actual_kwh,R.id.widget_short_actual_euro,
+                R.id.widget_short_forecast_kwh,R.id.widget_short_forecast_euro};
+        float size=Float.MAX_VALUE;
+        for(String value:values.amounts)size=Math.min(size,fit(context,value,columnWidth,height*.35f,16*spec.fontScale,true));
+        for(int i=0;i<amountIds.length;i++){
+            views.setTextViewText(amountIds[i],values.amounts[i]);
+            views.setTextViewTextSize(amountIds[i],android.util.TypedValue.COMPLEX_UNIT_PX,size);
+        }
+        float labelSize=fit(context,"Proiezione",columnWidth,height*.30f,11*spec.fontScale,false);
+        views.setTextViewTextSize(R.id.widget_short_actual_label,android.util.TypedValue.COMPLEX_UNIT_PX,labelSize);
+        views.setTextViewTextSize(R.id.widget_short_forecast_label,android.util.TypedValue.COMPLEX_UNIT_PX,labelSize);
+        views.setContentDescription(R.id.widget_short_actual,"Attuale. "+values.description(0));
+        views.setContentDescription(R.id.widget_short_forecast,"Proiezione. "+values.description(2)+" "+values.forecastNote);
+        PendingIntent open=openCalculator(context);
+        views.setOnClickPendingIntent(R.id.widget_short_actual,open);
+        views.setOnClickPendingIntent(R.id.widget_short_forecast,open);
+        return views;
+    }
+
     static RemoteViews create(Context c,WidgetLayoutSpec spec,int width,int height){
-        Locale locale=Locale.ITALY;NumberFormat usage=NumberFormat.getNumberInstance(locale);usage.setMaximumFractionDigits(1);NumberFormat money=NumberFormat.getCurrencyInstance(locale);
-        android.content.SharedPreferences p=CostoLuceWidgetProvider.prefs(c);String kwh="— kWh",cost="— €";
-        if(p.getLong("saved_at",0)>0)try{double k=Double.parseDouble(p.getString("kwh","")),v=Double.parseDouble(p.getString("estimated_euro",""));if(Double.isFinite(k)&&k>=0&&Double.isFinite(v)&&v>=0){kwh=usage.format(k)+" kWh";cost=money.format(v);}}catch(RuntimeException ignored){}
-        WidgetProjection.Result forecast=CostoLuceWidgetProvider.compactProjection(c);
-        String projectedKwh=forecast.available?"≈ "+usage.format(forecast.kwh)+" kWh":"— kWh",projectedCost=forecast.available?"≈ "+money.format(forecast.value):"— €";
-        String[] labels={"Consumo attuale","Costo attuale","Consumo previsto","Costo previsto"},values={kwh,cost,projectedKwh,projectedCost};
+        Values data=new Values(c);
+        String[] values=data.amounts.clone();
+        for(int i=2;i<values.length;i++)if(!values[i].startsWith("—"))values[i]="≈ "+values[i];
+        String kwh=values[0],cost=values[1],projectedKwh=values[2],projectedCost=values[3];
+        String[] labels={"Consumo attuale","Costo attuale","Consumo previsto","Costo previsto"};
         int mode=arrangement(width,height,spec.fontScale),rows=mode==FOUR_ROWS?4:2;float rowHeight=Math.max(1,(height-2f)/rows);
         RemoteViews root=new RemoteViews(c.getPackageName(),R.layout.widget_summary_values);
         for(int i=0;i<rows;i++){
@@ -46,9 +103,8 @@ final class WidgetSummaryViews {
             else{row.setViewVisibility(R.id.widget_value_right,android.view.View.GONE);int index=i;String label=mode==TWO_ROWS?(i==0?"Attuale":"Proiezione"):labels[index],value=mode==TWO_ROWS?(i==0?kwh+" · "+cost:projectedKwh+" · "+projectedCost):values[index];cell(c,row,false,label,value,mode==TWO_ROWS?i==1:index>=2,width,rowHeight,spec.fontScale);}
             root.addView(R.id.widget_four_values,row);
         }
-        root.setContentDescription(R.id.widget_four_values,"Consumo attuale: "+kwh+". Costo attuale: "+cost+". Consumo previsto: "+projectedKwh+". Costo previsto: "+projectedCost+". "+(forecast.available?"Proiezione dell’intero periodo basata su sette giorni completi.":forecast.reason));
-        Intent open=new Intent(c,MainActivity.class).setAction("com.costoluce.cloud.action.OPEN_WIDGET").addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP|Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        root.setOnClickPendingIntent(R.id.widget_four_values,PendingIntent.getActivity(c,0,open,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE));
+        root.setContentDescription(R.id.widget_four_values,"Consumo attuale: "+kwh+". Costo attuale: "+cost+". Consumo previsto: "+projectedKwh+". Costo previsto: "+projectedCost+". "+data.forecastNote);
+        root.setOnClickPendingIntent(R.id.widget_four_values,openCalculator(c));
         return root;
     }
 }

@@ -24,7 +24,7 @@ final class WidgetLayoutSpec {
     boolean sideBySide(){return width>=240;}
     boolean breakdown(){return !unified()&&height>=400*fontScale;}
     boolean shortWide(){return fullPages()&&height<250*fontScale;}
-    boolean wideStats(){return statsOnly()&&width>=260;}
+    boolean wideStats(){return statsOnly()&&width>=170&&height>=48;}
     boolean statsRefreshPossible(){return statsOnly()&&width>=120&&height>=56;}
     boolean smallDate(){return smallSummary()&&height>=170*fontScale;}
     boolean smallRefresh(){return smallSummary()&&width>=120;}
