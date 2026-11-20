@@ -11,3 +11,5 @@
 .legacy-flex-gap .bottom-nav button>svg,.legacy-flex-gap .bottom-nav .more-icon{margin-bottom:4px}
 
 .legacy-flex-gap .history-track>strong{margin-bottom:7px}.legacy-flex-gap .history-col>span>span{margin-top:2px}
+
+.history-col>span{max-height:none;overflow:visible}.history-col>span>span{white-space:normal;overflow:visible;text-overflow:clip;flex-shrink:0}
